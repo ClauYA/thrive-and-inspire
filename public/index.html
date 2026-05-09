@@ -1499,6 +1499,8 @@
             }
         }
     </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 
 <body>
@@ -2014,7 +2016,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>How did you hear about Root & Rise?</label>
+                    <label>How did you hear about T&I?</label>
                     <select>
                         <option value="" disabled selected>Select an option...</option>
                         <option>Instagram</option>
@@ -2183,9 +2185,40 @@
 
         // Form submit
         function handleSubmit(btn) {
-            btn.textContent = '✓ Application Received!';
-            btn.style.background = 'var(--forest)';
-            btn.disabled = true;
+            // Inicializa EmailJS con tu Public Key
+            emailjs.init("H2xrhXphjnJq-zYxa");
+
+            function handleSubmit(btn) {
+                const params = {
+                    nombre: document.querySelector('input[placeholder="Your first name"]').value + ' ' +
+                        document.querySelector('input[placeholder="Your last name"]').value,
+                    email: document.querySelector('input[type="email"]').value,
+                    objetivo: document.querySelectorAll('select')[0].value,
+                    obstaculos: document.querySelector('textarea').value,
+                    como_encontro: document.querySelectorAll('select')[1].value,
+                };
+
+                // Validación básica
+                if (!params.email || !params.nombre.trim()) {
+                    alert('Please complete your name and email');
+                    return;
+                }
+
+                btn.textContent = 'Sending...';
+                btn.disabled = true;
+
+                emailjs.send("service_7cwan1b", "template_72kemha", params)
+                    .then(() => {
+                        btn.textContent = '✓ Application Received!';
+                        btn.style.background = 'var(--forest)';
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                        btn.textContent = 'Error — Try again...';
+                        btn.style.background = '#e74c3c';
+                        btn.disabled = false;
+                    });
+            }
         }
 
         // Stagger reveal delays
