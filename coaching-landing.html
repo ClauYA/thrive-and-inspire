@@ -1,0 +1,2152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Root & Rise Coaching — Build Habits That Actually Stick</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FAF7F2;
+      --warm-white: #FFFCF8;
+      --sand: #E8DDD0;
+      --terracotta: #C4714A;
+      --terracotta-light: #D4895E;
+      --terracotta-dark: #A85A35;
+      --forest: #3D5A47;
+      --forest-light: #4E7260;
+      --sage: #8AAF94;
+      --sage-light: #B8D4BF;
+      --charcoal: #2C2C2A;
+      --warm-gray: #6B6560;
+      --light-gray: #C8C2BB;
+      --accent-gold: #C9A86C;
+      --shadow-warm: rgba(196, 113, 74, 0.12);
+      --shadow-dark: rgba(44, 44, 42, 0.08);
+      --font-display: 'Cormorant Garamond', Georgia, serif;
+      --font-body: 'DM Sans', sans-serif;
+      --radius: 16px;
+      --radius-lg: 28px;
+      --transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--cream);
+      color: var(--charcoal);
+      overflow-x: hidden;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    /* ── NOISE TEXTURE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* ── NAVIGATION ── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 20px 5%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: rgba(250, 247, 242, 0.88);
+      border-bottom: 1px solid rgba(200, 194, 187, 0.3);
+      transition: var(--transition);
+    }
+
+    .nav-logo {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--forest);
+      letter-spacing: 0.01em;
+      text-decoration: none;
+    }
+
+    .nav-logo span {
+      color: var(--terracotta);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--warm-gray);
+      text-decoration: none;
+      letter-spacing: 0.03em;
+      transition: color 0.25s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--forest);
+    }
+
+    .nav-cta {
+      background: var(--terracotta);
+      color: white !important;
+      padding: 10px 22px;
+      border-radius: 50px;
+      font-weight: 600 !important;
+      transition: background 0.25s ease, transform 0.2s ease !important;
+    }
+
+    .nav-cta:hover {
+      background: var(--terracotta-dark) !important;
+      transform: translateY(-1px);
+    }
+
+    /* ── HERO ── */
+    #hero {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      padding: 120px 5% 80px;
+      gap: 60px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #hero::after {
+      content: '';
+      position: absolute;
+      right: -10%;
+      top: -5%;
+      width: 55%;
+      height: 110%;
+      background: radial-gradient(ellipse at 60% 40%, var(--sage-light) 0%, var(--sand) 50%, transparent 75%);
+      border-radius: 40% 60% 60% 40% / 50% 40% 60% 50%;
+      z-index: 0;
+      opacity: 0.6;
+      animation: morphBlob 12s ease-in-out infinite alternate;
+    }
+
+    @keyframes morphBlob {
+      from {
+        border-radius: 40% 60% 60% 40% / 50% 40% 60% 50%;
+        transform: scale(1) rotate(0deg);
+      }
+
+      to {
+        border-radius: 60% 40% 40% 60% / 40% 60% 40% 60%;
+        transform: scale(1.05) rotate(3deg);
+      }
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      animation: fadeSlideUp 1s var(--transition) both;
+    }
+
+    @keyframes fadeSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--terracotta);
+      margin-bottom: 24px;
+      padding: 8px 16px;
+      background: rgba(196, 113, 74, 0.1);
+      border-radius: 50px;
+      border: 1px solid rgba(196, 113, 74, 0.2);
+    }
+
+    .hero-eyebrow::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--terracotta);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.5;
+        transform: scale(1.4);
+      }
+    }
+
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2.8rem, 5vw, 4.2rem);
+      font-weight: 600;
+      line-height: 1.1;
+      color: var(--charcoal);
+      margin-bottom: 24px;
+      letter-spacing: -0.01em;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--terracotta);
+    }
+
+    h1 .line-forest {
+      color: var(--forest);
+    }
+
+    .hero-sub {
+      font-size: 1.1rem;
+      color: var(--warm-gray);
+      max-width: 480px;
+      line-height: 1.75;
+      margin-bottom: 40px;
+      font-weight: 300;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--terracotta);
+      color: white;
+      padding: 16px 32px;
+      border-radius: 50px;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all var(--transition);
+      box-shadow: 0 8px 30px var(--shadow-warm);
+      letter-spacing: 0.01em;
+    }
+
+    .btn-primary:hover {
+      background: var(--terracotta-dark);
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(196, 113, 74, 0.3);
+    }
+
+    .btn-primary svg {
+      transition: transform 0.25s ease;
+    }
+
+    .btn-primary:hover svg {
+      transform: translateX(4px);
+    }
+
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--forest);
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
+      padding: 14px 4px;
+      border-bottom: 2px solid var(--sage-light);
+      transition: border-color 0.25s;
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--forest);
+    }
+
+    .hero-trust {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 48px;
+      padding-top: 32px;
+      border-top: 1px solid var(--sand);
+    }
+
+    .trust-avatars {
+      display: flex;
+      margin-right: 4px;
+    }
+
+    .trust-avatars span {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--warm-white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      margin-left: -8px;
+      background: var(--sage-light);
+    }
+
+    .trust-avatars span:first-child {
+      margin-left: 0;
+    }
+
+    .trust-text {
+      font-size: 0.85rem;
+      color: var(--warm-gray);
+    }
+
+    .trust-text strong {
+      color: var(--charcoal);
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 2px;
+    }
+
+    .hero-visual {
+      position: relative;
+      z-index: 1;
+      animation: fadeSlideUp 1s 0.2s var(--transition) both;
+    }
+
+    .hero-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: 36px;
+      box-shadow: 0 20px 60px var(--shadow-dark), 0 4px 16px var(--shadow-warm);
+      position: relative;
+    }
+
+    .habit-tracker {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .habit-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .habit-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .habit-icon.green {
+      background: rgba(138, 175, 148, 0.2);
+    }
+
+    .habit-icon.terra {
+      background: rgba(196, 113, 74, 0.12);
+    }
+
+    .habit-icon.gold {
+      background: rgba(201, 168, 108, 0.15);
+    }
+
+    .habit-info {
+      flex: 1;
+    }
+
+    .habit-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--charcoal);
+      margin-bottom: 4px;
+    }
+
+    .habit-bar {
+      height: 6px;
+      background: var(--sand);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .habit-fill {
+      height: 100%;
+      border-radius: 10px;
+      animation: growBar 1.5s 0.8s both;
+    }
+
+    @keyframes growBar {
+      from {
+        width: 0;
+      }
+
+      to {
+        width: var(--pct);
+      }
+    }
+
+    .habit-fill.green {
+      background: var(--sage);
+      --pct: 85%;
+    }
+
+    .habit-fill.terra {
+      background: var(--terracotta-light);
+      --pct: 70%;
+    }
+
+    .habit-fill.gold {
+      background: var(--accent-gold);
+      --pct: 60%;
+    }
+
+    .habit-days {
+      display: flex;
+      gap: 5px;
+      margin-top: 4px;
+    }
+
+    .day-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--sand);
+    }
+
+    .day-dot.done {
+      background: var(--sage);
+    }
+
+    .day-dot.done.terra {
+      background: var(--terracotta-light);
+    }
+
+    .streak-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--forest), var(--forest-light));
+      color: white;
+      padding: 14px 20px;
+      border-radius: var(--radius);
+    }
+
+    .streak-badge .number {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 600;
+      line-height: 1;
+    }
+
+    .streak-badge .label {
+      font-size: 0.8rem;
+      opacity: 0.85;
+    }
+
+    .floating-pill {
+      position: absolute;
+      background: white;
+      border-radius: 50px;
+      padding: 10px 16px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      box-shadow: 0 8px 24px var(--shadow-dark);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      animation: float 4s ease-in-out infinite;
+    }
+
+    .floating-pill.top-right {
+      top: -16px;
+      right: -20px;
+      animation-delay: 0.5s;
+      color: var(--forest);
+    }
+
+    .floating-pill.bottom-left {
+      bottom: -16px;
+      left: -20px;
+      animation-delay: 1.5s;
+      color: var(--terracotta);
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-8px);
+      }
+    }
+
+    /* ── SECTION SHARED ── */
+    section {
+      position: relative;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 100px 5%;
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--terracotta);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 600;
+      line-height: 1.15;
+      color: var(--charcoal);
+      margin-bottom: 20px;
+      letter-spacing: -0.01em;
+    }
+
+    .section-title em {
+      font-style: italic;
+      color: var(--terracotta);
+    }
+
+    .section-subtitle {
+      font-size: 1.05rem;
+      color: var(--warm-gray);
+      max-width: 560px;
+      line-height: 1.75;
+      font-weight: 300;
+    }
+
+    /* ── STRUGGLES ── */
+    #struggles {
+      background: var(--charcoal);
+      color: white;
+    }
+
+    #struggles .container {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 80px;
+      align-items: center;
+    }
+
+    #struggles .section-title {
+      color: white;
+    }
+
+    #struggles .section-subtitle {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    #struggles .section-label {
+      color: var(--sage-light);
+    }
+
+    .struggle-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .struggle-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius);
+      padding: 24px;
+      transition: all 0.3s ease;
+      cursor: default;
+    }
+
+    .struggle-card:hover {
+      background: rgba(255, 255, 255, 0.09);
+      border-color: rgba(196, 113, 74, 0.3);
+      transform: translateY(-3px);
+    }
+
+    .struggle-icon {
+      font-size: 1.6rem;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .struggle-card h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: white;
+    }
+
+    .struggle-card p {
+      font-size: 0.82rem;
+      color: rgba(255, 255, 255, 0.5);
+      line-height: 1.6;
+    }
+
+    /* ── STORY ── */
+    #story .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+
+    .story-img-wrap {
+      position: relative;
+      border-radius: var(--radius-lg);
+      overflow: visible;
+    }
+
+    .story-img-bg {
+      width: 100%;
+      aspect-ratio: 4/5;
+      background: linear-gradient(145deg, var(--sage-light), var(--sand));
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .story-img-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 50%, rgba(61, 90, 71, 0.4));
+      border-radius: var(--radius-lg);
+    }
+
+    .story-quote-card {
+      position: absolute;
+      bottom: -20px;
+      right: -24px;
+      background: white;
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      max-width: 240px;
+      box-shadow: 0 16px 40px var(--shadow-dark);
+    }
+
+    .story-quote-card blockquote {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 0.95rem;
+      color: var(--charcoal);
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+
+    .story-quote-card cite {
+      font-size: 0.78rem;
+      color: var(--warm-gray);
+      font-style: normal;
+      font-weight: 500;
+    }
+
+    .story-text .section-label {
+      margin-top: 0;
+    }
+
+    .story-text p {
+      font-size: 1rem;
+      color: var(--warm-gray);
+      line-height: 1.8;
+      margin-bottom: 20px;
+      font-weight: 300;
+    }
+
+    .story-text p strong {
+      color: var(--charcoal);
+      font-weight: 600;
+    }
+
+    .signature {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 1.6rem;
+      color: var(--terracotta);
+      margin-top: 32px;
+    }
+
+    /* ── HOW IT WORKS ── */
+    #how {
+      background: var(--forest);
+      color: white;
+    }
+
+    #how .section-title {
+      color: white;
+    }
+
+    #how .section-subtitle {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    #how .section-label {
+      color: var(--sage-light);
+    }
+
+    #how .container>div:first-child {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    #how .section-subtitle {
+      margin: 0 auto;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px;
+    }
+
+    .step-card {
+      background: rgba(255, 255, 255, 0.06);
+      padding: 40px 32px;
+      border-radius: 0;
+      position: relative;
+      transition: background 0.3s ease;
+    }
+
+    .step-card:first-child {
+      border-radius: var(--radius) 0 0 var(--radius);
+    }
+
+    .step-card:last-child {
+      border-radius: 0 var(--radius) var(--radius) 0;
+    }
+
+    .step-card:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .step-num {
+      font-family: var(--font-display);
+      font-size: 4rem;
+      font-weight: 600;
+      color: rgba(138, 175, 148, 0.3);
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+
+    .step-card h3 {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 14px;
+      color: white;
+    }
+
+    .step-card p {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.6);
+      line-height: 1.75;
+    }
+
+    .step-badge {
+      display: inline-block;
+      margin-top: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: var(--sage-light);
+      background: rgba(138, 175, 148, 0.15);
+      padding: 6px 14px;
+      border-radius: 50px;
+    }
+
+    /* ── BENEFITS ── */
+    #benefits .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: start;
+    }
+
+    .benefits-list {
+      display: grid;
+      gap: 20px;
+      margin-top: 40px;
+    }
+
+    .benefit-item {
+      display: flex;
+      gap: 18px;
+      align-items: flex-start;
+      padding: 24px;
+      background: white;
+      border-radius: var(--radius);
+      border: 1px solid var(--sand);
+      transition: all 0.3s ease;
+    }
+
+    .benefit-item:hover {
+      border-color: var(--sage-light);
+      box-shadow: 0 8px 24px var(--shadow-dark);
+      transform: translateX(6px);
+    }
+
+    .benefit-dot {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--sage-light), var(--sage));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .benefit-item h4 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: var(--charcoal);
+    }
+
+    .benefit-item p {
+      font-size: 0.85rem;
+      color: var(--warm-gray);
+      line-height: 1.6;
+    }
+
+    .benefits-right {
+      padding-top: 60px;
+    }
+
+    .feature-block {
+      background: linear-gradient(145deg, var(--terracotta), var(--terracotta-dark));
+      color: white;
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      margin-bottom: 20px;
+    }
+
+    .feature-block h3 {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .feature-block p {
+      font-size: 0.9rem;
+      opacity: 0.85;
+      line-height: 1.75;
+    }
+
+    .feature-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .feature-tag {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 50px;
+      font-size: 0.78rem;
+      font-weight: 500;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .stat-box {
+      background: white;
+      border: 1px solid var(--sand);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+    }
+
+    .stat-num {
+      font-family: var(--font-display);
+      font-size: 2.4rem;
+      font-weight: 600;
+      color: var(--forest);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--warm-gray);
+    }
+
+    /* ── TESTIMONIALS ── */
+    #testimonials {
+      background: var(--warm-white);
+      border-top: 1px solid var(--sand);
+      border-bottom: 1px solid var(--sand);
+    }
+
+    #testimonials .container>div:first-child {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    #testimonials .section-subtitle {
+      margin: 0 auto;
+    }
+
+    .testimonial-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .testimonial-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      border: 1px solid var(--sand);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .testimonial-card:hover {
+      box-shadow: 0 12px 40px var(--shadow-dark);
+      transform: translateY(-4px);
+    }
+
+    .testimonial-card.featured {
+      background: var(--forest);
+      color: white;
+      border-color: var(--forest);
+    }
+
+    .stars {
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+      letter-spacing: 2px;
+    }
+
+    .testimonial-card.featured .stars {
+      filter: brightness(1.5);
+    }
+
+    .testimonial-text {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-style: italic;
+      line-height: 1.65;
+      color: var(--charcoal);
+      margin-bottom: 24px;
+    }
+
+    .testimonial-card.featured .testimonial-text {
+      color: white;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .author-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--sage-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+
+    .testimonial-card.featured .author-avatar {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .author-name {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--charcoal);
+    }
+
+    .testimonial-card.featured .author-name {
+      color: white;
+    }
+
+    .author-detail {
+      font-size: 0.78rem;
+      color: var(--warm-gray);
+      margin-top: 2px;
+    }
+
+    .testimonial-card.featured .author-detail {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .result-tag {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(138, 175, 148, 0.15);
+      color: var(--forest);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 50px;
+    }
+
+    .testimonial-card.featured .result-tag {
+      background: rgba(255, 255, 255, 0.15);
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    /* ── APPLICATION FORM ── */
+    #apply {
+      background: linear-gradient(165deg, var(--cream) 0%, var(--sand) 100%);
+    }
+
+    #apply .container {
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      gap: 80px;
+      align-items: start;
+    }
+
+    .apply-info .section-title {
+      margin-bottom: 24px;
+    }
+
+    .apply-points {
+      list-style: none;
+      margin: 32px 0;
+      display: grid;
+      gap: 14px;
+    }
+
+    .apply-points li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 0.9rem;
+      color: var(--warm-gray);
+      line-height: 1.6;
+    }
+
+    .apply-points li::before {
+      content: '✦';
+      color: var(--terracotta);
+      font-size: 0.7rem;
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+
+    .apply-form {
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: 48px 40px;
+      box-shadow: 0 20px 60px var(--shadow-dark);
+    }
+
+    .form-title {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: var(--charcoal);
+      margin-bottom: 8px;
+    }
+
+    .form-sub {
+      font-size: 0.85rem;
+      color: var(--warm-gray);
+      margin-bottom: 32px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--charcoal);
+      margin-bottom: 8px;
+      letter-spacing: 0.02em;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 14px 18px;
+      border: 1.5px solid var(--sand);
+      border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      color: var(--charcoal);
+      background: var(--cream);
+      transition: border-color 0.25s, box-shadow 0.25s;
+      outline: none;
+      resize: none;
+    }
+
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: var(--light-gray);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--terracotta-light);
+      box-shadow: 0 0 0 3px rgba(196, 113, 74, 0.12);
+      background: white;
+    }
+
+    .form-group select {
+      appearance: none;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B6560' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-submit {
+      width: 100%;
+      padding: 16px;
+      background: var(--terracotta);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-family: var(--font-body);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      margin-top: 8px;
+      box-shadow: 0 8px 24px rgba(196, 113, 74, 0.3);
+    }
+
+    .form-submit:hover {
+      background: var(--terracotta-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 14px 32px rgba(196, 113, 74, 0.4);
+    }
+
+    .form-note {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--light-gray);
+      margin-top: 14px;
+    }
+
+    /* ── FAQ ── */
+    #faq .container>div:first-child {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    #faq .section-subtitle {
+      margin: 0 auto;
+    }
+
+    .faq-grid {
+      max-width: 760px;
+      margin: 0 auto;
+      display: grid;
+      gap: 12px;
+    }
+
+    .faq-item {
+      background: white;
+      border: 1.5px solid var(--sand);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.25s;
+    }
+
+    .faq-item:hover {
+      border-color: var(--sage-light);
+    }
+
+    .faq-q {
+      width: 100%;
+      background: none;
+      border: none;
+      padding: 22px 24px;
+      text-align: left;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--charcoal);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .faq-q .arrow {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--sand);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: transform 0.3s ease, background 0.25s;
+      font-size: 0.7rem;
+    }
+
+    .faq-item.open .faq-q .arrow {
+      transform: rotate(180deg);
+      background: var(--sage-light);
+    }
+
+    .faq-a {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease, padding 0.3s ease;
+      font-size: 0.9rem;
+      color: var(--warm-gray);
+      line-height: 1.75;
+      padding: 0 24px;
+    }
+
+    .faq-item.open .faq-a {
+      max-height: 300px;
+      padding: 0 24px 22px;
+    }
+
+    /* ── FINAL CTA ── */
+    #final-cta {
+      background: var(--charcoal);
+      text-align: center;
+      overflow: hidden;
+    }
+
+    #final-cta .container {
+      padding: 100px 5%;
+    }
+
+    #final-cta::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(196, 113, 74, 0.15), transparent 65%);
+      pointer-events: none;
+    }
+
+    #final-cta .section-title {
+      color: white;
+      max-width: 640px;
+      margin: 0 auto 24px;
+    }
+
+    #final-cta .section-subtitle {
+      margin: 0 auto 40px;
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    #final-cta .section-label {
+      justify-content: center;
+      display: flex;
+    }
+
+    .cta-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-light {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      color: var(--charcoal);
+      padding: 16px 32px;
+      border-radius: 50px;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all var(--transition);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-light:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-outline-light {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      color: rgba(255, 255, 255, 0.8);
+      padding: 14px 30px;
+      border-radius: 50px;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.25s ease;
+    }
+
+    .btn-outline-light:hover {
+      border-color: white;
+      color: white;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--charcoal);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 32px 5%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-brand {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .footer-brand span {
+      color: var(--terracotta);
+    }
+
+    footer p {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── MOBILE ── */
+    @media (max-width: 900px) {
+      nav {
+        padding: 16px 5%;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      #hero {
+        grid-template-columns: 1fr;
+        padding: 100px 5% 60px;
+        text-align: center;
+      }
+
+      #hero::after {
+        display: none;
+      }
+
+      .hero-actions {
+        justify-content: center;
+      }
+
+      .hero-trust {
+        justify-content: center;
+      }
+
+      .hero-sub {
+        margin: 0 auto 40px;
+      }
+
+      #struggles .container,
+      #story .container,
+      #benefits .container,
+      #apply .container {
+        grid-template-columns: 1fr;
+        gap: 48px;
+      }
+
+      .struggle-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .testimonial-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .steps-grid {
+        grid-template-columns: 1fr;
+        gap: 2px;
+      }
+
+      .step-card:first-child {
+        border-radius: var(--radius) var(--radius) 0 0;
+      }
+
+      .step-card:last-child {
+        border-radius: 0 0 var(--radius) var(--radius);
+      }
+
+      .stats-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .apply-form {
+        padding: 32px 24px;
+      }
+
+      .story-quote-card {
+        position: relative;
+        right: auto;
+        bottom: auto;
+        margin-top: -20px;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="#" class="nav-logo">Thrive <span>&</span> Inspire</a>
+    <ul class="nav-links">
+      <li><a href="#struggles">About</a></li>
+      <li><a href="#how">How It Works</a></li>
+      <li><a href="#testimonials">Stories</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="#apply" class="nav-cta">Apply Now</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-content">
+      <div class="hero-eyebrow">Now Accepting New Clients · Limited Spots</div>
+      <h1>
+        Build habits that<br>
+        <em>actually stick</em><br>
+        <span class="line-forest">this time.</span>
+      </h1>
+      <p class="hero-sub">
+        No extreme diets. No punishing routines. Just a realistic, supportive approach to becoming the healthiest
+        version of you — one small step at a time.
+      </p>
+      <div class="hero-actions">
+        <a href="#apply" class="btn-primary">
+          Apply for Coaching
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </a>
+        <a href="#story" class="btn-ghost">Read my story ↓</a>
+      </div>
+      <div class="hero-trust">
+        <div class="trust-avatars">
+          <span>🌿</span>
+          <span>💪</span>
+          <span>✨</span>
+          <span>🌱</span>
+        </div>
+        <div class="trust-text">
+          <strong>127+ beginners transformed</strong>
+          Average consistency rate: 84% by week 6
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="hero-card">
+        <div class="floating-pill top-right">🔥 21-day streak!</div>
+        <div class="floating-pill bottom-left">✅ Coach check-in done</div>
+
+        <div class="habit-tracker">
+          <div class="habit-row">
+            <div class="habit-icon green">🧘</div>
+            <div class="habit-info">
+              <div class="habit-name">Morning Movement</div>
+              <div class="habit-bar">
+                <div class="habit-fill green"></div>
+              </div>
+              <div class="habit-days">
+                <div class="day-dot done"></div>
+                <div class="day-dot done"></div>
+                <div class="day-dot done"></div>
+                <div class="day-dot done"></div>
+                <div class="day-dot done"></div>
+                <div class="day-dot done"></div>
+                <div class="day-dot"></div>
+              </div>
+            </div>
+          </div>
+          <div class="habit-row">
+            <div class="habit-icon terra">💧</div>
+            <div class="habit-info">
+              <div class="habit-name">Hydration Goal</div>
+              <div class="habit-bar">
+                <div class="habit-fill terra"></div>
+              </div>
+              <div class="habit-days">
+                <div class="day-dot done terra"></div>
+                <div class="day-dot done terra"></div>
+                <div class="day-dot done terra"></div>
+                <div class="day-dot done terra"></div>
+                <div class="day-dot"></div>
+                <div class="day-dot done terra"></div>
+                <div class="day-dot done terra"></div>
+              </div>
+            </div>
+          </div>
+          <div class="habit-row">
+            <div class="habit-icon gold">🌙</div>
+            <div class="habit-info">
+              <div class="habit-name">Evening Wind-Down</div>
+              <div class="habit-bar">
+                <div class="habit-fill gold"></div>
+              </div>
+              <div class="habit-days">
+                <div class="day-dot done"></div>
+                <div class="day-dot done"></div>
+                <div class="day-dot"></div>
+                <div class="day-dot done"></div>
+                <div class="day-dot done"></div>
+                <div class="day-dot done"></div>
+                <div class="day-dot"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="streak-badge">
+          <div>
+            <div class="number">21</div>
+            <div class="label">Day Streak 🔥</div>
+          </div>
+          <div style="flex:1; text-align:right; font-size:0.8rem; opacity:0.75; line-height:1.5;">
+            "I've never made it<br>this far before!"<br>— <em>Sarah M.</em>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STRUGGLES -->
+  <section id="struggles">
+    <div class="container reveal">
+      <div>
+        <div class="section-label">You're Not Alone</div>
+        <h2 class="section-title">Sound familiar?</h2>
+        <p class="section-subtitle">Most beginners face the same invisible walls. Recognizing them is the first step to
+          breaking through.</p>
+      </div>
+      <div class="struggle-grid">
+        <div class="struggle-card">
+          <span class="struggle-icon">😮‍💨</span>
+          <h3>"I start strong, then fall off"</h3>
+          <p>You go all-in Monday and burn out by Thursday. The cycle never seems to end.</p>
+        </div>
+        <div class="struggle-card">
+          <span class="struggle-icon">⏱️</span>
+          <h3>"I'm too busy to be healthy"</h3>
+          <p>Work, family, life — there's never a "perfect time" to finally start taking care of yourself.</p>
+        </div>
+        <div class="struggle-card">
+          <span class="struggle-icon">🤯</span>
+          <h3>"I don't know where to start"</h3>
+          <p>There's too much conflicting advice online. It's overwhelming before you even begin.</p>
+        </div>
+        <div class="struggle-card">
+          <span class="struggle-icon">💭</span>
+          <h3>"I always give up on myself"</h3>
+          <p>You've tried before and it hasn't worked. You're starting to wonder if it ever will.</p>
+        </div>
+        <div class="struggle-card">
+          <span class="struggle-icon">🎢</span>
+          <h3>"My motivation comes and goes"</h3>
+          <p>Some weeks you're unstoppable. Others, you can barely get out of bed to try.</p>
+        </div>
+        <div class="struggle-card">
+          <span class="struggle-icon">🪞</span>
+          <h3>"I don't feel good in my body"</h3>
+          <p>Low energy, low confidence, and not loving how you feel day-to-day. It's exhausting.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STORY -->
+  <section id="story">
+    <div class="container">
+      <div class="story-img-wrap reveal">
+        <div class="story-img-bg">
+          🌿
+        </div>
+        <div class="story-quote-card">
+          <blockquote>"I was exactly where you are right now. And it changed everything."</blockquote>
+          <cite>— Claudia B., Founder & Head Coach</cite>
+        </div>
+      </div>
+
+      <div class="story-text reveal">
+        <div class="section-label">My Story</div>
+        <h2 class="section-title">I used to be the person who <em>couldn't stick to anything.</em></h2>
+        <p>
+          Three years ago, I was exhausted, overwhelmed, and convinced that healthy living just wasn't for someone like
+          me. I'd tried every program, every diet, every "30-day challenge." They all worked for about a week.
+        </p>
+        <p>
+          <strong>What nobody told me was that consistency isn't about willpower — it's about systems.</strong> It's
+          about having someone in your corner who understands your real life, not an idealized version of it.
+        </p>
+        <p>
+          Once I figured that out, everything shifted. I lost 20 pounds, ran my first 5K, and — more importantly — I
+          finally felt <em>like myself</em> again. I started this program because I want that for you, too.
+        </p>
+        <p>
+          This isn't about perfection. It's about progress. It's about showing up for yourself, imperfectly, every
+          single day — and having someone celebrate every step with you.
+        </p>
+        <div class="signature">Claudia Bittner</div>
+        <p style="font-size: 0.8rem; color: var(--light-gray); margin-top: 6px;">NASM-Certified · Certified
+          Powerbuilding coach - Dietician IFBB</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how">
+    <div class="container">
+      <div class="reveal">
+        <div class="section-label">The Process</div>
+        <h2 class="section-title">Simple. Sustainable. <em>Yours.</em></h2>
+        <p class="section-subtitle">No complex programs, no overwhelming systems. Just three clear steps toward becoming
+          who you want to be.</p>
+      </div>
+      <div class="steps-grid reveal">
+        <div class="step-card">
+          <div class="step-num">01</div>
+          <h3>Honest Discovery Call</h3>
+          <p>We start with a real conversation — no pressure, no sales pitch. I want to understand your life, your
+            goals, and the specific obstacles that have held you back before.</p>
+          <span class="step-badge">↳ 45-min deep dive</span>
+        </div>
+        <div class="step-card">
+          <div class="step-num">02</div>
+          <h3>Your Custom Game Plan</h3>
+          <p>I build a 90-day roadmap designed around your actual schedule, preferences, and lifestyle — not some ideal
+            version of your day. Small, stackable habits that fit <em>your</em> real life.</p>
+          <span class="step-badge">↳ Built for your reality</span>
+        </div>
+        <div class="step-card">
+          <div class="step-num">03</div>
+          <h3>Daily Support & Accountability</h3>
+          <p>This is where the magic happens. Weekly video calls, daily check-ins, and a coach in your corner every step
+            of the way. When life gets hard, I'm right there with you.</p>
+          <span class="step-badge">↳ Never do it alone</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BENEFITS -->
+  <section id="benefits">
+    <div class="container">
+      <div class="reveal">
+        <div class="section-label">What You Get</div>
+        <h2 class="section-title">Everything you need to <em>finally</em> stay consistent.</h2>
+
+        <div class="benefits-list">
+          <div class="benefit-item">
+            <div class="benefit-dot">📲</div>
+            <div>
+              <h4>Weekly 1:1 Video Coaching Calls</h4>
+              <p>Personal sessions tailored entirely to your progress, challenges, and wins — every single week.</p>
+            </div>
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-dot">🗓️</div>
+            <div>
+              <h4>Custom Habit & Movement Plan</h4>
+              <p>A realistic routine built around your schedule — whether you have 10 minutes or an hour.</p>
+            </div>
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-dot">💬</div>
+            <div>
+              <h4>Daily Check-In & Messaging Support</h4>
+              <p>Direct access to me on the days between calls. No question too small, no moment too hard.</p>
+            </div>
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-dot">🧠</div>
+            <div>
+              <h4>Mindset & Habit Psychology Coaching</h4>
+              <p>We work on the inner game — motivation, identity, and building a relationship with consistency.</p>
+            </div>
+          </div>
+          <div class="benefit-item">
+            <div class="benefit-dot">🥗</div>
+            <div>
+              <h4>Sustainable Nutrition Guidance</h4>
+              <p>No meal plans. No calorie counting. Just smart, flexible strategies that don't make food your enemy.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="benefits-right reveal">
+        <div class="feature-block">
+          <h3>The Accountability System That Actually Works</h3>
+          <p>Most programs give you information. This program gives you a system — daily rituals, weekly milestones, and
+            a coach who holds you to your word without judgment.</p>
+          <div class="feature-tags">
+            <span class="feature-tag">Habit Stacking</span>
+            <span class="feature-tag">Progress Tracking</span>
+            <span class="feature-tag">Weekly Reviews</span>
+            <span class="feature-tag">Celebration Rituals</span>
+            <span class="feature-tag">Crisis Support</span>
+          </div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-num">84%</div>
+            <div class="stat-label">average consistency rate by week 6</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num">12wk</div>
+            <div class="stat-label">transformation program length</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num">127+</div>
+            <div class="stat-label">beginners transformed so far</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num">4.9★</div>
+            <div class="stat-label">average client satisfaction rating</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section id="testimonials">
+    <div class="container">
+      <div class="reveal">
+        <div class="section-label">Client Stories</div>
+        <h2 class="section-title">Real people. <em>Real results.</em></h2>
+        <p class="section-subtitle">These aren't highlight reels — they're honest accounts from people who were exactly
+          where you are right now.</p>
+      </div>
+
+      <div class="testimonial-grid reveal">
+        <div class="testimonial-card">
+          <span class="result-tag">Lost 18 lbs</span>
+          <div class="stars">★★★★★</div>
+          <p class="testimonial-text">"I'd failed at every diet imaginable. Maya didn't give me a diet — she gave me a
+            life I actually wanted. I'm 18 pounds lighter and, more importantly, I finally feel like myself again."</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">🌸</div>
+            <div>
+              <div class="author-name">Sarah M.</div>
+              <div class="author-detail">Mom of 2 · Marketing Manager · Week 14</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card featured">
+          <span class="result-tag">Ran first 5K</span>
+          <div class="stars">★★★★★</div>
+          <p class="testimonial-text">"I was the most sedentary person alive. Genuinely. At week 12, I ran a 5K. I cried
+            at the finish line. None of this would have happened without the accountability and someone who actually
+            believed in me."</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">🏃</div>
+            <div>
+              <div class="author-name">James T.</div>
+              <div class="author-detail">Software Engineer · Week 12</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card">
+          <span class="result-tag">8-week streak</span>
+          <div class="stars">★★★★★</div>
+          <p class="testimonial-text">"For the first time in my adult life, I've gone 8 weeks without quitting. I used
+            to give up on week 2, every single time. The support in this program is unlike anything else."</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">✨</div>
+            <div>
+              <div class="author-name">Priya K.</div>
+              <div class="author-detail">Teacher · 34 years old · Week 8</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card">
+          <span class="result-tag">+2hrs energy/day</span>
+          <div class="stars">★★★★★</div>
+          <p class="testimonial-text">"I came in wanting to lose weight. What I actually gained was energy, confidence,
+            and a relationship with movement that doesn't feel like punishment. Worth every penny."</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">💪</div>
+            <div>
+              <div class="author-name">David L.</div>
+              <div class="author-detail">Small Business Owner · Week 16</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card">
+          <span class="result-tag">No more burnout</span>
+          <div class="stars">★★★★★</div>
+          <p class="testimonial-text">"I always thought I needed to overhaul my entire life at once. Maya showed me how
+            to change one small thing at a time. I haven't burned out once. I can't believe this is my life now."</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">🌿</div>
+            <div>
+              <div class="author-name">Leila R.</div>
+              <div class="author-detail">Nurse · Week 10</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="testimonial-card">
+          <span class="result-tag">Off anxiety meds</span>
+          <div class="stars">★★★★★</div>
+          <p class="testimonial-text">"The movement and mindset work changed my mental health more than I ever expected.
+            With my doctor's guidance, I've been able to reduce my anxiety medication for the first time in years."</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">🌙</div>
+            <div>
+              <div class="author-name">Rachel A.</div>
+              <div class="author-detail">Graphic Designer · Week 18</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- APPLICATION FORM -->
+  <section id="apply">
+    <div class="container">
+      <div class="apply-info reveal">
+        <div class="section-label">Apply Today</div>
+        <h2 class="section-title">Ready to finally <em>show up for yourself?</em></h2>
+        <p class="section-subtitle">This isn't a sign-up form — it's a first step. Tell me a little about where you are
+          and where you want to go, and we'll figure out the rest together.</p>
+
+        <ul class="apply-points">
+          <li>Application takes less than 3 minutes</li>
+          <li>No commitment required to apply — just a conversation</li>
+          <li>Only 4 spots available per month to ensure personal attention</li>
+          <li>Response within 24 hours, guaranteed</li>
+          <li>Your information is completely private and never shared</li>
+        </ul>
+      </div>
+
+      <div class="apply-form reveal">
+        <div class="form-title">Let's get started.</div>
+        <div class="form-sub">Fill this out and I'll be in touch within 24 hours. ✦</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>First Name</label>
+            <input type="text" placeholder="Your first name">
+          </div>
+          <div class="form-group">
+            <label>Last Name</label>
+            <input type="text" placeholder="Your last name">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" placeholder="you@example.com">
+        </div>
+
+        <div class="form-group">
+          <label>What's your primary goal?</label>
+          <select>
+            <option value="" disabled selected>Choose the one that resonates most...</option>
+            <option>Build consistent healthy habits</option>
+            <option>Lose weight sustainably</option>
+            <option>Increase daily energy levels</option>
+            <option>Get more active / start moving</option>
+            <option>Improve mental health & confidence</option>
+            <option>All of the above</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>What has stopped you from reaching your goals before?</label>
+          <textarea rows="3" placeholder="Be honest — the more you share, the better I can help you..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>How did you hear about Root & Rise?</label>
+          <select>
+            <option value="" disabled selected>Select an option...</option>
+            <option>Instagram</option>
+            <option>TikTok</option>
+            <option>Friend or family referral</option>
+            <option>Google search</option>
+            <option>Podcast</option>
+            <option>Other</option>
+          </select>
+        </div>
+
+        <button class="form-submit" onclick="handleSubmit(this)">
+          Submit My Application →
+        </button>
+        <p class="form-note">🔒 Your privacy is protected. No spam, ever.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="container">
+      <div class="reveal">
+        <div class="section-label">FAQ</div>
+        <h2 class="section-title">Your questions, <em>answered.</em></h2>
+        <p class="section-subtitle">Still on the fence? These are the questions I hear most from people exactly where
+          you are right now.</p>
+      </div>
+
+      <div class="faq-grid reveal">
+        <div class="faq-item open">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            I've tried everything and nothing sticks. Why would this be different?
+            <span class="arrow">▾</span>
+          </button>
+          <div class="faq-a">
+            Because this isn't another program — it's a relationship. Most programs give you information. I give you
+            accountability, a custom strategy, and a real human being in your corner every single day. The research is
+            clear: accountability is the missing piece for most beginners. And that's exactly what this provides.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            I'm really busy. How much time do I need to commit?
+            <span class="arrow">▾</span>
+          </button>
+          <div class="faq-a">
+            Your plan is built around your actual schedule, not an ideal one. Many clients start with just 10–15 minutes
+            a day. We'll find what works for your real life — because sustainable habits work with your lifestyle, not
+            against it. One weekly call (45 mins) plus daily check-ins are the only real time requirements.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            Do I need to follow a strict diet or meal plan?
+            <span class="arrow">▾</span>
+          </button>
+          <div class="faq-a">
+            Absolutely not. I don't believe in restriction, calorie counting, or making food your enemy. We focus on
+            simple, flexible nutrition principles that help you feel good — without rules that make you miserable. Food
+            should bring you joy, not anxiety.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            I'm completely out of shape. Is this program for me?
+            <span class="arrow">▾</span>
+          </button>
+          <div class="faq-a">
+            Yes — especially you. This program was designed with absolute beginners in mind. There are no fitness
+            prerequisites, no "minimum level" required. We start exactly where you are, and we build from there. I've
+            worked with clients who couldn't walk for 10 minutes, and watched them transform.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            What does coaching actually look like week to week?
+            <span class="arrow">▾</span>
+          </button>
+          <div class="faq-a">
+            Each week includes a 45-minute 1:1 video call where we review the past week, adjust your plan, and set
+            intentions for the coming days. Between calls, you'll have daily check-in prompts and direct messaging
+            access. I respond within a few hours during business days — you are never alone in this.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" onclick="toggleFaq(this)">
+            How much does it cost?
+            <span class="arrow">▾</span>
+          </button>
+          <div class="faq-a">
+            Investment varies based on your goals and the coaching package that's right for you. I'll go over all
+            options transparently on our discovery call — no hidden fees, no pressure. I believe this should be
+            accessible, and I'm committed to finding something that works for your situation.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section id="final-cta">
+    <div class="container reveal">
+      <div class="section-label">The First Step</div>
+      <h2 class="section-title">Your future self is waiting. <em>She's rooting for you.</em></h2>
+      <p class="section-subtitle">Every single client who transformed their life started exactly where you are right now
+        — a little scared, a little hopeful, and ready to try one more time. This time, you won't be doing it alone.</p>
+      <div class="cta-actions">
+        <a href="#apply" class="btn-light">
+          Apply for Coaching →
+        </a>
+        <a href="#how" class="btn-outline-light">
+          See How It Works
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-brand">Thrive <span>&</span> Inspire Coaching</div>
+    <p>© 2026 Root & Rise. Built with intention, for beginners who dare to begin.</p>
+  </footer>
+
+  <script>
+    // Scroll reveal
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // FAQ toggle
+    function toggleFaq(btn) {
+      const item = btn.closest('.faq-item');
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    }
+
+    // Form submit
+    function handleSubmit(btn) {
+      btn.textContent = '✓ Application Received!';
+      btn.style.background = 'var(--forest)';
+      btn.disabled = true;
+    }
+
+    // Stagger reveal delays
+    document.querySelectorAll('.struggle-card, .testimonial-card, .benefit-item, .step-card').forEach((el, i) => {
+      el.style.transitionDelay = `${i * 0.08}s`;
+    });
+  </script>
+</body>
+
+</html>
