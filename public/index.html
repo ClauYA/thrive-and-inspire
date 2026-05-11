@@ -651,13 +651,13 @@
             align-items: center;
         }
 
-        .story-img-wrap {
+        /* .story-img-wrap {
             position: relative;
             border-radius: var(--radius-lg);
             overflow: visible;
-        }
+        }*/
 
-        .story-img-bg {
+        /*.story-img-bg {
             width: 100%;
             aspect-ratio: 4/5;
             background: linear-gradient(145deg, var(--sage-light), var(--sand));
@@ -668,6 +668,14 @@
             font-size: 5rem;
             position: relative;
             overflow: hidden;
+        }*/
+        .story-img-bg img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center top;
+            display: block;
+            border-radius: var(--radius-lg);
         }
 
         .story-img-bg::after {
@@ -1680,7 +1688,7 @@
         <div class="container">
             <div class="story-img-wrap reveal">
                 <div class="story-img-bg">
-                    🌿
+                    <img src="images/story-bg.jpg" alt="Claudia Bittner - Head Coach">
                 </div>
                 <div class="story-quote-card">
                     <blockquote>"I was exactly where you are right now. And it changed everything."</blockquote>
@@ -1982,23 +1990,23 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label>First Name</label>
-                        <input type="text" placeholder="Your first name">
+                        <label for="firstName">First Name</label>
+                        <input id="firstName" name="firstName" type="text" placeholder="Your first name">
                     </div>
                     <div class="form-group">
-                        <label>Last Name</label>
-                        <input type="text" placeholder="Your last name">
+                        <label for="lastName">Last Name</label>
+                        <input id="lastName" name="lastName" type="text" placeholder="Your last name">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" placeholder="you@example.com">
+                    <label for="email"> Email Address</label>
+                    <input id="email" name="email" type="email" placeholder="you@example.com">
                 </div>
 
                 <div class="form-group">
-                    <label>What's your primary goal?</label>
-                    <select>
+                    <label for="goal">What's your primary goal?</label>
+                    <select id="goal" name="goal">
                         <option value="" disabled selected>Choose the one that resonates most...</option>
                         <option>Build consistent healthy habits</option>
                         <option>Lose weight sustainably</option>
@@ -2010,14 +2018,14 @@
                 </div>
 
                 <div class="form-group">
-                    <label>What has stopped you from reaching your goals before?</label>
-                    <textarea rows="3"
+                    <label for="obstacles">What has stopped you from reaching your goals before?</label>
+                    <textarea id="obstacles" name="obstacles" rows="3"
                         placeholder="Be honest — the more you share, the better I can help you..."></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label>How did you hear about T&I?</label>
-                    <select>
+                    <label for="findUs">How did you hear about T&I?</label>
+                    <select id="findUs" name="findus">
                         <option value="" disabled selected>Select an option...</option>
                         <option>Instagram</option>
                         <option>TikTok</option>
@@ -2159,7 +2167,7 @@
     <!-- FOOTER -->
     <footer>
         <div class="footer-brand">Thrive <span>&</span> Inspire Coaching</div>
-        <p>© 2026 Root & Rise. Built with intention, for beginners who dare to begin.</p>
+        <p>© 2026 Thrive & Inspire. Built with intention, for beginners who dare to begin.</p>
     </footer>
 
     <script>
@@ -2190,16 +2198,16 @@
 
             function handleSubmit(btn) {
                 const params = {
-                    nombre: document.querySelector('input[placeholder="Your first name"]').value + ' ' +
-                        document.querySelector('input[placeholder="Your last name"]').value,
-                    email: document.querySelector('input[type="email"]').value,
-                    objetivo: document.querySelectorAll('select')[0].value,
-                    obstaculos: document.querySelector('textarea').value,
-                    como_encontro: document.querySelectorAll('select')[1].value,
+                    name: document.getElementById('firstName').value + ' ' +
+                        document.getElementById('lastName').value,
+                    email: document.getElementById('email').value,
+                    goal: document.getElementById('goal').value,
+                    obstacles: document.getElementById('obstacles').value,
+                    find_us: document.querySelectorAll('findUs').value,
                 };
 
                 // Validación básica
-                if (!params.email || !params.nombre.trim()) {
+                if (!params.email || !params.name.trim()) {
                     alert('Please complete your name and email');
                     return;
                 }
