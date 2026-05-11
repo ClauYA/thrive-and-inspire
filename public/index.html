@@ -2190,43 +2190,39 @@
             document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
             if (!isOpen) item.classList.add('open');
         }
-
+        // Inicializa EmailJS con tu Public Key
+        emailjs.init("H2xrhXphjnJq-zYxa");
         // Form submit
         function handleSubmit(btn) {
-            // Inicializa EmailJS con tu Public Key
-            emailjs.init("H2xrhXphjnJq-zYxa");
+            const params = {
+                name: document.getElementById('firstName').value + ' ' +
+                    document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                goal: document.getElementById('goal').value,
+                obstacles: document.getElementById('obstacles').value,
+                find_us: document.getElementById('findUs').value,
+            };
 
-            function handleSubmit(btn) {
-                const params = {
-                    name: document.getElementById('firstName').value + ' ' +
-                        document.getElementById('lastName').value,
-                    email: document.getElementById('email').value,
-                    goal: document.getElementById('goal').value,
-                    obstacles: document.getElementById('obstacles').value,
-                    find_us: document.querySelectorAll('findUs').value,
-                };
-
-                // Validación básica
-                if (!params.email || !params.name.trim()) {
-                    alert('Please complete your name and email');
-                    return;
-                }
-
-                btn.textContent = 'Sending...';
-                btn.disabled = true;
-
-                emailjs.send("service_7cwan1b", "template_72kemha", params)
-                    .then(() => {
-                        btn.textContent = '✓ Application Received!';
-                        btn.style.background = 'var(--forest)';
-                    })
-                    .catch((error) => {
-                        console.error('Error:', error);
-                        btn.textContent = 'Error — Try again...';
-                        btn.style.background = '#e74c3c';
-                        btn.disabled = false;
-                    });
+            // Validación básica
+            if (!params.email || !params.name.trim()) {
+                alert('Please complete your name and email');
+                return;
             }
+
+            btn.textContent = 'Sending...';
+            btn.disabled = true;
+
+            emailjs.send("service_7cwan1b", "template_72kemha", params)
+                .then(() => {
+                    btn.textContent = '✓ Application Received!';
+                    btn.style.background = 'var(--forest)';
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    btn.textContent = 'Error — Try again...';
+                    btn.style.background = '#e74c3c';
+                    btn.disabled = false;
+                });
         }
 
         // Stagger reveal delays
