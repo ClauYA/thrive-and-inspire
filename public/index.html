@@ -1506,6 +1506,27 @@
                 max-width: 100%;
             }
         }
+
+        /*Language buttom*/
+        .lang-btn {
+            background: transparent;
+            border: 1.5px solid var(--sage-light);
+            color: var(--forest);
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-family: var(--font-body);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            margin-left: 8px;
+        }
+
+        .lang-btn:hover {
+            background: var(--forest);
+            color: white;
+            border-color: var(--forest);
+        }
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -1515,14 +1536,15 @@
 
     <!-- NAV -->
     <nav>
-        <a href="#" class="nav-logo">Thrive <span>&</span> Inspire</a>
+        <a href="#" class="nav-logo" data-en="Thrive" data-es="Crece">Thrive <span>&</span> Inspire</a>
         <ul class="nav-links">
-            <li><a href="#struggles">About</a></li>
-            <li><a href="#how">How It Works</a></li>
+            <li><a href="#struggles" data-es="Nosotros" data-en="About">About</a></li>
+            <li><a href="#how" data-es="Como funciona" data-en="How It Works">How It Works</a></li>
             <li><a href="#testimonials">Stories</a></li>
             <li><a href="#faq">FAQ</a></li>
             <li><a href="#apply" class="nav-cta">Apply Now</a></li>
         </ul>
+        <button class="lang-btn" onclick="toggleLanguage()" id="langBtn">🌐 Español</button>
     </nav>
 
     <!-- HERO -->
@@ -1776,8 +1798,9 @@
                     <div class="benefit-item">
                         <div class="benefit-dot">📲</div>
                         <div>
-                            <h4>Weekly 1:1 Video Coaching Calls</h4>
-                            <p>Personal sessions tailored entirely to your progress, challenges, and wins — every single
+                            <h4>Weekly 1:1 Video Coaching Calls or In-person meeting</h4>
+                            <p>Personal sessions tailored entirely to your progress, challenges, questions in execution,
+                                and wins — every single
                                 week.</p>
                         </div>
                     </div>
@@ -2211,6 +2234,7 @@
 
             btn.textContent = 'Sending...';
             btn.disabled = true;
+            console('true');
 
             emailjs.send("service_7cwan1b", "template_72kemha", params)
                 .then(() => {
@@ -2229,6 +2253,34 @@
         document.querySelectorAll('.struggle-card, .testimonial-card, .benefit-item, .step-card').forEach((el, i) => {
             el.style.transitionDelay = `${i * 0.08}s`;
         });
+
+        let currentLang = 'en';
+        //Language change
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'es' : 'en';
+
+            // Actualiza el botón
+            const btn = document.getElementById('langBtn');
+            btn.textContent = currentLang === 'en' ? '🌐 Español' : '🌐 English';
+
+            // Traduce todos los elementos con data-en y data-es
+            document.querySelectorAll('[data-en]').forEach(el => {
+                // Si el elemento tiene hijos (como el botón con SVG), solo cambia el primer texto
+                if (el.childNodes.length > 1) {
+                    el.childNodes.forEach(node => {
+                        if (node.nodeType === 3 && node.textContent.trim()) {
+                            node.textContent = currentLang === 'en'
+                                ? el.getAttribute('data-en')
+                                : el.getAttribute('data-es');
+                        }
+                    });
+                } else {
+                    el.textContent = currentLang === 'en'
+                        ? el.getAttribute('data-en')
+                        : el.getAttribute('data-es');
+                }
+            });
+        }
     </script>
 </body>
 
