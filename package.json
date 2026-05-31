@@ -8,7 +8,8 @@
     "dev": "concurrently -n server,client -c green,cyan \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "node --watch server.js",
     "dev:client": "npm --prefix client run dev",
-    "build": "npm --prefix client install && npm --prefix client run build",
+    "build": "node scripts/build-client.mjs",
+    "postinstall": "node scripts/build-client.mjs",
     "start": "node server.js",
     "install:all": "npm install && npm --prefix client install"
   },
