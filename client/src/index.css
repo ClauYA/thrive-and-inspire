@@ -1,0 +1,107 @@
+@import "tailwindcss";
+
+/* ── DESIGN TOKENS (Tailwind v4 @theme) ──
+   These become utilities automatically, e.g. bg-cream, text-terracotta,
+   font-display. Same warm palette as the original site. */
+@theme {
+  --color-cream: #faf7f2;
+  --color-warm-white: #fffcf8;
+  --color-sand: #e8ddd0;
+  --color-terracotta: #c4714a;
+  --color-terracotta-light: #d4895e;
+  --color-terracotta-dark: #a85a35;
+  --color-forest: #3d5a47;
+  --color-forest-light: #4e7260;
+  --color-sage: #8aaf94;
+  --color-sage-light: #b8d4bf;
+  --color-charcoal: #2c2c2a;
+  --color-warm-gray: #6b6560;
+  --color-light-gray: #c8c2bb;
+  --color-gold: #c9a86c;
+
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-body: "DM Sans", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--color-cream);
+  color: var(--color-charcoal);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Grainy paper texture overlay for warmth */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+@keyframes morphBlob {
+  from {
+    border-radius: 40% 60% 60% 40% / 50% 40% 60% 50%;
+    transform: scale(1) rotate(0deg);
+  }
+  to {
+    border-radius: 60% 40% 40% 60% / 40% 60% 40% 60%;
+    transform: scale(1.05) rotate(3deg);
+  }
+}
+
+@keyframes pulseDot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.4);
+  }
+}
+
+@keyframes floatPill {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Custom scrollbar to match the warm palette */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-cream);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-sand);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-light-gray);
+}

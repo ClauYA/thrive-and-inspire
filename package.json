@@ -1,16 +1,24 @@
 {
   "name": "thrive-and-inspire",
-  "version": "1.0.0",
-  "description": "",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "Thrive & Inspire coaching site — React (Vite + Tailwind) frontend with an Express API.",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "dev": "concurrently -n server,client -c green,cyan \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "node --watch server.js",
+    "dev:client": "npm --prefix client run dev",
+    "build": "npm --prefix client install && npm --prefix client run build",
+    "start": "node server.js",
+    "install:all": "npm install && npm --prefix client install"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2"
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^4.18.2",
+    "nodemailer": "^6.9.16"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
   }
 }
