@@ -1,0 +1,12 @@
+# Vite / Node
+node_modules/
+dist/
+dist-ssr/
+
+# logs
+*.log
+npm-debug.log*
+
+# editor / OS
+.DS_Store
+*.local

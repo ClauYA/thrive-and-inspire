@@ -1,3 +1,26 @@
+# dependencies
 node_modules/
+client/node_modules/
+
+# build output
+client/dist/
+
+# application submissions (contains personal data)
+submissions.jsonl
+
+# env / secrets
 .env
+.env.local
 .ftpconfig
+
+# local editor/agent settings
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+
+# logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
