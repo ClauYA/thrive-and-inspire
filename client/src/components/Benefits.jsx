@@ -1,8 +1,6 @@
+import { Link } from "react-router-dom";
 import Reveal from "./Reveal";
 import { useLanguage } from "../i18n/LanguageContext";
-
-const READY_FORM_URL =
-  "https://docs.google.com/forms/d/1Sdw3YWn96zhhySvPxCuhl8hT5NLD_k9QQndSZ5SaTNQ/viewform";
 
 export default function Benefits() {
   const { t } = useLanguage();
@@ -34,14 +32,12 @@ export default function Benefits() {
                   <h4 className="text-[0.95rem] font-semibold text-charcoal mb-1">{item.h}</h4>
                   <p className="text-[0.85rem] text-warm-gray leading-[1.6]">{item.p}</p>
                   {item.link && (
-                    <a
-                      href={READY_FORM_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 mt-3 text-forest text-[0.85rem] font-medium border-b-2 border-sage-light hover:border-forest transition-colors"
+                    <Link
+                      to="/ready"
+                      className="inline-flex items-center gap-2 mt-4 bg-terracotta text-white text-[0.85rem] font-semibold px-5 py-2.5 rounded-full shadow-[0_8px_24px_rgba(196,113,74,0.3)] hover:bg-terracotta-dark hover:-translate-y-0.5 transition-all"
                     >
-                      {item.link}
-                    </a>
+                      {item.link} →
+                    </Link>
                   )}
                 </div>
               </div>

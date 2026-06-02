@@ -1,3 +1,4 @@
+import { Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
@@ -10,25 +11,35 @@ import ApplyForm from "./components/ApplyForm";
 import Faq from "./components/Faq";
 import FinalCta from "./components/FinalCta";
 import Footer from "./components/Footer";
+import ReadyPage from "./components/ReadyPage";
+
+function Landing() {
+  return (
+    <div className="relative z-[1]">
+      <Navbar />
+      <main>
+        <Hero />
+        <Struggles />
+        <Story />
+        <HowItWorks />
+        <Benefits />
+        <Testimonials />
+        <ApplyForm />
+        <Faq />
+        <FinalCta />
+      </main>
+      <Footer />
+    </div>
+  );
+}
 
 export default function App() {
   return (
     <LanguageProvider>
-      <div className="relative z-[1]">
-        <Navbar />
-        <main>
-          <Hero />
-          <Struggles />
-          <Story />
-          <HowItWorks />
-          <Benefits />
-          <Testimonials />
-          <ApplyForm />
-          <Faq />
-          <FinalCta />
-        </main>
-        <Footer />
-      </div>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/ready" element={<ReadyPage />} />
+      </Routes>
     </LanguageProvider>
   );
 }

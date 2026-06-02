@@ -124,6 +124,91 @@ app.post("/api/apply", async (req, res) => {
   res.json({ ok: true });
 });
 
+// ── Coaching intake endpoint ──
+// The full intake form (goals, measurements, history) for clients ready to
+// start. Payment itself happens via the Stripe / Venmo links on the page.
+app.post("/api/ready", async (req, res) => {
+  const { firstName, lastName, email, phone, goals, format, location, weight, height, coachedBefore, experience, message } = req.body || {};
+
+  if (!firstName || !String(firstName).trim() || !isValidEmail(email)) {
+    return res.status(400).json({ ok: false, error: "Name and a valid email are required." });
+  }
+
+  const goalsList = Array.isArray(goals) ? goals.map((g) => String(g).trim()).filter(Boolean) : [];
+
+  const submission = {
+    type: "intake",
+    firstName: String(firstName).trim(),
+    lastName: String(lastName || "").trim(),
+    email: String(email).trim(),
+    phone: String(phone || "").trim(),
+    goals: goalsList,
+    format: String(format || "").trim(),
+    location: String(location || "").trim(),
+    weight: String(weight || "").trim(),
+    height: String(height || "").trim(),
+    coachedBefore: String(coachedBefore || "").trim(),
+    experience: String(experience || "").trim(),
+    message: String(message || "").trim(),
+    receivedAt: new Date().toISOString(),
+  };
+
+  // Always persist to disk as a durable record.
+  try {
+    fs.appendFileSync(SUBMISSIONS_FILE, JSON.stringify(submission) + "\n");
+  } catch (err) {
+    console.error("Failed to write submission:", err);
+  }
+
+  // Email the coach if a transport is configured.
+  if (transporter) {
+    const fullName = `${submission.firstName} ${submission.lastName}`.trim();
+    const rows = [
+      ["Name", fullName],
+      ["Email", submission.email],
+      ["Phone", submission.phone || "—"],
+      ["Goals", submission.goals.join(", ") || "—"],
+      ["Coaching format", submission.format || "—"],
+      ["City / area", submission.location || "—"],
+      ["Weight", submission.weight || "—"],
+      ["Height", submission.height || "—"],
+      ["Coached before", submission.coachedBefore || "—"],
+      ["Experience", submission.experience || "—"],
+      ["Message", submission.message || "—"],
+      ["Received", submission.receivedAt],
+    ];
+    try {
+      await transporter.sendMail({
+        from: `"Thrive & Inspire" <${mailFrom}>`,
+        to: APPLY_TO,
+        replyTo: submission.email,
+        subject: `New coaching intake — ${fullName}`,
+        text: rows.map(([k, v]) => `${k}: ${v}`).join("\n"),
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#2c2c2a">
+            <h2 style="color:#2c5d5d;margin:0 0 4px">New coaching intake 🎉</h2>
+            <p style="color:#6b6560;margin:0 0 20px">A client just submitted their intake form.</p>
+            <table style="width:100%;border-collapse:collapse">
+              ${rows
+                .map(
+                  ([k, v]) =>
+                    `<tr><td style="padding:8px 12px;background:#f4f6f2;border:1px solid #dde3da;font-weight:bold;width:160px">${k}</td><td style="padding:8px 12px;border:1px solid #dde3da">${v}</td></tr>`
+                )
+                .join("")}
+            </table>
+          </div>`,
+      });
+      console.log("✉️  Intake emailed for:", submission.email);
+    } catch (err) {
+      console.error("Failed to send email:", err);
+    }
+  } else {
+    console.log("📥 New intake stored:", submission.email);
+  }
+
+  res.json({ ok: true });
+});
+
 // ── Serve the built React client ──
 const CLIENT_DIST = path.join(__dirname, "client", "dist");
 if (fs.existsSync(CLIENT_DIST)) {

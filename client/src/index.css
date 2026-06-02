@@ -4,20 +4,23 @@
    These become utilities automatically, e.g. bg-cream, text-terracotta,
    font-display. Same warm palette as the original site. */
 @theme {
-  --color-cream: #faf7f2;
-  --color-warm-white: #fffcf8;
-  --color-sand: #e8ddd0;
-  --color-terracotta: #c4714a;
-  --color-terracotta-light: #d4895e;
-  --color-terracotta-dark: #a85a35;
-  --color-forest: #3d5a47;
+  /* ── Paleta Salvia / Eucalipto (wellness) ──
+     El "terracotta" ahora es verde salvia (color principal); el resto
+     de tonos se ajustaron a una base verdosa cálida sin naranja. */
+  --color-cream: #f4f6f2;
+  --color-warm-white: #fbfdfa;
+  --color-sand: #dde3da;
+  --color-terracotta: #2c5d5d;
+  --color-terracotta-light: #3a7575;
+  --color-terracotta-dark: #214949;
+  --color-forest: #34503f;
   --color-forest-light: #4e7260;
   --color-sage: #8aaf94;
   --color-sage-light: #b8d4bf;
-  --color-charcoal: #2c2c2a;
-  --color-warm-gray: #6b6560;
-  --color-light-gray: #c8c2bb;
-  --color-gold: #c9a86c;
+  --color-charcoal: #2b332c;
+  --color-warm-gray: #5f6b62;
+  --color-light-gray: #c3ccc4;
+  --color-gold: #b8946a;
 
   --font-display: "Cormorant Garamond", Georgia, serif;
   --font-body: "DM Sans", sans-serif;

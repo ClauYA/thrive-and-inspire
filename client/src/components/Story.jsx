@@ -34,13 +34,15 @@ export default function Story() {
             <em className="italic text-terracotta">{s.titleEm}</em>
           </h2>
           <div className="space-y-5 text-[1rem] text-warm-gray leading-[1.8] font-light">
-            <p>{s.p1}</p>
-            <p>
-              <strong className="text-charcoal font-semibold">{s.p2Strong}</strong>
-              {s.p2}
-            </p>
-            <p>{s.p3}</p>
-            <p>{s.p4}</p>
+            {s.paragraphs.map((para, i) =>
+              i === s.highlightIndex ? (
+                <p key={i}>
+                  <strong className="text-charcoal font-semibold">{para}</strong>
+                </p>
+              ) : (
+                <p key={i}>{para}</p>
+              )
+            )}
           </div>
           <div className="font-display italic text-[1.6rem] text-terracotta mt-8">{s.signature}</div>
           <p className="text-[0.8rem] text-light-gray mt-1.5">{s.creds}</p>

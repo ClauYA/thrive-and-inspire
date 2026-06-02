@@ -52,13 +52,24 @@ export default function Testimonials() {
                 {item.text}
               </p>
               <div className="flex items-center gap-3">
-                <div
-                  className={`w-11 h-11 rounded-full flex items-center justify-center text-[1.1rem] ${
-                    item.featured ? "bg-white/20" : "bg-sage-light"
-                  }`}
-                >
-                  {item.avatar}
-                </div>
+                {item.image ? (
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    loading="lazy"
+                    className={`w-11 h-11 rounded-full object-cover ${
+                      item.featured ? "ring-2 ring-white/30" : "ring-2 ring-sage-light"
+                    }`}
+                  />
+                ) : (
+                  <div
+                    className={`w-11 h-11 rounded-full flex items-center justify-center text-[1.1rem] ${
+                      item.featured ? "bg-white/20" : "bg-sage-light"
+                    }`}
+                  >
+                    {item.avatar}
+                  </div>
+                )}
                 <div>
                   <div className={`text-[0.88rem] font-semibold ${item.featured ? "text-white" : "text-charcoal"}`}>
                     {item.name}
