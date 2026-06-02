@@ -6,7 +6,7 @@
   "main": "server.js",
   "scripts": {
     "dev": "concurrently -n server,client -c green,cyan \"npm run dev:server\" \"npm run dev:client\"",
-    "dev:server": "node --watch server.js",
+    "dev:server": "node --watch-path=server.js server.js",
     "dev:client": "npm --prefix client run dev",
     "build": "node scripts/build-client.mjs",
     "postinstall": "node scripts/build-client.mjs",

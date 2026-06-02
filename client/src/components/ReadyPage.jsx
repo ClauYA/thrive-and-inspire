@@ -160,6 +160,20 @@ export default function ReadyPage() {
                 <div className="font-display text-[1.8rem] font-semibold text-forest mb-2">{r.success}</div>
                 <p className="text-[0.92rem] text-warm-gray leading-[1.7] mb-8">{r.successNote}</p>
 
+                {/* Schedule the first video call via Calendly (opens in a new tab) */}
+                <div className="border-t border-sand pt-8 mb-8">
+                  <div className="font-display text-[1.4rem] font-semibold text-charcoal mb-2">{r.schedTitle}</div>
+                  <p className="text-[0.88rem] text-warm-gray mb-6">{r.schedSub}</p>
+                  <a
+                    href={CALENDLY_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-[0.95rem] font-semibold text-white bg-forest hover:bg-forest-light hover:-translate-y-0.5 transition-all shadow-[0_8px_24px_rgba(61,90,71,0.25)]"
+                  >
+                    📅 {r.schedBtn}
+                  </a>
+                </div>
+
                 <div className="border-t border-sand pt-8">
                   <div className="font-display text-[1.4rem] font-semibold text-charcoal mb-2">{r.payTitle}</div>
                   <p className="text-[0.88rem] text-warm-gray mb-6">{r.payP}</p>
@@ -260,20 +274,6 @@ export default function ReadyPage() {
                     <input id="location" type="text" value={form.location} onChange={update("location")} placeholder={r.locationPh} className={inputClass} />
                   </div>
                 )}
-
-                {/* Schedule the intro video call via Calendly (opens in a new tab) */}
-                <div className="mb-6 rounded-2xl border border-sand bg-cream p-5">
-                  <span className="block text-[0.9rem] font-semibold text-charcoal mb-1">{r.schedTitle}</span>
-                  <p className="text-[0.82rem] text-warm-gray mb-4">{r.schedSub}</p>
-                  <a
-                    href={CALENDLY_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-[0.9rem] font-semibold text-white bg-forest hover:bg-forest-light hover:-translate-y-0.5 transition-all"
-                  >
-                    📅 {r.schedBtn}
-                  </a>
-                </div>
 
                 <div className="grid sm:grid-cols-2 gap-4 mb-5">
                   <div>
