@@ -12,10 +12,12 @@ import Faq from "./components/Faq";
 import FinalCta from "./components/FinalCta";
 import Footer from "./components/Footer";
 import ReadyPage from "./components/ReadyPage";
+import GuidePopup from "./components/GuidePopup";
 
 function Landing() {
   return (
     <div className="relative z-[1]">
+      <GuidePopup />
       <Navbar />
       <main>
         <Hero />
