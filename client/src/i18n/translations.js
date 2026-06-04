@@ -228,6 +228,22 @@ export const translations = {
     footer: {
       copy: "© 2026 Thrive & Inspire. Built with intention, for beginners who dare to begin.",
     },
+    guide: {
+      badge: "Free Gift 🎁",
+      title: "Get your FREE Guide",
+      body: "...on how to get started if you're new to the gym or building new habits. We were all beginners and started from zero — ALL of us. Here are some of my best tips I wish I'd known when I began.",
+      firstName: "Full name",
+      firstNamePh: "Your full name",
+      email: "Email",
+      emailPh: "you@email.com",
+      submit: "Send me the guide",
+      submitting: "Sending...",
+      success: "Done! Check your inbox 💌",
+      error: "Something went wrong. Please try again.",
+      validation: "Please enter your name and a valid email.",
+      note: "No spam, ever. Unsubscribe anytime.",
+      close: "Close",
+    },
   },
 
   es: {
@@ -456,6 +472,22 @@ export const translations = {
     },
     footer: {
       copy: "© 2026 Thrive & Inspire. Hecho con intención, para principiantes que se atreven a empezar.",
+    },
+    guide: {
+      badge: "Regalo Gratis 🎁",
+      title: "Obtén tu Guía GRATIS",
+      body: "...de cómo empezar si eres nueva en el gym o construyendo nuevos hábitos. Todos somos principiantes y empezamos desde cero, TODOS. Pero te regalo algunos de mis mejores tips que me hubiera encantado saber cuando comencé.",
+      firstName: "Nombre completo",
+      firstNamePh: "Tu nombre completo",
+      email: "Correo",
+      emailPh: "tu@correo.com",
+      submit: "Envíame la guía",
+      submitting: "Enviando...",
+      success: "¡Listo! Revisa tu correo 💌",
+      error: "Algo salió mal. Inténtalo de nuevo.",
+      validation: "Por favor ingresa tu nombre y un correo válido.",
+      note: "Sin spam, nunca. Cancela cuando quieras.",
+      close: "Cerrar",
     },
   },
 };

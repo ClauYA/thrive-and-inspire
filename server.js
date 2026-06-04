@@ -209,6 +209,69 @@ app.post("/api/ready", async (req, res) => {
   res.json({ ok: true });
 });
 
+// ── Free guide lead capture (email popup) ──
+// Collects name + email from the "Get your FREE Guide" popup. Stored to disk
+// and emailed to the coach so leads are never lost.
+app.post("/api/guide", async (req, res) => {
+  const { firstName, email } = req.body || {};
+
+  if (!firstName || !String(firstName).trim() || !isValidEmail(email)) {
+    return res.status(400).json({ ok: false, error: "Name and a valid email are required." });
+  }
+
+  const submission = {
+    type: "guide-lead",
+    firstName: String(firstName).trim(),
+    email: String(email).trim(),
+    receivedAt: new Date().toISOString(),
+  };
+
+  // Always persist to disk as a durable record.
+  try {
+    fs.appendFileSync(SUBMISSIONS_FILE, JSON.stringify(submission) + "\n");
+  } catch (err) {
+    console.error("Failed to write submission:", err);
+  }
+
+  // Email the coach if a transport is configured.
+  if (transporter) {
+    const rows = [
+      ["Name", submission.firstName],
+      ["Email", submission.email],
+      ["Received", submission.receivedAt],
+    ];
+    try {
+      await transporter.sendMail({
+        from: `"Thrive & Inspire" <${mailFrom}>`,
+        to: APPLY_TO,
+        replyTo: submission.email,
+        subject: `New free-guide lead — ${submission.firstName}`,
+        text: rows.map(([k, v]) => `${k}: ${v}`).join("\n"),
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#2c2c2a">
+            <h2 style="color:#c4714a;margin:0 0 4px">New free-guide lead 🎁</h2>
+            <p style="color:#6b6560;margin:0 0 20px">Someone requested the free starter guide.</p>
+            <table style="width:100%;border-collapse:collapse">
+              ${rows
+                .map(
+                  ([k, v]) =>
+                    `<tr><td style="padding:8px 12px;background:#faf7f2;border:1px solid #e8ddd0;font-weight:bold;width:160px">${k}</td><td style="padding:8px 12px;border:1px solid #e8ddd0">${v}</td></tr>`
+                )
+                .join("")}
+            </table>
+          </div>`,
+      });
+      console.log("✉️  Guide lead emailed for:", submission.email);
+    } catch (err) {
+      console.error("Failed to send email:", err);
+    }
+  } else {
+    console.log("📥 New guide lead stored:", submission.email);
+  }
+
+  res.json({ ok: true });
+});
+
 // ── Serve the built React client ──
 const CLIENT_DIST = path.join(__dirname, "client", "dist");
 if (fs.existsSync(CLIENT_DIST)) {
