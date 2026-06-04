@@ -78,7 +78,7 @@ export const translations = {
       titleEm: "finally",
       title2: " stay consistent.",
       items: [
-        { icon: "📲", h: "Weekly 1:1 Video Coaching Calls or In-Person Meeting", p: "Personal sessions tailored entirely to your progress, challenges, questions in execution, and wins — every single week.", link: "I already had my call. I am ready!" },
+        { icon: "📲", h: "Weekly 1:1 Video Coaching Calls or In-Person Meeting", p: "Personal sessions tailored entirely to your progress, challenges, questions in execution, and wins — every single week." },
         { icon: "🗓️", h: "Custom Habit & Movement Plan", p: "A realistic routine built around your schedule — whether you have 10 minutes or an hour." },
         { icon: "💬", h: "Daily Check-In & Messaging Support", p: "Direct access to me on the days between calls. No question too small, no moment too hard." },
         { icon: "🧠", h: "Mindset & Habit Psychology Coaching", p: "We work on the inner game — motivation, identity, and building a relationship with consistency." },
@@ -307,7 +307,7 @@ export const translations = {
       titleEm: "por fin",
       title2: " ser constante.",
       items: [
-        { icon: "📲", h: "Videollamadas 1:1 Semanales o Reunión Presencial", p: "Sesiones personales adaptadas por completo a tu progreso, desafíos, dudas de ejecución y logros — cada semana.", link: "Ya tuve mi llamada. ¡Estoy listo!" },
+        { icon: "📲", h: "Videollamadas 1:1 Semanales o Reunión Presencial", p: "Sesiones personales adaptadas por completo a tu progreso, desafíos, dudas de ejecución y logros — cada semana." },
         { icon: "🗓️", h: "Plan de Hábitos y Movimiento a Medida", p: "Una rutina realista construida en torno a tu horario — ya sea que tengas 10 minutos o una hora." },
         { icon: "💬", h: "Check-in Diario y Soporte por Mensajes", p: "Acceso directo a mí los días entre llamadas. Ninguna pregunta es muy pequeña, ningún momento muy difícil." },
         { icon: "🧠", h: "Coaching de Mentalidad y Psicología del Hábito", p: "Trabajamos el juego interior — motivación, identidad y construir una relación con la constancia." },
