@@ -113,7 +113,7 @@ export default function ReadyPage() {
       {/* Minimal header */}
       <header className="flex items-center justify-between px-[5%] py-5 border-b border-light-gray/30 bg-cream/80 backdrop-blur-md">
         <Link to="/" className="font-display text-2xl font-semibold text-forest tracking-tight">
-          Thrive<span className="text-terracotta">&amp;</span>Inspire
+          Lift<span className="text-terracotta">&amp;</span>Inspire
         </Link>
         <button
           onClick={toggle}
@@ -188,7 +188,7 @@ export default function ReadyPage() {
                       💳 {r.payStripe}
                     </a>
                     <a
-                      href={buildVenmoLink("Asesoria Thrive & Inspire")}
+                      href={buildVenmoLink("Asesoria Lift & Inspire")}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center justify-center gap-2 py-4 rounded-full text-[0.95rem] font-semibold text-white bg-[#008CFF] hover:brightness-95 hover:-translate-y-0.5 transition-all shadow-[0_8px_24px_rgba(0,140,255,0.25)]"

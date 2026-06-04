@@ -1,4 +1,4 @@
-# Thrive & Inspire
+# Lift & Inspire
 
 Coaching landing page — **React (Vite + Tailwind v4)** frontend with an **Express** API backend.
 
@@ -9,7 +9,7 @@ proper component-based app with a real backend for the application form.
 ## Structure
 
 ```
-thrive-and-inspire/
+lift-and-inspire/
 ├── server.js              # Express API + serves the built client
 ├── package.json           # backend deps + dev/build/start scripts
 ├── client/                # React frontend (Vite)

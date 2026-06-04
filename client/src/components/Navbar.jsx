@@ -28,7 +28,7 @@ export default function Navbar() {
       }`}
     >
       <a href="#hero" className="font-display text-2xl font-semibold text-forest tracking-tight">
-        Thrive<span className="text-terracotta">&amp;</span>Inspire
+        Lift<span className="text-terracotta">&amp;</span>Inspire
       </a>
 
       <ul className="hidden md:flex items-center gap-8 list-none">

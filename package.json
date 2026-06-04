@@ -1,8 +1,8 @@
 {
-  "name": "thrive-and-inspire",
+  "name": "lift-and-inspire",
   "version": "2.0.0",
   "type": "module",
-  "description": "Thrive & Inspire coaching site — React (Vite + Tailwind) frontend with an Express API.",
+  "description": "Lift & Inspire coaching site — React (Vite + Tailwind) frontend with an Express API.",
   "main": "server.js",
   "scripts": {
     "dev": "concurrently -n server,client -c green,cyan \"npm run dev:server\" \"npm run dev:client\"",
