@@ -126,7 +126,7 @@ export default function ApplyForm() {
             <button
               type="submit"
               disabled={status === "sending" || status === "success"}
-              className={`w-full py-4 rounded-full text-[1rem] font-semibold text-white transition-all mt-2 shadow-[0_8px_24px_rgba(196,113,74,0.3)] disabled:cursor-not-allowed ${
+              className={`w-full py-4 rounded-full text-[1rem] font-semibold text-white transition-all mt-2 shadow-[0_8px_24px_rgba(176,125,31,0.3)] disabled:cursor-not-allowed ${
                 status === "success" ? "bg-forest" : "bg-terracotta hover:bg-terracotta-dark hover:-translate-y-0.5"
               }`}
             >

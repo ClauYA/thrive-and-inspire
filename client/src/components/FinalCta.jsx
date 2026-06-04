@@ -9,7 +9,7 @@ export default function FinalCta() {
     <section id="final-cta" className="relative bg-charcoal text-center overflow-hidden">
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] pointer-events-none"
-        style={{ background: "radial-gradient(circle, rgba(196,113,74,0.15), transparent 65%)" }}
+        style={{ background: "radial-gradient(circle, rgba(176,125,31,0.15), transparent 65%)" }}
       />
       <Reveal className="relative max-w-[1100px] mx-auto px-[5%] py-24">
         <div className="flex justify-center text-[0.75rem] font-semibold tracking-[0.14em] uppercase text-sage-light mb-4">

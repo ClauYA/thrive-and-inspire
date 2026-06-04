@@ -118,7 +118,7 @@ export default function GuidePopup() {
                   <button
                     type="submit"
                     disabled={status === "sending"}
-                    className="w-full py-3.5 rounded-full text-[1rem] font-semibold text-white bg-terracotta hover:bg-terracotta-dark hover:-translate-y-0.5 transition-all mt-1 shadow-[0_8px_24px_rgba(196,113,74,0.3)] disabled:cursor-not-allowed disabled:opacity-70"
+                    className="w-full py-3.5 rounded-full text-[1rem] font-semibold text-white bg-terracotta hover:bg-terracotta-dark hover:-translate-y-0.5 transition-all mt-1 shadow-[0_8px_24px_rgba(176,125,31,0.3)] disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {status === "sending" ? g.submitting : g.submit}
                   </button>
