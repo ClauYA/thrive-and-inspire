@@ -141,7 +141,7 @@ export const translations = {
       ],
       obstacles: "What has stopped you from reaching your goals before?",
       obstaclesPh: "Be honest — the more you share, the better I can help you...",
-      findUs: "How did you hear about T&I?",
+      findUs: "How did you hear about L&I?",
       findUsPh: "Select an option...",
       findUsOptions: ["Instagram", "TikTok", "Friend or family referral", "Google search", "Podcast", "Other"],
       submit: "Submit My Application →",
@@ -227,7 +227,7 @@ export const translations = {
       ctaHow: "See How It Works",
     },
     footer: {
-      copy: "© 2026 Thrive & Inspire. Built with intention, for beginners who dare to begin.",
+      copy: "© 2026 Lift & Inspire. Built with intention, for beginners who dare to begin.",
     },
     guide: {
       badge: "Free Gift 🎁",
@@ -387,7 +387,7 @@ export const translations = {
       ],
       obstacles: "¿Qué te ha impedido alcanzar tus metas antes?",
       obstaclesPh: "Sé honesto — mientras más compartas, mejor podré ayudarte...",
-      findUs: "¿Cómo te enteraste de T&I?",
+      findUs: "¿Cómo te enteraste de L&I?",
       findUsPh: "Selecciona una opción...",
       findUsOptions: ["Instagram", "TikTok", "Referencia de amigo o familiar", "Búsqueda en Google", "Podcast", "Otro"],
       submit: "Enviar Mi Solicitud →",
@@ -473,7 +473,7 @@ export const translations = {
       ctaHow: "Ver Cómo Funciona",
     },
     footer: {
-      copy: "© 2026 Thrive & Inspire. Hecho con intención, para principiantes que se atreven a empezar.",
+      copy: "© 2026 Lift & Inspire. Hecho con intención, para principiantes que se atreven a empezar.",
     },
     guide: {
       badge: "Regalo Gratis 🎁",

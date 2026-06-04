@@ -93,7 +93,7 @@ app.post("/api/apply", async (req, res) => {
     ];
     try {
       await transporter.sendMail({
-        from: `"Thrive & Inspire" <${mailFrom}>`,
+        from: `"Lift & Inspire" <${mailFrom}>`,
         to: APPLY_TO,
         replyTo: submission.email, // hitting reply goes straight to the applicant
         subject: `New coaching application — ${fullName}`,
@@ -179,7 +179,7 @@ app.post("/api/ready", async (req, res) => {
     ];
     try {
       await transporter.sendMail({
-        from: `"Thrive & Inspire" <${mailFrom}>`,
+        from: `"Lift & Inspire" <${mailFrom}>`,
         to: APPLY_TO,
         replyTo: submission.email,
         subject: `New coaching intake — ${fullName}`,
@@ -242,7 +242,7 @@ app.post("/api/guide", async (req, res) => {
     ];
     try {
       await transporter.sendMail({
-        from: `"Thrive & Inspire" <${mailFrom}>`,
+        from: `"Lift & Inspire" <${mailFrom}>`,
         to: APPLY_TO,
         replyTo: submission.email,
         subject: `New free-guide lead — ${submission.firstName}`,
