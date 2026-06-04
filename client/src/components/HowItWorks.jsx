@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import Reveal from "./Reveal";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -38,6 +39,16 @@ export default function HowItWorks() {
               <span className="inline-block mt-5 text-[0.75rem] font-semibold tracking-wide text-sage-light bg-sage/15 px-3.5 py-1.5 rounded-full">
                 {step.badge}
               </span>
+              {step.link && (
+                <div>
+                  <Link
+                    to="/ready"
+                    className="inline-flex items-center gap-2 mt-5 bg-terracotta text-white text-[0.85rem] font-semibold px-5 py-2.5 rounded-full shadow-[0_8px_24px_rgba(196,113,74,0.3)] hover:bg-terracotta-dark hover:-translate-y-0.5 transition-all"
+                  >
+                    {step.link} →
+                  </Link>
+                </div>
+              )}
             </motion.div>
           ))}
         </div>

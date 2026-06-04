@@ -67,7 +67,7 @@ export const translations = {
       titleEm: "Yours.",
       sub: "No complex programs, no overwhelming systems. Just three clear steps toward becoming who you want to be.",
       steps: [
-        { num: "01", h: "Honest Discovery Call", p: "We start with a real conversation — no pressure, no sales pitch. I want to understand your life, your goals, and the specific obstacles that have held you back before.", badge: "↳ 45-min deep dive" },
+        { num: "01", h: "Honest Discovery Call", p: "We start with a real conversation — no pressure, no sales pitch. I want to understand your life, your goals, and the specific obstacles that have held you back before.", badge: "↳ 45-min deep dive", link: "I already had my call. I am ready!" },
         { num: "02", h: "Your Custom Game Plan", p: "I build a 90-day roadmap designed around your actual schedule, preferences, and lifestyle — not some ideal version of your day. Small, stackable habits that fit your real life.", badge: "↳ Built for your reality" },
         { num: "03", h: "Daily Support & Accountability", p: "This is where the magic happens. Weekly video calls, daily check-ins, and a coach in your corner every step of the way. When life gets hard, I'm right there with you.", badge: "↳ Never do it alone" },
       ],
@@ -296,7 +296,7 @@ export const translations = {
       titleEm: "Tuyo.",
       sub: "Sin programas complejos ni sistemas abrumadores. Solo tres pasos claros para convertirte en quien quieres ser.",
       steps: [
-        { num: "01", h: "Llamada de Descubrimiento Honesta", p: "Empezamos con una conversación real — sin presión, sin discurso de ventas. Quiero entender tu vida, tus metas y los obstáculos específicos que te han frenado antes.", badge: "↳ 45 min a fondo" },
+        { num: "01", h: "Llamada de Descubrimiento Honesta", p: "Empezamos con una conversación real — sin presión, sin discurso de ventas. Quiero entender tu vida, tus metas y los obstáculos específicos que te han frenado antes.", badge: "↳ 45 min a fondo", link: "Ya tuve mi llamada. ¡Estoy listo!" },
         { num: "02", h: "Tu Plan Personalizado", p: "Construyo una hoja de ruta de 90 días diseñada según tu horario real, tus preferencias y tu estilo de vida — no una versión ideal de tu día. Hábitos pequeños y acumulables que encajan en tu vida real.", badge: "↳ Hecho para tu realidad" },
         { num: "03", h: "Apoyo Diario y Responsabilidad", p: "Aquí ocurre la magia. Videollamadas semanales, check-ins diarios y una coach a tu lado en cada paso. Cuando la vida se pone difícil, estoy ahí contigo.", badge: "↳ Nunca lo hagas solo" },
       ],
