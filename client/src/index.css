@@ -4,23 +4,40 @@
    These become utilities automatically, e.g. bg-cream, text-terracotta,
    font-display. Same warm palette as the original site. */
 @theme {
-  /* ── Paleta Salvia / Eucalipto (wellness) ──
-     El "terracotta" ahora es verde salvia (color principal); el resto
-     de tonos se ajustaron a una base verdosa cálida sin naranja. */
-  --color-cream: #f4f6f2;
-  --color-warm-white: #fbfdfa;
-  --color-sand: #dde3da;
-  --color-terracotta: #2c5d5d;
-  --color-terracotta-light: #3a7575;
-  --color-terracotta-dark: #214949;
-  --color-forest: #34503f;
-  --color-forest-light: #4e7260;
-  --color-sage: #8aaf94;
-  --color-sage-light: #b8d4bf;
-  --color-charcoal: #2b332c;
-  --color-warm-gray: #5f6b62;
-  --color-light-gray: #c3ccc4;
-  --color-gold: #b8946a;
+  /* ── Paleta: Eucalipto · Durazno · Marfil · Arcilla · Pistacho ──
+     Combina cinco tonos cálidos y naturales. Los nombres de token se
+     conservan por compatibilidad, pero ahora apuntan a la nueva paleta:
+       cream/warm-white/sand  → Marfil (ivory)
+       terracotta (principal) → Arcilla (clay)
+       forest/sage            → Eucalipto (eucalyptus)
+       sage-light             → Pistacho (pistachio)
+       gold                   → Durazno (peach) */
+
+  /* Marfil (ivory) — fondos */
+  --color-cream: #f6f1e6;
+  --color-warm-white: #fdfaf3;
+  --color-sand: #e7dcc9;
+
+  /* Arcilla (clay) — acento principal */
+  --color-terracotta: #c0764f;
+  --color-terracotta-light: #e0a07a;
+  --color-terracotta-dark: #a05f3c;
+
+  /* Eucalipto (eucalyptus) — verdes */
+  --color-forest: #3e564a;
+  --color-forest-light: #5a7567;
+  --color-sage: #82a392;
+
+  /* Pistacho (pistachio) — verde claro */
+  --color-sage-light: #c6dbac;
+
+  /* Neutros con matiz eucalipto */
+  --color-charcoal: #303a33;
+  --color-warm-gray: #61706a;
+  --color-light-gray: #bcc6bd;
+
+  /* Durazno (peach) — acento cálido */
+  --color-gold: #eaa67e;
 
   --font-display: "Cormorant Garamond", Georgia, serif;
   --font-body: "DM Sans", sans-serif;
