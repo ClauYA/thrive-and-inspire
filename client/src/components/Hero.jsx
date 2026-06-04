@@ -74,7 +74,7 @@ export default function Hero() {
         <div className="flex flex-wrap gap-4 items-center">
           <a
             href="#apply"
-            className="group inline-flex items-center gap-2.5 bg-terracotta text-white px-8 py-4 rounded-full text-[0.95rem] font-semibold shadow-[0_8px_30px_rgba(196,113,74,0.12)] hover:bg-terracotta-dark hover:-translate-y-[3px] hover:shadow-[0_16px_40px_rgba(196,113,74,0.3)] transition-all"
+            className="group inline-flex items-center gap-2.5 bg-terracotta text-white px-8 py-4 rounded-full text-[0.95rem] font-semibold shadow-[0_8px_30px_rgba(176,125,31,0.12)] hover:bg-terracotta-dark hover:-translate-y-[3px] hover:shadow-[0_16px_40px_rgba(176,125,31,0.3)] transition-all"
           >
             {t.hero.ctaApply}
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="group-hover:translate-x-1 transition-transform">
@@ -113,7 +113,7 @@ export default function Hero() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
       >
-        <div className="relative bg-white rounded-[28px] p-9 shadow-[0_20px_60px_rgba(44,44,42,0.08),0_4px_16px_rgba(196,113,74,0.12)]">
+        <div className="relative bg-white rounded-[28px] p-9 shadow-[0_20px_60px_rgba(44,44,42,0.08),0_4px_16px_rgba(176,125,31,0.12)]">
           <div
             className="absolute -top-4 -right-5 bg-white rounded-full px-4 py-2.5 text-[0.8rem] font-semibold shadow-[0_8px_24px_rgba(44,44,42,0.08)] text-forest whitespace-nowrap"
             style={{ animation: "floatPill 4s ease-in-out 0.5s infinite" }}

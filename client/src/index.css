@@ -8,7 +8,7 @@
      Combina cinco tonos cálidos y naturales. Los nombres de token se
      conservan por compatibilidad, pero ahora apuntan a la nueva paleta:
        cream/warm-white/sand  → Marfil (ivory)
-       terracotta (principal) → Arcilla (clay)
+       terracotta (principal) → Ámbar / dorado profundo
        forest/sage            → Eucalipto (eucalyptus)
        sage-light             → Pistacho (pistachio)
        gold                   → Durazno (peach) */
@@ -18,10 +18,10 @@
   --color-warm-white: #fdfaf3;
   --color-sand: #e7dcc9;
 
-  /* Arcilla (clay) — acento principal */
-  --color-terracotta: #c0764f;
-  --color-terracotta-light: #e0a07a;
-  --color-terracotta-dark: #a05f3c;
+  /* Ámbar / dorado profundo — acento principal */
+  --color-terracotta: #b07d1f;
+  --color-terracotta-light: #c99a3a;
+  --color-terracotta-dark: #916615;
 
   /* Eucalipto (eucalyptus) — verdes */
   --color-forest: #3e564a;

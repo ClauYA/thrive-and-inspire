@@ -183,7 +183,7 @@ export default function ReadyPage() {
                       href={STRIPE_PAYMENT_LINK}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 py-4 rounded-full text-[0.95rem] font-semibold text-white bg-terracotta hover:bg-terracotta-dark hover:-translate-y-0.5 transition-all shadow-[0_8px_24px_rgba(196,113,74,0.3)]"
+                      className="flex items-center justify-center gap-2 py-4 rounded-full text-[0.95rem] font-semibold text-white bg-terracotta hover:bg-terracotta-dark hover:-translate-y-0.5 transition-all shadow-[0_8px_24px_rgba(176,125,31,0.3)]"
                     >
                       💳 {r.payStripe}
                     </a>
@@ -319,7 +319,7 @@ export default function ReadyPage() {
                 <button
                   type="submit"
                   disabled={status === "sending"}
-                  className="w-full py-4 rounded-full text-[1rem] font-semibold text-white transition-all mt-2 shadow-[0_8px_24px_rgba(196,113,74,0.3)] disabled:cursor-not-allowed bg-terracotta hover:bg-terracotta-dark hover:-translate-y-0.5"
+                  className="w-full py-4 rounded-full text-[1rem] font-semibold text-white transition-all mt-2 shadow-[0_8px_24px_rgba(176,125,31,0.3)] disabled:cursor-not-allowed bg-terracotta hover:bg-terracotta-dark hover:-translate-y-0.5"
                 >
                   {status === "sending" ? r.submitting : r.submit}
                 </button>

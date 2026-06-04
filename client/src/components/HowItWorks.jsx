@@ -43,7 +43,7 @@ export default function HowItWorks() {
                 <div>
                   <Link
                     to="/ready"
-                    className="inline-flex items-center gap-2 mt-5 bg-terracotta text-white text-[0.85rem] font-semibold px-5 py-2.5 rounded-full shadow-[0_8px_24px_rgba(196,113,74,0.3)] hover:bg-terracotta-dark hover:-translate-y-0.5 transition-all"
+                    className="inline-flex items-center gap-2 mt-5 bg-terracotta text-white text-[0.85rem] font-semibold px-5 py-2.5 rounded-full shadow-[0_8px_24px_rgba(176,125,31,0.3)] hover:bg-terracotta-dark hover:-translate-y-0.5 transition-all"
                   >
                     {step.link} →
                   </Link>
