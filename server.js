@@ -5,6 +5,9 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import nodemailer from "nodemailer";
+import jwt from "jsonwebtoken";
+import { marked } from "marked";
+import { dbEnabled, query } from "./db.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -12,7 +15,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "2mb" })); // posts can carry sizeable Markdown
 
 // ── Email transport (optional) ──
 // Applications are emailed to the coach if email is configured; otherwise they
@@ -72,6 +75,19 @@ app.post("/api/apply", async (req, res) => {
     findUs: String(findUs || "").trim(),
     receivedAt: new Date().toISOString(),
   };
+
+  // Persist to the database when configured (best-effort).
+  if (dbEnabled) {
+    try {
+      await query(
+        `insert into applications (first_name, last_name, email, goal, obstacles, find_us)
+         values ($1, $2, $3, $4, $5, $6)`,
+        [submission.firstName, submission.lastName, submission.email, submission.goal, submission.obstacles, submission.findUs]
+      );
+    } catch (err) {
+      console.error("DB insert (application) failed:", err);
+    }
+  }
 
   // Always persist to disk as a durable record.
   try {
@@ -153,6 +169,19 @@ app.post("/api/ready", async (req, res) => {
     receivedAt: new Date().toISOString(),
   };
 
+  // Persist to the database when configured (best-effort).
+  if (dbEnabled) {
+    try {
+      await query(
+        `insert into intakes (first_name, last_name, email, phone, goals, format, location, weight, height, coached_before, experience, message)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+        [submission.firstName, submission.lastName, submission.email, submission.phone, submission.goals, submission.format, submission.location, submission.weight, submission.height, submission.coachedBefore, submission.experience, submission.message]
+      );
+    } catch (err) {
+      console.error("DB insert (intake) failed:", err);
+    }
+  }
+
   // Always persist to disk as a durable record.
   try {
     fs.appendFileSync(SUBMISSIONS_FILE, JSON.stringify(submission) + "\n");
@@ -226,6 +255,18 @@ app.post("/api/guide", async (req, res) => {
     receivedAt: new Date().toISOString(),
   };
 
+  // Persist to the database when configured (best-effort).
+  if (dbEnabled) {
+    try {
+      await query(
+        `insert into guide_leads (first_name, email) values ($1, $2)`,
+        [submission.firstName, submission.email]
+      );
+    } catch (err) {
+      console.error("DB insert (guide lead) failed:", err);
+    }
+  }
+
   // Always persist to disk as a durable record.
   try {
     fs.appendFileSync(SUBMISSIONS_FILE, JSON.stringify(submission) + "\n");
@@ -270,6 +311,185 @@ app.post("/api/guide", async (req, res) => {
   }
 
   res.json({ ok: true });
+});
+
+// ─────────────────────────────────────────────────────────────
+// Blog + admin
+// ─────────────────────────────────────────────────────────────
+const JWT_SECRET = process.env.JWT_SECRET;
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const adminEnabled = Boolean(JWT_SECRET && ADMIN_EMAIL && ADMIN_PASSWORD);
+
+// Turn a title into a URL-friendly slug.
+function slugify(str) {
+  return String(str)
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // strip accents
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
+// Shape a DB row into the JSON the client expects.
+function toPost(row, { withHtml = false } = {}) {
+  if (!row) return null;
+  const post = {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    excerpt: row.excerpt,
+    coverImage: row.cover_image,
+    content: row.content,
+    author: row.author,
+    published: row.published,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+  if (withHtml) post.contentHtml = marked.parse(row.content || "");
+  return post;
+}
+
+// Verify the admin bearer token on protected routes.
+function requireAuth(req, res, next) {
+  if (!adminEnabled) {
+    return res.status(503).json({ ok: false, error: "Admin is not configured on the server." });
+  }
+  const header = req.headers.authorization || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : null;
+  if (!token) return res.status(401).json({ ok: false, error: "Not authenticated." });
+  try {
+    req.admin = jwt.verify(token, JWT_SECRET);
+    next();
+  } catch {
+    return res.status(401).json({ ok: false, error: "Session expired. Please log in again." });
+  }
+}
+
+// ── Admin login ──
+app.post("/api/admin/login", (req, res) => {
+  if (!adminEnabled) {
+    return res.status(503).json({ ok: false, error: "Admin is not configured on the server." });
+  }
+  const { email, password } = req.body || {};
+  if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
+    return res.status(401).json({ ok: false, error: "Incorrect email or password." });
+  }
+  const token = jwt.sign({ sub: email, role: "admin" }, JWT_SECRET, { expiresIn: "7d" });
+  res.json({ ok: true, token });
+});
+
+// ── Public: list published posts ──
+app.get("/api/posts", async (req, res) => {
+  if (!dbEnabled) return res.json({ ok: true, posts: [] });
+  try {
+    const { rows } = await query(
+      `select * from posts where published = true order by created_at desc`
+    );
+    res.json({ ok: true, posts: rows.map((r) => toPost(r)) });
+  } catch (err) {
+    console.error("Fetch posts failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load posts." });
+  }
+});
+
+// ── Public: single published post by slug ──
+app.get("/api/posts/:slug", async (req, res) => {
+  if (!dbEnabled) return res.status(404).json({ ok: false, error: "Not found." });
+  try {
+    const { rows } = await query(
+      `select * from posts where slug = $1 and published = true limit 1`,
+      [req.params.slug]
+    );
+    if (!rows[0]) return res.status(404).json({ ok: false, error: "Post not found." });
+    res.json({ ok: true, post: toPost(rows[0], { withHtml: true }) });
+  } catch (err) {
+    console.error("Fetch post failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load the post." });
+  }
+});
+
+// ── Admin: list all posts (incl. drafts) ──
+app.get("/api/admin/posts", requireAuth, async (req, res) => {
+  try {
+    const { rows } = await query(`select * from posts order by created_at desc`);
+    res.json({ ok: true, posts: rows.map((r) => toPost(r)) });
+  } catch (err) {
+    console.error("Admin fetch posts failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load posts." });
+  }
+});
+
+// ── Admin: create a post ──
+app.post("/api/admin/posts", requireAuth, async (req, res) => {
+  const { title, excerpt, coverImage, content, author, published } = req.body || {};
+  if (!title || !String(title).trim()) {
+    return res.status(400).json({ ok: false, error: "A title is required." });
+  }
+  let slug = slugify(req.body.slug || title);
+  if (!slug) slug = `post-${Date.now()}`;
+  try {
+    // Ensure the slug is unique by appending a short suffix on collision.
+    const existing = await query(`select 1 from posts where slug = $1`, [slug]);
+    if (existing.rows[0]) slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
+
+    const { rows } = await query(
+      `insert into posts (slug, title, excerpt, cover_image, content, author, published)
+       values ($1, $2, $3, $4, $5, $6, $7) returning *`,
+      [slug, String(title).trim(), excerpt || "", coverImage || "", content || "", author || "Claudia Bittner", Boolean(published)]
+    );
+    res.json({ ok: true, post: toPost(rows[0]) });
+  } catch (err) {
+    console.error("Create post failed:", err);
+    res.status(500).json({ ok: false, error: "Could not create the post." });
+  }
+});
+
+// ── Admin: update a post ──
+app.put("/api/admin/posts/:id", requireAuth, async (req, res) => {
+  const { title, excerpt, coverImage, content, author, published, slug } = req.body || {};
+  try {
+    const { rows } = await query(
+      `update posts set
+         title = coalesce($2, title),
+         slug = coalesce($3, slug),
+         excerpt = coalesce($4, excerpt),
+         cover_image = coalesce($5, cover_image),
+         content = coalesce($6, content),
+         author = coalesce($7, author),
+         published = coalesce($8, published),
+         updated_at = now()
+       where id = $1 returning *`,
+      [
+        req.params.id,
+        title != null ? String(title).trim() : null,
+        slug != null ? slugify(slug) : null,
+        excerpt,
+        coverImage,
+        content,
+        author,
+        published != null ? Boolean(published) : null,
+      ]
+    );
+    if (!rows[0]) return res.status(404).json({ ok: false, error: "Post not found." });
+    res.json({ ok: true, post: toPost(rows[0]) });
+  } catch (err) {
+    console.error("Update post failed:", err);
+    res.status(500).json({ ok: false, error: "Could not update the post." });
+  }
+});
+
+// ── Admin: delete a post ──
+app.delete("/api/admin/posts/:id", requireAuth, async (req, res) => {
+  try {
+    await query(`delete from posts where id = $1`, [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Delete post failed:", err);
+    res.status(500).json({ ok: false, error: "Could not delete the post." });
+  }
 });
 
 // ── Serve the built React client ──

@@ -13,6 +13,10 @@ import FinalCta from "./components/FinalCta";
 import Footer from "./components/Footer";
 import ReadyPage from "./components/ReadyPage";
 import GuidePopup from "./components/GuidePopup";
+import Blog from "./components/Blog";
+import BlogPost from "./components/BlogPost";
+import AdminLogin from "./components/admin/AdminLogin";
+import AdminDashboard from "./components/admin/AdminDashboard";
 
 function Landing() {
   return (
@@ -41,6 +45,10 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/ready" element={<ReadyPage />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/blog/:slug" element={<BlogPost />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
     </LanguageProvider>
   );

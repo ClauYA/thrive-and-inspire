@@ -63,6 +63,73 @@ body {
   overflow-x: hidden;
 }
 
+/* ── Rendered blog post content (Markdown → HTML) ── */
+.blog-content {
+  font-size: 1.05rem;
+  line-height: 1.85;
+  color: color-mix(in srgb, var(--color-charcoal) 88%, transparent);
+}
+.blog-content > * + * {
+  margin-top: 1.25em;
+}
+.blog-content h2 {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--color-charcoal);
+  margin-top: 1.8em;
+}
+.blog-content h3 {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 600;
+  color: var(--color-charcoal);
+  margin-top: 1.6em;
+}
+.blog-content a {
+  color: var(--color-terracotta);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.blog-content a:hover {
+  color: var(--color-terracotta-dark);
+}
+.blog-content ul,
+.blog-content ol {
+  padding-left: 1.4em;
+}
+.blog-content ul {
+  list-style: disc;
+}
+.blog-content ol {
+  list-style: decimal;
+}
+.blog-content li + li {
+  margin-top: 0.4em;
+}
+.blog-content img {
+  border-radius: 16px;
+  max-width: 100%;
+  height: auto;
+}
+.blog-content blockquote {
+  border-left: 3px solid var(--color-terracotta);
+  padding-left: 1.1em;
+  font-style: italic;
+  color: var(--color-warm-gray);
+}
+.blog-content code {
+  background: var(--color-sand);
+  padding: 0.15em 0.4em;
+  border-radius: 6px;
+  font-size: 0.9em;
+}
+.blog-content strong {
+  color: var(--color-charcoal);
+  font-weight: 600;
+}
+
 /* Grainy paper texture overlay for warmth */
 body::before {
   content: "";
