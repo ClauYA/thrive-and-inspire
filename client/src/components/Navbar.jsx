@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext";
 
 const links = [
@@ -43,6 +44,14 @@ export default function Navbar() {
           </li>
         ))}
         <li>
+          <Link
+            to="/blog"
+            className="text-sm font-medium text-warm-gray tracking-wide hover:text-forest transition-colors"
+          >
+            {t.nav.blog}
+          </Link>
+        </li>
+        <li>
           <a
             href="#apply"
             className="bg-terracotta text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-terracotta-dark hover:-translate-y-0.5 transition-all"
@@ -82,6 +91,13 @@ export default function Navbar() {
               {t.nav[l.key]}
             </a>
           ))}
+          <Link
+            to="/blog"
+            onClick={() => setMenuOpen(false)}
+            className="text-sm font-medium text-warm-gray py-1"
+          >
+            {t.nav.blog}
+          </Link>
           <a
             href="#apply"
             onClick={() => setMenuOpen(false)}
