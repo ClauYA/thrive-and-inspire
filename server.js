@@ -51,6 +51,43 @@ if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
 // Where applications are emailed (falls back to the sending account).
 const APPLY_TO = process.env.APPLY_TO || mailFrom;
 
+// Booking link sent to applicants in the auto-reply (override via env var).
+const CALENDLY_URL = process.env.CALENDLY_URL || "https://calendly.com/cyabittner/30min";
+
+// Builds the friendly auto-reply we send to an applicant, in their language,
+// inviting them to book the discovery call via Calendly.
+function applicantAutoReply(firstName, lang) {
+  const es = lang !== "en";
+  const subject = es
+    ? `¡Gracias por aplicar, ${firstName}! Agenda tu llamada 🌿`
+    : `Thanks for applying, ${firstName}! Let's book your call 🌿`;
+  const intro = es
+    ? `¡Hola ${firstName}! Gracias por dar el primer paso. Recibí tu aplicación y me encantaría conocerte.`
+    : `Hi ${firstName}! Thank you for taking the first step. I received your application and I'd love to get to know you.`;
+  const cta = es
+    ? "El siguiente paso es agendar tu llamada de descubrimiento (gratis, sin compromiso). Elige el horario que mejor te quede aquí:"
+    : "The next step is to book your free, no-pressure discovery call. Pick the time that works best for you here:";
+  const button = es ? "Agendar mi llamada →" : "Book my call →";
+  const closing = es
+    ? "Nos vemos pronto. ¡Estoy muy emocionada de acompañarte!"
+    : "Talk soon — I'm so excited to support you!";
+  const signature = es ? "Con cariño,<br>Claudia · Lift & Inspire" : "Warmly,<br>Claudia · Lift & Inspire";
+
+  const text = `${intro}\n\n${cta}\n${CALENDLY_URL}\n\n${closing}\n\n${es ? "Con cariño, Claudia · Lift & Inspire" : "Warmly, Claudia · Lift & Inspire"}`;
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:540px;margin:0 auto;color:#2c2c2a;line-height:1.6">
+      <h2 style="color:#b07d1f;margin:0 0 16px">${es ? "¡Gracias por aplicar!" : "Thanks for applying!"}</h2>
+      <p style="margin:0 0 16px">${intro}</p>
+      <p style="margin:0 0 20px">${cta}</p>
+      <p style="margin:0 0 28px">
+        <a href="${CALENDLY_URL}" style="background:#b07d1f;color:#fff;text-decoration:none;font-weight:bold;padding:14px 28px;border-radius:999px;display:inline-block">${button}</a>
+      </p>
+      <p style="margin:0 0 16px">${closing}</p>
+      <p style="margin:0;color:#6b6560">${signature}</p>
+    </div>`;
+  return { subject, text, html };
+}
+
 // Where applications are appended when email isn't configured.
 const SUBMISSIONS_FILE = path.join(__dirname, "submissions.jsonl");
 
@@ -60,7 +97,7 @@ function isValidEmail(email) {
 
 // ── Application endpoint ──
 app.post("/api/apply", async (req, res) => {
-  const { firstName, lastName, email, goal, obstacles, findUs } = req.body || {};
+  const { firstName, lastName, email, goal, obstacles, findUs, lang } = req.body || {};
 
   if (!firstName || !String(firstName).trim() || !isValidEmail(email)) {
     return res.status(400).json({ ok: false, error: "Name and a valid email are required." });
@@ -132,6 +169,22 @@ app.post("/api/apply", async (req, res) => {
     } catch (err) {
       console.error("Failed to send email:", err);
       // Submission is already saved, so still report success to the user.
+    }
+
+    // Auto-reply to the applicant with the Calendly booking link.
+    try {
+      const reply = applicantAutoReply(submission.firstName, lang);
+      await transporter.sendMail({
+        from: `"Lift & Inspire" <${mailFrom}>`,
+        to: submission.email,
+        replyTo: APPLY_TO, // replies from the applicant reach the coach
+        subject: reply.subject,
+        text: reply.text,
+        html: reply.html,
+      });
+      console.log("✉️  Auto-reply (Calendly) sent to:", submission.email);
+    } catch (err) {
+      console.error("Failed to send auto-reply:", err);
     }
   } else {
     console.log("📥 New application stored:", submission.email);
