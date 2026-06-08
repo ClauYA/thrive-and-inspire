@@ -12,6 +12,7 @@ import FinalCta from "./components/FinalCta";
 import Footer from "./components/Footer";
 import ReadyPage from "./components/ReadyPage";
 import GuidePopup from "./components/GuidePopup";
+import BackToTop from "./components/BackToTop";
 import Blog from "./components/Blog";
 import BlogPost from "./components/BlogPost";
 import AdminLogin from "./components/admin/AdminLogin";
@@ -24,8 +25,8 @@ function Landing() {
       <Navbar />
       <main>
         <Hero />
-        <Benefits />
         <Struggles />
+        <Benefits />
         <Story />
         <Testimonials />
         <ApplyForm />
@@ -33,6 +34,7 @@ function Landing() {
         <FinalCta />
       </main>
       <Footer />
+      <BackToTop />
     </div>
   );
 }
