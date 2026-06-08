@@ -94,16 +94,16 @@ export default function Benefits() {
             <p className="text-[1rem] text-warm-gray leading-[1.75] font-light">{h.sub}</p>
           </Reveal>
 
-          <div className="grid md:grid-cols-3 gap-5 max-w-[960px] mx-auto">
+          <div className="grid sm:grid-cols-3 gap-4 max-w-[800px] mx-auto">
             {h.steps.map((step, i) => (
               <Reveal key={i} delay={i * 0.1} className="h-full">
-                <div className="h-full flex flex-col bg-white rounded-2xl border border-sand p-7 shadow-[0_8px_24px_rgba(44,44,42,0.05)]">
-                  <div className="font-display text-[3rem] font-semibold text-terracotta/25 leading-none mb-4">
+                <div className="h-full flex flex-col bg-white rounded-2xl border border-sand p-5 shadow-[0_8px_24px_rgba(44,44,42,0.05)]">
+                  <div className="font-display text-[2rem] font-semibold text-terracotta/25 leading-none mb-2.5">
                     {step.num}
                   </div>
-                  <h4 className="font-display text-[1.3rem] font-semibold text-charcoal mb-2.5">{step.h}</h4>
-                  <p className="text-[0.88rem] text-warm-gray leading-[1.7]">{step.p}</p>
-                  <span className="inline-block self-start mt-4 text-[0.72rem] font-semibold tracking-wide text-forest bg-sage-light/50 px-3.5 py-1.5 rounded-full">
+                  <h4 className="font-display text-[1.05rem] font-semibold text-charcoal mb-1.5">{step.h}</h4>
+                  <p className="text-[0.8rem] text-warm-gray leading-[1.6]">{step.p}</p>
+                  <span className="inline-block self-start mt-3 text-[0.68rem] font-semibold tracking-wide text-forest bg-sage-light/50 px-3 py-1 rounded-full">
                     {step.badge}
                   </span>
                 </div>
