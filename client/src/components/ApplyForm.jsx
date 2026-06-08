@@ -57,10 +57,16 @@ export default function ApplyForm() {
   return (
     <section
       id="apply"
-      className="relative"
+      className="relative overflow-hidden"
       style={{ background: "linear-gradient(165deg, var(--color-cream) 0%, var(--color-sand) 100%)" }}
     >
-      <div className="max-w-[1100px] mx-auto px-[5%] py-24 grid lg:grid-cols-[1fr_1.1fr] gap-12 lg:gap-20 items-start">
+      {/* Background photo with a light overlay so the copy and form stay readable */}
+      <div className="absolute inset-0 z-0">
+        <img src="/images/claudia.png" alt="" className="w-full h-full object-cover object-center" />
+        <div className="absolute inset-0 bg-gradient-to-br from-cream/95 via-cream/88 to-cream/70" />
+      </div>
+
+      <div className="relative z-10 max-w-[1100px] mx-auto px-[5%] py-24 grid lg:grid-cols-[1fr_1.1fr] gap-12 lg:gap-20 items-start">
         <Reveal>
           <div className="text-[0.75rem] font-semibold tracking-[0.14em] uppercase text-terracotta mb-4">
             {a.label}
