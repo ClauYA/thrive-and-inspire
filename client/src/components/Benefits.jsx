@@ -106,14 +106,6 @@ export default function Benefits() {
                   <span className="inline-block self-start mt-4 text-[0.72rem] font-semibold tracking-wide text-forest bg-sage-light/50 px-3.5 py-1.5 rounded-full">
                     {step.badge}
                   </span>
-                  {step.link && (
-                    <Link
-                      to="/ready"
-                      className="inline-flex items-center gap-2 mt-5 self-start bg-terracotta text-white text-[0.82rem] font-semibold px-5 py-2.5 rounded-full shadow-[0_8px_24px_rgba(176,125,31,0.3)] hover:bg-terracotta-dark hover:-translate-y-0.5 transition-all"
-                    >
-                      {step.link} →
-                    </Link>
-                  )}
                 </div>
               </Reveal>
             ))}
