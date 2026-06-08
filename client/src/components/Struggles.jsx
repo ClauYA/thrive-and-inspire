@@ -8,18 +8,18 @@ export default function Struggles() {
 
   return (
     <section id="struggles" className="relative bg-charcoal text-white">
-      <div className="max-w-[1100px] mx-auto px-[5%] py-24 grid lg:grid-cols-[1fr_1.2fr] gap-12 lg:gap-20 items-center">
-        <Reveal>
+      <div className="max-w-[1100px] mx-auto px-[5%] py-24">
+        <Reveal className="text-center max-w-[640px] mx-auto mb-14">
           <div className="text-[0.75rem] font-semibold tracking-[0.14em] uppercase text-sage-light mb-4">
             {s.label}
           </div>
           <h2 className="font-display text-[clamp(2rem,4vw,3rem)] font-semibold leading-[1.15] tracking-tight mb-5">
             {s.title}
           </h2>
-          <p className="text-[1.05rem] text-white/60 max-w-[560px] leading-[1.75] font-light">{s.sub}</p>
+          <p className="text-[1.05rem] text-white/60 leading-[1.75] font-light">{s.sub}</p>
         </Reveal>
 
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {s.items.map((item, i) => (
             <motion.div
               key={i}
