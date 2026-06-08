@@ -6,8 +6,9 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 import { marked } from "marked";
-import { dbEnabled, query } from "./db.js";
+import { dbEnabled, query, pool } from "./db.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -542,6 +543,176 @@ app.delete("/api/admin/posts/:id", requireAuth, async (req, res) => {
   } catch (err) {
     console.error("Delete post failed:", err);
     res.status(500).json({ ok: false, error: "Could not delete the post." });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────
+// Workout tracker — member accounts + workout logging
+// ─────────────────────────────────────────────────────────────
+const userAuthEnabled = Boolean(JWT_SECRET && dbEnabled);
+
+function isStrongEnough(pw) {
+  return typeof pw === "string" && pw.length >= 6;
+}
+
+// Verify a member (user) bearer token.
+function requireUser(req, res, next) {
+  if (!userAuthEnabled) {
+    return res.status(503).json({ ok: false, error: "The workout tracker is not configured on the server." });
+  }
+  const header = req.headers.authorization || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : null;
+  if (!token) return res.status(401).json({ ok: false, error: "Not authenticated." });
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    if (payload.role !== "user") throw new Error("wrong role");
+    req.user = payload;
+    next();
+  } catch {
+    return res.status(401).json({ ok: false, error: "Session expired. Please log in again." });
+  }
+}
+
+function signUserToken(user) {
+  return jwt.sign({ sub: user.id, role: "user", name: user.name, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
+}
+
+// ── Sign up ──
+app.post("/api/auth/signup", async (req, res) => {
+  if (!userAuthEnabled) return res.status(503).json({ ok: false, error: "The workout tracker is not configured on the server." });
+  const { name, email, password } = req.body || {};
+  if (!name || !String(name).trim()) return res.status(400).json({ ok: false, error: "Please enter your name." });
+  if (!isValidEmail(email)) return res.status(400).json({ ok: false, error: "Please enter a valid email." });
+  if (!isStrongEnough(password)) return res.status(400).json({ ok: false, error: "Password must be at least 6 characters." });
+  try {
+    const exists = await query(`select 1 from users where email = $1`, [String(email).trim().toLowerCase()]);
+    if (exists.rows[0]) return res.status(409).json({ ok: false, error: "An account with this email already exists." });
+    const hash = await bcrypt.hash(password, 10);
+    const { rows } = await query(
+      `insert into users (name, email, password_hash) values ($1, $2, $3) returning id, name, email`,
+      [String(name).trim(), String(email).trim().toLowerCase(), hash]
+    );
+    const user = rows[0];
+    res.json({ ok: true, token: signUserToken(user), user: { id: user.id, name: user.name, email: user.email } });
+  } catch (err) {
+    console.error("Signup failed:", err);
+    res.status(500).json({ ok: false, error: "Could not create your account." });
+  }
+});
+
+// ── Log in ──
+app.post("/api/auth/login", async (req, res) => {
+  if (!userAuthEnabled) return res.status(503).json({ ok: false, error: "The workout tracker is not configured on the server." });
+  const { email, password } = req.body || {};
+  if (!isValidEmail(email) || !password) return res.status(400).json({ ok: false, error: "Email and password are required." });
+  try {
+    const { rows } = await query(`select * from users where email = $1`, [String(email).trim().toLowerCase()]);
+    const user = rows[0];
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+      return res.status(401).json({ ok: false, error: "Incorrect email or password." });
+    }
+    res.json({ ok: true, token: signUserToken(user), user: { id: user.id, name: user.name, email: user.email } });
+  } catch (err) {
+    console.error("Login failed:", err);
+    res.status(500).json({ ok: false, error: "Could not log you in." });
+  }
+});
+
+// ── Exercise library ──
+app.get("/api/exercises", requireUser, async (req, res) => {
+  try {
+    const { rows } = await query(`select id, name, muscle_group, equipment, media_url, instructions from exercises order by name`);
+    res.json({ ok: true, exercises: rows });
+  } catch (err) {
+    console.error("Fetch exercises failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load exercises." });
+  }
+});
+
+// ── Create a workout (with its sets) ──
+app.post("/api/workouts", requireUser, async (req, res) => {
+  const { title, performedAt, notes, sets } = req.body || {};
+  if (!Array.isArray(sets) || sets.length === 0) {
+    return res.status(400).json({ ok: false, error: "Add at least one set before saving." });
+  }
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    const w = await client.query(
+      `insert into workouts (user_id, title, performed_at, notes)
+       values ($1, $2, coalesce($3, now()), $4) returning *`,
+      [req.user.sub, String(title || "Workout").trim(), performedAt || null, String(notes || "").trim()]
+    );
+    const workout = w.rows[0];
+    for (const s of sets) {
+      await client.query(
+        `insert into workout_sets (workout_id, exercise_id, exercise_name, set_number, weight, reps, rir, rpe)
+         values ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [
+          workout.id,
+          s.exerciseId || null,
+          String(s.exerciseName || "Exercise"),
+          Number(s.setNumber) || 1,
+          s.weight === "" || s.weight == null ? 0 : Number(s.weight),
+          s.reps === "" || s.reps == null ? 0 : Number(s.reps),
+          s.rir === "" || s.rir == null ? null : Number(s.rir),
+          s.rpe === "" || s.rpe == null ? null : Number(s.rpe),
+        ]
+      );
+    }
+    await client.query("commit");
+    res.json({ ok: true, workout });
+  } catch (err) {
+    await client.query("rollback");
+    console.error("Create workout failed:", err);
+    res.status(500).json({ ok: false, error: "Could not save the workout." });
+  } finally {
+    client.release();
+  }
+});
+
+// ── List the user's workouts (with a short summary) ──
+app.get("/api/workouts", requireUser, async (req, res) => {
+  try {
+    const { rows } = await query(
+      `select w.id, w.title, w.performed_at, w.notes,
+              count(s.id)::int as set_count,
+              count(distinct s.exercise_name)::int as exercise_count
+       from workouts w
+       left join workout_sets s on s.workout_id = w.id
+       where w.user_id = $1
+       group by w.id
+       order by w.performed_at desc`,
+      [req.user.sub]
+    );
+    res.json({ ok: true, workouts: rows });
+  } catch (err) {
+    console.error("List workouts failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load your workouts." });
+  }
+});
+
+// ── Single workout with its sets ──
+app.get("/api/workouts/:id", requireUser, async (req, res) => {
+  try {
+    const w = await query(`select * from workouts where id = $1 and user_id = $2`, [req.params.id, req.user.sub]);
+    if (!w.rows[0]) return res.status(404).json({ ok: false, error: "Workout not found." });
+    const s = await query(`select * from workout_sets where workout_id = $1 order by set_number`, [req.params.id]);
+    res.json({ ok: true, workout: w.rows[0], sets: s.rows });
+  } catch (err) {
+    console.error("Fetch workout failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load the workout." });
+  }
+});
+
+// ── Delete a workout ──
+app.delete("/api/workouts/:id", requireUser, async (req, res) => {
+  try {
+    await query(`delete from workouts where id = $1 and user_id = $2`, [req.params.id, req.user.sub]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Delete workout failed:", err);
+    res.status(500).json({ ok: false, error: "Could not delete the workout." });
   }
 });
 
