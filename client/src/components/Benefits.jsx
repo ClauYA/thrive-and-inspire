@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import Reveal from "./Reveal";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -64,8 +65,8 @@ export default function Benefits() {
                   ))}
                 </ul>
 
-                <a
-                  href="#apply"
+                <Link
+                  to="/ready"
                   className={`mt-auto text-center py-3.5 rounded-full text-[0.95rem] font-semibold transition-all ${
                     p.featured
                       ? "bg-terracotta text-white hover:bg-terracotta-dark hover:-translate-y-0.5 shadow-[0_8px_24px_rgba(176,125,31,0.3)]"
@@ -73,7 +74,7 @@ export default function Benefits() {
                   }`}
                 >
                   {b.cta}
-                </a>
+                </Link>
               </div>
             </Reveal>
           ))}
