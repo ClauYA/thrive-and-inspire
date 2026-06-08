@@ -5,6 +5,7 @@ import { useLanguage } from "../i18n/LanguageContext";
 export default function Benefits() {
   const { t } = useLanguage();
   const b = t.benefits;
+  const h = t.how;
 
   return (
     <section
@@ -78,6 +79,45 @@ export default function Benefits() {
               </div>
             </Reveal>
           ))}
+        </div>
+
+        {/* The Process — what's actually included (more than just diet & food) */}
+        <div id="how" className="mt-24 scroll-mt-24">
+          <Reveal className="text-center mb-12 max-w-[640px] mx-auto">
+            <div className="text-[0.75rem] font-semibold tracking-[0.14em] uppercase text-terracotta mb-4">
+              {h.label}
+            </div>
+            <h3 className="font-display text-[clamp(1.7rem,3.2vw,2.5rem)] font-semibold leading-[1.15] tracking-tight text-charcoal mb-4">
+              {h.title1}
+              <em className="italic text-terracotta">{h.titleEm}</em>
+            </h3>
+            <p className="text-[1rem] text-warm-gray leading-[1.75] font-light">{h.sub}</p>
+          </Reveal>
+
+          <div className="grid md:grid-cols-3 gap-5 max-w-[960px] mx-auto">
+            {h.steps.map((step, i) => (
+              <Reveal key={i} delay={i * 0.1} className="h-full">
+                <div className="h-full flex flex-col bg-white rounded-2xl border border-sand p-7 shadow-[0_8px_24px_rgba(44,44,42,0.05)]">
+                  <div className="font-display text-[3rem] font-semibold text-terracotta/25 leading-none mb-4">
+                    {step.num}
+                  </div>
+                  <h4 className="font-display text-[1.3rem] font-semibold text-charcoal mb-2.5">{step.h}</h4>
+                  <p className="text-[0.88rem] text-warm-gray leading-[1.7]">{step.p}</p>
+                  <span className="inline-block self-start mt-4 text-[0.72rem] font-semibold tracking-wide text-forest bg-sage-light/50 px-3.5 py-1.5 rounded-full">
+                    {step.badge}
+                  </span>
+                  {step.link && (
+                    <Link
+                      to="/ready"
+                      className="inline-flex items-center gap-2 mt-5 self-start bg-terracotta text-white text-[0.82rem] font-semibold px-5 py-2.5 rounded-full shadow-[0_8px_24px_rgba(176,125,31,0.3)] hover:bg-terracotta-dark hover:-translate-y-0.5 transition-all"
+                    >
+                      {step.link} →
+                    </Link>
+                  )}
+                </div>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </div>
     </section>

@@ -4,7 +4,6 @@ import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import Struggles from "./components/Struggles";
 import Story from "./components/Story";
-import HowItWorks from "./components/HowItWorks";
 import Benefits from "./components/Benefits";
 import Testimonials from "./components/Testimonials";
 import ApplyForm from "./components/ApplyForm";
@@ -28,7 +27,6 @@ function Landing() {
         <Benefits />
         <Struggles />
         <Story />
-        <HowItWorks />
         <Testimonials />
         <ApplyForm />
         <Faq />
