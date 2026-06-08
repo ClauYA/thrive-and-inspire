@@ -39,7 +39,7 @@ export default function Hero() {
       {/* Background photo of Claudia with a light overlay so the copy stays readable */}
       <div className="absolute inset-0 z-0">
         <img
-          src="/images/ClaudiaFt.png"
+          src="/images/claudia.png"
           alt=""
           className="w-full h-full object-cover object-[center_top] lg:object-[right_center]"
         />
