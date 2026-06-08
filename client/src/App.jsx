@@ -17,6 +17,10 @@ import Blog from "./components/Blog";
 import BlogPost from "./components/BlogPost";
 import AdminLogin from "./components/admin/AdminLogin";
 import AdminDashboard from "./components/admin/AdminDashboard";
+import Signup from "./components/members/Signup";
+import Login from "./components/members/Login";
+import MemberDashboard from "./components/members/Dashboard";
+import WorkoutLogger from "./components/members/WorkoutLogger";
 
 function Landing() {
   return (
@@ -49,6 +53,10 @@ export default function App() {
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/app" element={<MemberDashboard />} />
+        <Route path="/app/new" element={<WorkoutLogger />} />
       </Routes>
     </LanguageProvider>
   );

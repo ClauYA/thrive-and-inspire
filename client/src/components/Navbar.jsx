@@ -52,6 +52,14 @@ export default function Navbar() {
           </Link>
         </li>
         <li>
+          <Link
+            to="/app"
+            className="text-sm font-medium text-warm-gray tracking-wide hover:text-forest transition-colors"
+          >
+            {t.nav.train}
+          </Link>
+        </li>
+        <li>
           <a
             href="#apply"
             className="bg-terracotta text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-terracotta-dark hover:-translate-y-0.5 transition-all"
@@ -97,6 +105,13 @@ export default function Navbar() {
             className="text-sm font-medium text-warm-gray py-1"
           >
             {t.nav.blog}
+          </Link>
+          <Link
+            to="/app"
+            onClick={() => setMenuOpen(false)}
+            className="text-sm font-medium text-warm-gray py-1"
+          >
+            {t.nav.train}
           </Link>
           <a
             href="#apply"
