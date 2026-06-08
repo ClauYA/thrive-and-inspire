@@ -36,14 +36,15 @@ export default function Hero() {
       id="hero"
       className="relative min-h-screen grid lg:grid-cols-2 items-center gap-16 px-[5%] pt-32 pb-20 overflow-hidden"
     >
-      <div
-        className="hidden lg:block absolute right-[-10%] top-[-5%] w-[55%] h-[110%] z-0 opacity-60"
-        style={{
-          background:
-            "radial-gradient(ellipse at 60% 40%, var(--color-sage-light) 0%, var(--color-sand) 50%, transparent 75%)",
-          animation: "morphBlob 12s ease-in-out infinite alternate",
-        }}
-      />
+      {/* Background photo of Claudia with a light overlay so the copy stays readable */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/images/ClaudiaFt.png"
+          alt=""
+          className="w-full h-full object-cover object-[center_top] lg:object-[right_center]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-cream/95 via-cream/85 to-cream/55" />
+      </div>
 
       <motion.div
         className="relative z-10"

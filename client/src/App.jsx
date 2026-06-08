@@ -25,10 +25,10 @@ function Landing() {
       <Navbar />
       <main>
         <Hero />
+        <Benefits />
         <Struggles />
         <Story />
         <HowItWorks />
-        <Benefits />
         <Testimonials />
         <ApplyForm />
         <Faq />
