@@ -629,6 +629,30 @@ app.get("/api/exercises", requireUser, async (req, res) => {
   }
 });
 
+// ── Last performance for an exercise (for the "last time" + suggestion) ──
+app.get("/api/last-performance/:exerciseId", requireUser, async (req, res) => {
+  try {
+    const { rows } = await query(
+      `select s.weight, s.reps, s.rir, s.set_number, w.performed_at
+       from workout_sets s
+       join workouts w on w.id = s.workout_id
+       where w.user_id = $1 and s.exercise_id = $2
+         and w.id = (
+           select w2.id from workouts w2
+           join workout_sets s2 on s2.workout_id = w2.id
+           where w2.user_id = $1 and s2.exercise_id = $2
+           order by w2.performed_at desc limit 1
+         )
+       order by s.set_number`,
+      [req.user.sub, req.params.exerciseId]
+    );
+    res.json({ ok: true, sets: rows, performedAt: rows[0]?.performed_at || null });
+  } catch (err) {
+    console.error("Last performance failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load history." });
+  }
+});
+
 // ── Create a workout (with its sets) ──
 app.post("/api/workouts", requireUser, async (req, res) => {
   const { title, performedAt, notes, sets } = req.body || {};

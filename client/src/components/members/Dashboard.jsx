@@ -130,8 +130,7 @@ export default function Dashboard() {
                                 <th className="font-medium py-1 pr-3">{tr.set}</th>
                                 <th className="font-medium py-1 pr-3">{tr.weight}</th>
                                 <th className="font-medium py-1 pr-3">{tr.reps}</th>
-                                <th className="font-medium py-1 pr-3">{tr.rir}</th>
-                                <th className="font-medium py-1">{tr.rpe}</th>
+                                <th className="font-medium py-1">{tr.rir}</th>
                               </tr>
                             </thead>
                             <tbody className="text-charcoal">
@@ -140,8 +139,7 @@ export default function Dashboard() {
                                   <td className="py-1.5 pr-3">{s.set_number}</td>
                                   <td className="py-1.5 pr-3">{s.weight}</td>
                                   <td className="py-1.5 pr-3">{s.reps}</td>
-                                  <td className="py-1.5 pr-3">{s.rir ?? "—"}</td>
-                                  <td className="py-1.5">{s.rpe ?? "—"}</td>
+                                  <td className="py-1.5">{s.rir ?? "—"}</td>
                                 </tr>
                               ))}
                             </tbody>
