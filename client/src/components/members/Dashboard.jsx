@@ -5,6 +5,7 @@ import { userApi, getUserToken } from "../../lib/userApi";
 import { formatDate } from "../../lib/format";
 import MemberHeader from "./MemberHeader";
 import Calendar from "./Calendar";
+import WeekStrip from "./WeekStrip";
 
 function groupByExercise(sets) {
   const groups = [];
@@ -26,6 +27,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [workouts, setWorkouts] = useState(null);
   const [routine, setRoutine] = useState(undefined); // undefined = loading
+  const [exMap, setExMap] = useState({});
   const [expanded, setExpanded] = useState(null);
   const [detail, setDetail] = useState({});
   const [view, setView] = useState("list");
@@ -33,9 +35,12 @@ export default function Dashboard() {
 
   const load = useCallback(async () => {
     try {
-      const [w, r] = await Promise.all([userApi("/api/workouts"), userApi("/api/routine")]);
+      const [w, r, ex] = await Promise.all([userApi("/api/workouts"), userApi("/api/routine"), userApi("/api/exercises")]);
       setWorkouts(w.workouts);
       setRoutine(r.routine);
+      const map = {};
+      ex.exercises.forEach((e) => (map[e.id] = e.name));
+      setExMap(map);
     } catch (e) {
       if (e.unauthorized) return navigate("/login");
       setError(e.message);
@@ -128,6 +133,11 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+        )}
+
+        {/* This week strip */}
+        {workouts !== null && routine && routine.days.length > 0 && (
+          <WeekStrip workouts={workouts} routine={routine} exMap={exMap} onPick={pickFromCalendar} />
         )}
 
         {/* Toolbar: new workout + view toggle */}
