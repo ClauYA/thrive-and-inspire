@@ -1,12 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "../../i18n/LanguageContext";
-import { getUser, clearSession } from "../../lib/userApi";
+import { clearSession } from "../../lib/userApi";
 
 export default function MemberHeader() {
   const { t } = useLanguage();
   const tr = t.tracker;
   const navigate = useNavigate();
-  const user = getUser();
 
   const logout = () => {
     clearSession();
@@ -19,9 +18,11 @@ export default function MemberHeader() {
         Lift<span className="text-terracotta">&amp;</span>Inspire
       </Link>
       <div className="flex items-center gap-4">
-        {user && <span className="hidden sm:inline text-[0.85rem] text-warm-gray">{user.name}</span>}
-        <Link to="/" className="text-[0.85rem] font-medium text-warm-gray hover:text-forest transition-colors">
-          {tr.site}
+        <Link to="/app" className="text-[0.85rem] font-medium text-warm-gray hover:text-forest transition-colors">
+          {tr.appTitle}
+        </Link>
+        <Link to="/app/progress" className="text-[0.85rem] font-medium text-warm-gray hover:text-forest transition-colors">
+          {tr.progress}
         </Link>
         <button onClick={logout} className="text-[0.85rem] font-semibold text-terracotta hover:text-terracotta-dark transition-colors">
           {tr.logout}

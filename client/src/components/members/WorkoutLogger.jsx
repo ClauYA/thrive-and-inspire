@@ -312,7 +312,7 @@ export default function WorkoutLogger() {
                         <input type="number" inputMode="numeric" value={s.reps} onChange={updateSet(blk.uid, si, "reps")} className={inputClass} />
                         <select value={s.rir} onChange={updateSet(blk.uid, si, "rir")} className={`${inputClass} cursor-pointer`}>
                           <option value="">–</option>
-                          <option value="0">0</option>
+                          <option value="0">{`0 · ${tr.failure}`}</option>
                           <option value="1">1</option>
                           <option value="2">2</option>
                           <option value="3">3</option>

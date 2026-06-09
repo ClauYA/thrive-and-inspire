@@ -814,6 +814,47 @@ app.post("/api/routine/advance", requireUser, async (req, res) => {
   }
 });
 
+// ── Progress data for an exercise (for charts) ──
+app.get("/api/progress/:exerciseId", requireUser, async (req, res) => {
+  try {
+    const { rows } = await query(
+      `select to_char(w.performed_at, 'YYYY-MM-DD') as date,
+              max(s.weight)::float as top_weight,
+              max(s.weight * (1 + s.reps / 30.0))::float as est_1rm,
+              sum(s.weight * s.reps)::float as volume
+       from workouts w
+       join workout_sets s on s.workout_id = w.id
+       where w.user_id = $1 and s.exercise_id = $2
+       group by w.performed_at::date, to_char(w.performed_at, 'YYYY-MM-DD')
+       order by w.performed_at::date`,
+      [req.user.sub, req.params.exerciseId]
+    );
+    res.json({ ok: true, points: rows });
+  } catch (err) {
+    console.error("Progress failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load progress." });
+  }
+});
+
+// ── Flat export of all the user's sets (for Excel) ──
+app.get("/api/export", requireUser, async (req, res) => {
+  try {
+    const { rows } = await query(
+      `select to_char(w.performed_at, 'YYYY-MM-DD') as date, w.title,
+              s.exercise_name, s.set_number, s.weight, s.reps, s.rir
+       from workouts w
+       join workout_sets s on s.workout_id = w.id
+       where w.user_id = $1
+       order by w.performed_at desc, s.exercise_name, s.set_number`,
+      [req.user.sub]
+    );
+    res.json({ ok: true, rows });
+  } catch (err) {
+    console.error("Export failed:", err);
+    res.status(500).json({ ok: false, error: "Could not export your data." });
+  }
+});
+
 // ── Serve the built React client ──
 const CLIENT_DIST = path.join(__dirname, "client", "dist");
 if (fs.existsSync(CLIENT_DIST)) {
