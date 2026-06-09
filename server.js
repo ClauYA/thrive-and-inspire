@@ -740,6 +740,80 @@ app.delete("/api/workouts/:id", requireUser, async (req, res) => {
   }
 });
 
+// ── Get the user's routine (A/B/C rotation) ──
+app.get("/api/routine", requireUser, async (req, res) => {
+  try {
+    const r = await query(`select * from routines where user_id = $1`, [req.user.sub]);
+    if (!r.rows[0]) return res.json({ ok: true, routine: null });
+    const routine = r.rows[0];
+    const d = await query(`select position, name, exercise_ids from routine_days where routine_id = $1 order by position`, [routine.id]);
+    res.json({
+      ok: true,
+      routine: {
+        name: routine.name,
+        nextIndex: routine.next_index,
+        days: d.rows.map((x) => ({ position: x.position, name: x.name, exerciseIds: x.exercise_ids || [] })),
+      },
+    });
+  } catch (err) {
+    console.error("Get routine failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load your routine." });
+  }
+});
+
+// ── Create / replace the user's routine ──
+app.put("/api/routine", requireUser, async (req, res) => {
+  const { name, days } = req.body || {};
+  if (!Array.isArray(days)) return res.status(400).json({ ok: false, error: "Days are required." });
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    const existing = await client.query(`select id, next_index from routines where user_id = $1`, [req.user.sub]);
+    let routineId;
+    if (existing.rows[0]) {
+      routineId = existing.rows[0].id;
+      const clamp = days.length > 0 ? existing.rows[0].next_index % days.length : 0;
+      await client.query(`update routines set name = $2, next_index = $3 where id = $1`, [routineId, String(name || "My Routine").trim(), clamp]);
+      await client.query(`delete from routine_days where routine_id = $1`, [routineId]);
+    } else {
+      const ins = await client.query(`insert into routines (user_id, name) values ($1, $2) returning id`, [req.user.sub, String(name || "My Routine").trim()]);
+      routineId = ins.rows[0].id;
+    }
+    for (let i = 0; i < days.length; i++) {
+      const day = days[i];
+      const ids = Array.isArray(day.exerciseIds) ? day.exerciseIds.filter(Boolean) : [];
+      await client.query(
+        `insert into routine_days (routine_id, position, name, exercise_ids) values ($1, $2, $3, $4)`,
+        [routineId, i, String(day.name || `Day ${i + 1}`).trim(), ids]
+      );
+    }
+    await client.query("commit");
+    res.json({ ok: true });
+  } catch (err) {
+    await client.query("rollback");
+    console.error("Save routine failed:", err);
+    res.status(500).json({ ok: false, error: "Could not save your routine." });
+  } finally {
+    client.release();
+  }
+});
+
+// ── Advance the rotation pointer (after completing a routine day) ──
+app.post("/api/routine/advance", requireUser, async (req, res) => {
+  try {
+    const r = await query(`select r.id, r.next_index, count(d.id)::int as day_count
+                           from routines r left join routine_days d on d.routine_id = r.id
+                           where r.user_id = $1 group by r.id`, [req.user.sub]);
+    if (!r.rows[0] || r.rows[0].day_count === 0) return res.json({ ok: true });
+    const { id, next_index, day_count } = r.rows[0];
+    await query(`update routines set next_index = $2 where id = $1`, [id, (next_index + 1) % day_count]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Advance routine failed:", err);
+    res.status(500).json({ ok: false, error: "Could not advance your routine." });
+  }
+});
+
 // ── Serve the built React client ──
 const CLIENT_DIST = path.join(__dirname, "client", "dist");
 if (fs.existsSync(CLIENT_DIST)) {

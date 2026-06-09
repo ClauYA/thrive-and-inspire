@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { userApi, getUserToken } from "../../lib/userApi";
 import { recommendation, toneStyles } from "../../lib/recommend";
@@ -33,6 +33,7 @@ export default function WorkoutLogger() {
   const { t, lang } = useLanguage();
   const tr = t.tracker;
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [exercises, setExercises] = useState([]);
   const [title, setTitle] = useState(tr.defaultTitle);
@@ -40,6 +41,7 @@ export default function WorkoutLogger() {
   const [notes, setNotes] = useState("");
   const [blocks, setBlocks] = useState([]);
   const [started, setStarted] = useState(false);
+  const [fromRoutine, setFromRoutine] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [showRirInfo, setShowRirInfo] = useState(false);
@@ -50,12 +52,40 @@ export default function WorkoutLogger() {
       navigate("/login");
       return;
     }
-    userApi("/api/exercises")
-      .then((d) => setExercises(d.exercises))
-      .catch((e) => {
+    let active = true;
+    (async () => {
+      try {
+        const d = await userApi("/api/exercises");
+        if (!active) return;
+        setExercises(d.exercises);
+
+        // If launched from a routine day (?day=N), prefill its exercises.
+        const dayParam = searchParams.get("day");
+        if (dayParam != null) {
+          const r = await userApi("/api/routine");
+          if (!active) return;
+          const day = r.routine?.days?.[Number(dayParam)];
+          if (day) {
+            setTitle(day.name);
+            setFromRoutine(true);
+            const newBlocks = day.exerciseIds
+              .map((id) => d.exercises.find((ex) => ex.id === id))
+              .filter(Boolean)
+              .map((ex) => makeBlock(ex));
+            setBlocks(newBlocks);
+            setStarted(true);
+            newBlocks.forEach((b) => loadLast(b.uid, b.exerciseId));
+          }
+        }
+      } catch (e) {
         if (e.unauthorized) navigate("/login");
-      });
-  }, [navigate]);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate, searchParams]);
 
   const makeBlock = (ex) => ({
     uid: ++uid.current,
@@ -137,6 +167,13 @@ export default function WorkoutLogger() {
     setError("");
     try {
       await userApi("/api/workouts", "POST", { title, performedAt: date || null, notes, sets: flatSets });
+      if (fromRoutine) {
+        try {
+          await userApi("/api/routine/advance", "POST");
+        } catch {
+          /* non-blocking */
+        }
+      }
       navigate("/app");
     } catch (e) {
       if (e.unauthorized) return navigate("/login");
