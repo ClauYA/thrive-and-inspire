@@ -21,6 +21,7 @@ import Signup from "./components/members/Signup";
 import Login from "./components/members/Login";
 import MemberDashboard from "./components/members/Dashboard";
 import WorkoutLogger from "./components/members/WorkoutLogger";
+import RoutineEditor from "./components/members/RoutineEditor";
 
 function Landing() {
   return (
@@ -57,6 +58,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/app" element={<MemberDashboard />} />
         <Route path="/app/new" element={<WorkoutLogger />} />
+        <Route path="/app/routine" element={<RoutineEditor />} />
       </Routes>
     </LanguageProvider>
   );
