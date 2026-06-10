@@ -20,12 +20,39 @@ const TEMPLATES = {
 };
 
 function ExerciseMedia({ url }) {
+  const { t } = useLanguage();
+  const tr = t.tracker;
+  const [show, setShow] = useState(false);
   if (!url) return null;
   const isVideo = /\.(mp4|webm|mov)$/i.test(url);
-  return isVideo ? (
-    <video src={url} autoPlay loop muted playsInline className="w-full max-h-56 object-contain rounded-xl bg-charcoal/5 mt-3" />
-  ) : (
-    <img src={url} alt="" className="w-full max-h-56 object-contain rounded-xl bg-charcoal/5 mt-3" />
+  const isImage = /\.(gif|png|jpe?g|webp)$/i.test(url);
+  const label = isVideo ? tr.watchVideo : tr.watchDemo;
+
+  return (
+    <div className="mt-3">
+      {isVideo || isImage ? (
+        <>
+          <button
+            type="button"
+            onClick={() => setShow((s) => !s)}
+            className="inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark"
+          >
+            🎬 {show ? tr.hideMedia : label}
+          </button>
+          {show &&
+            (isVideo ? (
+              <video src={url} controls autoPlay loop muted playsInline className="w-full max-h-64 object-contain rounded-xl bg-charcoal/5 mt-2" />
+            ) : (
+              <img src={url} alt="" className="w-full max-h-64 object-contain rounded-xl bg-charcoal/5 mt-2" />
+            ))}
+        </>
+      ) : (
+        // Not a direct media file (e.g. a YouTube link) — open in a new tab.
+        <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark">
+          🎬 {tr.watchVideo} ↗
+        </a>
+      )}
+    </div>
   );
 }
 
