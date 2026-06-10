@@ -53,7 +53,7 @@ export default function Navbar() {
         </li>
         <li>
           <Link
-            to="/app"
+            to="/login"
             className="text-sm font-medium text-warm-gray tracking-wide hover:text-forest transition-colors"
           >
             {t.nav.train}
@@ -107,7 +107,7 @@ export default function Navbar() {
             {t.nav.blog}
           </Link>
           <Link
-            to="/app"
+            to="/login"
             onClick={() => setMenuOpen(false)}
             className="text-sm font-medium text-warm-gray py-1"
           >
