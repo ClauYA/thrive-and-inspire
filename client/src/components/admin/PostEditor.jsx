@@ -17,6 +17,7 @@ export default function PostEditor({ post, onSaved, onCancel, onAuthError }) {
     coverImage: post?.coverImage || "",
     content: post?.content || "",
     author: post?.author || "Claudia Bittner",
+    lang: post?.lang || "es",
     published: post?.published ?? false,
   });
   const [busy, setBusy] = useState(false);
@@ -69,6 +70,14 @@ export default function PostEditor({ post, onSaved, onCancel, onAuthError }) {
             <label className="block text-[0.8rem] font-semibold text-charcoal mb-1.5">{a.fieldAuthor}</label>
             <input type="text" value={form.author} onChange={update("author")} className={inputClass} />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-[0.8rem] font-semibold text-charcoal mb-1.5">{a.fieldLang}</label>
+          <select value={form.lang} onChange={update("lang")} className={`${inputClass} cursor-pointer`}>
+            <option value="es">Español</option>
+            <option value="en">English</option>
+          </select>
         </div>
 
         <div>

@@ -12,6 +12,7 @@ create table if not exists posts (
   cover_image text default '',
   content     text not null default '',          -- Markdown
   author      text default 'Claudia Bittner',
+  lang        text default 'es',                  -- 'es' or 'en'
   published   boolean not null default false,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()

@@ -12,10 +12,11 @@ export default function Blog() {
   const [posts, setPosts] = useState(null); // null = loading
 
   useEffect(() => {
-    apiGet("/api/posts")
+    setPosts(null);
+    apiGet(`/api/posts?lang=${lang}`)
       .then((d) => setPosts(d.posts))
       .catch(() => setPosts([]));
-  }, []);
+  }, [lang]);
 
   return (
     <div className="relative z-[1] min-h-screen flex flex-col bg-cream">
