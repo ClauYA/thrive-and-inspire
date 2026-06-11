@@ -399,6 +399,7 @@ function toPost(row, { withHtml = false } = {}) {
     content: row.content,
     author: row.author,
     published: row.published,
+    lang: row.lang,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -435,13 +436,20 @@ app.post("/api/admin/login", (req, res) => {
   res.json({ ok: true, token });
 });
 
-// ── Public: list published posts ──
+// ── Public: list published posts (filtered by language) ──
 app.get("/api/posts", async (req, res) => {
   if (!dbEnabled) return res.json({ ok: true, posts: [] });
   try {
-    const { rows } = await query(
-      `select * from posts where published = true order by created_at desc`
-    );
+    const lang = req.query.lang;
+    // Posts match the requested language; untagged/legacy posts (null/empty)
+    // show in every language so nothing disappears.
+    const rows = lang
+      ? (await query(
+          `select * from posts where published = true and (lang = $1 or lang is null or lang = '')
+           order by created_at desc`,
+          [lang]
+        )).rows
+      : (await query(`select * from posts where published = true order by created_at desc`)).rows;
     res.json({ ok: true, posts: rows.map((r) => toPost(r)) });
   } catch (err) {
     console.error("Fetch posts failed:", err);
@@ -478,7 +486,7 @@ app.get("/api/admin/posts", requireAuth, async (req, res) => {
 
 // ── Admin: create a post ──
 app.post("/api/admin/posts", requireAuth, async (req, res) => {
-  const { title, excerpt, coverImage, content, author, published } = req.body || {};
+  const { title, excerpt, coverImage, content, author, published, lang } = req.body || {};
   if (!title || !String(title).trim()) {
     return res.status(400).json({ ok: false, error: "A title is required." });
   }
@@ -490,9 +498,9 @@ app.post("/api/admin/posts", requireAuth, async (req, res) => {
     if (existing.rows[0]) slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
 
     const { rows } = await query(
-      `insert into posts (slug, title, excerpt, cover_image, content, author, published)
-       values ($1, $2, $3, $4, $5, $6, $7) returning *`,
-      [slug, String(title).trim(), excerpt || "", coverImage || "", content || "", author || "Claudia Bittner", Boolean(published)]
+      `insert into posts (slug, title, excerpt, cover_image, content, author, published, lang)
+       values ($1, $2, $3, $4, $5, $6, $7, $8) returning *`,
+      [slug, String(title).trim(), excerpt || "", coverImage || "", content || "", author || "Claudia Bittner", Boolean(published), lang === "en" ? "en" : "es"]
     );
     res.json({ ok: true, post: toPost(rows[0]) });
   } catch (err) {
@@ -503,7 +511,7 @@ app.post("/api/admin/posts", requireAuth, async (req, res) => {
 
 // ── Admin: update a post ──
 app.put("/api/admin/posts/:id", requireAuth, async (req, res) => {
-  const { title, excerpt, coverImage, content, author, published, slug } = req.body || {};
+  const { title, excerpt, coverImage, content, author, published, slug, lang } = req.body || {};
   try {
     const { rows } = await query(
       `update posts set
@@ -514,6 +522,7 @@ app.put("/api/admin/posts/:id", requireAuth, async (req, res) => {
          content = coalesce($6, content),
          author = coalesce($7, author),
          published = coalesce($8, published),
+         lang = coalesce($9, lang),
          updated_at = now()
        where id = $1 returning *`,
       [
@@ -525,6 +534,7 @@ app.put("/api/admin/posts/:id", requireAuth, async (req, res) => {
         content,
         author,
         published != null ? Boolean(published) : null,
+        lang != null ? (lang === "en" ? "en" : "es") : null,
       ]
     );
     if (!rows[0]) return res.status(404).json({ ok: false, error: "Post not found." });
