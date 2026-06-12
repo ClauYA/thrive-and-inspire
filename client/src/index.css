@@ -150,6 +150,62 @@ body {
   background: color-mix(in srgb, var(--color-cream) 50%, transparent);
 }
 
+/* Portion-guide food cards (used inside blog post HTML) */
+.blog-content .pg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 16px;
+  margin: 1.5em 0 2em;
+}
+.blog-content .pg-card {
+  border: 1px solid var(--color-sand);
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(44, 44, 42, 0.05);
+}
+.blog-content .pg-card img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 0;
+  margin: 0;
+  display: block;
+}
+.blog-content .pg-body {
+  padding: 13px 15px 15px;
+}
+.blog-content .pg-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.15rem;
+  color: var(--color-charcoal);
+}
+.blog-content .pg-serving {
+  font-size: 0.78rem;
+  color: var(--color-warm-gray);
+  margin: 2px 0 10px;
+}
+.blog-content .pg-chip {
+  display: inline-block;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  margin: 0 5px 5px 0;
+}
+.blog-content .pg-s { background: #f8edda; color: #9a6418; }
+.blog-content .pg-p { background: #f7e3e2; color: #8f2f2c; }
+.blog-content .pg-f { background: #e0efec; color: #2f5d55; }
+.blog-content .pg-variant {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-light-gray);
+  margin: 8px 0 4px;
+}
+
 /* Grainy paper texture overlay for warmth */
 body::before {
   content: "";
