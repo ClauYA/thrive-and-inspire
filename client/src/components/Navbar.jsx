@@ -5,7 +5,6 @@ import { useLanguage } from "../i18n/LanguageContext";
 const links = [
   { href: "#struggles", key: "about" },
   { href: "#how", key: "how" },
-  { href: "#testimonials", key: "stories" },
   { href: "#faq", key: "faq" },
 ];
 

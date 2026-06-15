@@ -95,8 +95,9 @@ export default function Hero() {
                 className="flex-1 flex flex-col"
               >
                 {/* Header */}
-                <div className="flex items-center justify-between gap-3 mb-5">
-                  <div className="font-display text-[1.5rem] font-semibold text-charcoal">{item.name}</div>
+                <div className="flex items-center gap-3 mb-5">
+                  <img src={item.image} alt={item.name} loading="lazy" className="w-12 h-12 rounded-full object-cover ring-2 ring-sage-light shrink-0" />
+                  <div className="font-display text-[1.45rem] font-semibold text-charcoal flex-1 min-w-0">{item.name}</div>
                   <span className="text-[0.78rem] font-semibold text-terracotta bg-terracotta/10 px-3 py-1.5 rounded-full whitespace-nowrap">
                     {item.streak}
                   </span>
