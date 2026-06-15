@@ -5,7 +5,6 @@ import Hero from "./components/Hero";
 import Struggles from "./components/Struggles";
 import Story from "./components/Story";
 import Benefits from "./components/Benefits";
-import Testimonials from "./components/Testimonials";
 import ApplyForm from "./components/ApplyForm";
 import Faq from "./components/Faq";
 import FinalCta from "./components/FinalCta";
@@ -34,7 +33,6 @@ function Landing() {
         <Struggles />
         <Benefits />
         <Story />
-        <Testimonials />
         <ApplyForm />
         <Faq />
         <FinalCta />

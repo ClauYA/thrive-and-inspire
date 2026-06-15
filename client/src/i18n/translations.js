@@ -26,6 +26,7 @@ export const translations = {
       proof: [
         {
           name: "Jessica",
+          image: "https://randomuser.me/api/portraits/women/68.jpg",
           streak: "🔥 28-Day Streak",
           habits: ["Morning Movement", "Protein Goal", "Daily Water Goal", "Evening Walk"],
           weeks: "8 weeks",
@@ -34,6 +35,7 @@ export const translations = {
         },
         {
           name: "Mark",
+          image: "https://randomuser.me/api/portraits/men/32.jpg",
           streak: "🔥 42-Day Streak",
           habits: ["Morning Walk", "Protein Goal", "Strength Training", "Sleep 7h+"],
           weeks: "12 weeks",
@@ -42,6 +44,7 @@ export const translations = {
         },
         {
           name: "Daniela",
+          image: "https://randomuser.me/api/portraits/women/44.jpg",
           streak: "🔥 60-Day Streak",
           habits: ["Daily Steps", "Veggies at Lunch", "Water Goal", "Evening Stretch"],
           weeks: "10 weeks",
@@ -461,6 +464,7 @@ export const translations = {
       proof: [
         {
           name: "Jessica",
+          image: "https://randomuser.me/api/portraits/women/68.jpg",
           streak: "🔥 28 Días Seguidos",
           habits: ["Movimiento Matutino", "Meta de Proteína", "Meta de Agua Diaria", "Caminata Nocturna"],
           weeks: "8 semanas",
@@ -469,6 +473,7 @@ export const translations = {
         },
         {
           name: "Mark",
+          image: "https://randomuser.me/api/portraits/men/32.jpg",
           streak: "🔥 42 Días Seguidos",
           habits: ["Caminata Matutina", "Meta de Proteína", "Entrenamiento de Fuerza", "Dormir 7h+"],
           weeks: "12 semanas",
@@ -477,6 +482,7 @@ export const translations = {
         },
         {
           name: "Daniela",
+          image: "https://randomuser.me/api/portraits/women/44.jpg",
           streak: "🔥 60 Días Seguidos",
           habits: ["Pasos Diarios", "Verduras en el Almuerzo", "Meta de Agua", "Estiramiento Nocturno"],
           weeks: "10 semanas",
