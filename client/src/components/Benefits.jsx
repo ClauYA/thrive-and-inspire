@@ -28,7 +28,7 @@ export default function Benefits() {
           </p>
         </Reveal>
 
-        <div className="grid md:grid-cols-2 gap-6 lg:gap-8 max-w-[860px] mx-auto items-stretch">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-[1000px] mx-auto items-stretch">
           {b.programs.map((p, i) => (
             <Reveal key={i} delay={i * 0.1} className="h-full">
               <div
