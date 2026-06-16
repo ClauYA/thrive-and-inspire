@@ -18,6 +18,8 @@ import AdminLogin from "./components/admin/AdminLogin";
 import AdminDashboard from "./components/admin/AdminDashboard";
 import Signup from "./components/members/Signup";
 import Login from "./components/members/Login";
+import ForgotPassword from "./components/members/ForgotPassword";
+import ResetPassword from "./components/members/ResetPassword";
 import MemberDashboard from "./components/members/Dashboard";
 import WorkoutLogger from "./components/members/WorkoutLogger";
 import RoutineEditor from "./components/members/RoutineEditor";
@@ -56,6 +58,8 @@ export default function App() {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/app" element={<MemberDashboard />} />
         <Route path="/app/new" element={<WorkoutLogger />} />
         <Route path="/app/routine" element={<RoutineEditor />} />
