@@ -5,6 +5,7 @@ import { userApi, getUserToken } from "../../lib/userApi";
 import { recommendation, toneStyles } from "../../lib/recommend";
 import { formatDate } from "../../lib/format";
 import MemberHeader from "./MemberHeader";
+import { Button } from "../ui";
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 const inputClass =
@@ -397,9 +398,9 @@ export default function WorkoutLogger() {
             {error && <p className="text-red-500 text-[0.85rem] mb-3">{error}</p>}
 
             <div className="flex gap-3 mt-2">
-              <button onClick={save} disabled={saving} className="bg-terracotta text-white text-[0.95rem] font-semibold px-6 py-3.5 rounded-full hover:bg-terracotta-dark transition-colors shadow-[0_8px_24px_rgba(176,125,31,0.3)] disabled:opacity-70 disabled:cursor-not-allowed">
+              <Button onClick={save} disabled={saving}>
                 {saving ? tr.saving : tr.save}
-              </button>
+              </Button>
               <button onClick={() => navigate("/app")} className="text-[0.95rem] font-semibold px-6 py-3.5 rounded-full border border-sand text-warm-gray hover:bg-sand transition-colors">
                 {tr.cancel}
               </button>

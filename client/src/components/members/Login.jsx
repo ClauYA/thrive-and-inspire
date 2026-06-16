@@ -2,9 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { setSession } from "../../lib/userApi";
-
-const inputClass =
-  "w-full px-[18px] py-3.5 border-[1.5px] border-sand rounded-2xl text-[0.9rem] text-charcoal bg-cream outline-none transition-all placeholder:text-light-gray focus:border-terracotta-light focus:bg-white focus:ring-[3px] focus:ring-terracotta/10";
+import { Button, Input, Field } from "../ui";
 
 export default function Login() {
   const { t } = useLanguage();
@@ -47,17 +45,19 @@ export default function Login() {
         <p className="text-[0.85rem] text-warm-gray mb-6">{a.loginSub}</p>
 
         <div className="mb-4">
-          <label className="block text-[0.82rem] font-semibold text-charcoal mb-2">{a.email}</label>
-          <input type="email" value={form.email} onChange={update("email")} placeholder={a.emailPh} className={inputClass} autoComplete="username" />
+          <Field label={a.email}>
+            <Input type="email" value={form.email} onChange={update("email")} placeholder={a.emailPh} autoComplete="username" />
+          </Field>
         </div>
         <div className="mb-5">
-          <label className="block text-[0.82rem] font-semibold text-charcoal mb-2">{a.password}</label>
-          <input type="password" value={form.password} onChange={update("password")} placeholder={a.passwordPh} className={inputClass} autoComplete="current-password" />
+          <Field label={a.password}>
+            <Input type="password" value={form.password} onChange={update("password")} placeholder={a.passwordPh} autoComplete="current-password" />
+          </Field>
         </div>
 
-        <button type="submit" disabled={busy} className="w-full py-3.5 rounded-full text-[1rem] font-semibold text-white bg-terracotta hover:bg-terracotta-dark hover:-translate-y-0.5 transition-all shadow-[0_8px_24px_rgba(176,125,31,0.3)] disabled:opacity-70 disabled:cursor-not-allowed">
+        <Button type="submit" disabled={busy} size="lg" className="w-full">
           {busy ? a.loggingIn : a.loginBtn}
-        </button>
+        </Button>
         {error && <p className="text-center text-[0.82rem] text-red-500 mt-4">{error}</p>}
 
         <p className="text-center text-[0.85rem] text-warm-gray mt-6">

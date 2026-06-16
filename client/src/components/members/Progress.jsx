@@ -5,6 +5,7 @@ import { userApi, getUserToken } from "../../lib/userApi";
 import { formatDate } from "../../lib/format";
 import MemberHeader from "./MemberHeader";
 import LineChart from "./LineChart";
+import { Button } from "../ui";
 
 export default function Progress() {
   const { t, lang } = useLanguage();
@@ -92,13 +93,9 @@ export default function Progress() {
       <main className="max-w-[820px] mx-auto px-[5%] py-10">
         <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
           <h1 className="font-display text-[2rem] font-semibold text-charcoal">{tr.progress}</h1>
-          <button
-            onClick={exportExcel}
-            disabled={exporting}
-            className="bg-forest text-white text-[0.85rem] font-semibold px-4 py-2.5 rounded-full hover:bg-forest-light transition-colors disabled:opacity-70"
-          >
+          <Button onClick={exportExcel} disabled={exporting} variant="forest" size="sm">
             {exporting ? tr.exporting : `📥 ${tr.exportExcel}`}
-          </button>
+          </Button>
         </div>
 
         <div className="bg-white rounded-2xl border border-sand p-5 sm:p-6">

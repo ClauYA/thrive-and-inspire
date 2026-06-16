@@ -6,6 +6,7 @@ import { formatDate } from "../../lib/format";
 import MemberHeader from "./MemberHeader";
 import Calendar from "./Calendar";
 import WeekStrip from "./WeekStrip";
+import { Button } from "../ui";
 
 function groupByExercise(sets) {
   const groups = [];
@@ -113,12 +114,12 @@ export default function Dashboard() {
                   <div className="text-[0.8rem] text-white/60 mt-0.5">{nextDay.exerciseIds.length} {tr.exercises}</div>
                 </div>
                 <div className="flex gap-2">
-                  <Link to={`/app/new?day=${routine.nextIndex % routine.days.length}`} className="bg-terracotta text-white text-[0.88rem] font-semibold px-5 py-2.5 rounded-full hover:bg-terracotta-dark transition-colors">
+                  <Button as={Link} to={`/app/new?day=${routine.nextIndex % routine.days.length}`} size="sm">
                     {tr.startDay}
-                  </Link>
-                  <Link to="/app/routine" className="border border-white/30 text-white/90 text-[0.88rem] font-semibold px-4 py-2.5 rounded-full hover:bg-white/10 transition-colors">
+                  </Button>
+                  <Button as={Link} to="/app/routine" variant="outlineLight" size="sm">
                     {tr.editRoutine}
-                  </Link>
+                  </Button>
                 </div>
               </div>
             ) : (
@@ -127,9 +128,9 @@ export default function Dashboard() {
                   <div className="font-display text-[1.3rem] font-semibold">{tr.noRoutineTitle}</div>
                   <div className="text-[0.82rem] text-white/60 mt-0.5">{tr.noRoutineSub}</div>
                 </div>
-                <Link to="/app/routine" className="bg-terracotta text-white text-[0.88rem] font-semibold px-5 py-2.5 rounded-full hover:bg-terracotta-dark transition-colors">
+                <Button as={Link} to="/app/routine" size="sm">
                   {tr.setupRoutine}
-                </Link>
+                </Button>
               </div>
             )}
           </div>
@@ -150,9 +151,9 @@ export default function Dashboard() {
               {tr.viewCalendar}
             </button>
           </div>
-          <Link to="/app/new" className="bg-terracotta text-white text-[0.88rem] font-semibold px-5 py-2.5 rounded-full hover:bg-terracotta-dark transition-colors shadow-[0_8px_24px_rgba(176,125,31,0.3)] whitespace-nowrap">
+          <Button as={Link} to="/app/new" size="sm" className="whitespace-nowrap">
             + {tr.newWorkout}
-          </Link>
+          </Button>
         </div>
 
         {error && <p className="text-red-500 text-[0.85rem] mb-4">{error}</p>}
@@ -165,9 +166,9 @@ export default function Dashboard() {
           <div className="text-center py-16">
             <div className="text-5xl mb-4">🏋️</div>
             <p className="text-warm-gray mb-6">{tr.noWorkouts}</p>
-            <Link to="/app/new" className="bg-terracotta text-white text-[0.9rem] font-semibold px-6 py-3 rounded-full hover:bg-terracotta-dark transition-colors">
+            <Button as={Link} to="/app/new">
               + {tr.newWorkout}
-            </Link>
+            </Button>
           </div>
         ) : (
           <div className="grid gap-3">
