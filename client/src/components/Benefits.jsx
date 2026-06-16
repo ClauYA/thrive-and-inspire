@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import Reveal from "./Reveal";
 import { useLanguage } from "../i18n/LanguageContext";
+import { Card, Badge, Button } from "./ui";
 
 export default function Benefits() {
   const { t } = useLanguage();
@@ -31,17 +32,11 @@ export default function Benefits() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-[1000px] mx-auto items-stretch">
           {b.programs.map((p, i) => (
             <Reveal key={i} delay={i * 0.1} className="h-full">
-              <div
-                className={`relative h-full flex flex-col bg-white rounded-[28px] p-8 sm:p-10 transition-all ${
-                  p.featured
-                    ? "border-2 border-terracotta shadow-[0_20px_50px_rgba(176,125,31,0.18)]"
-                    : "border border-sand shadow-[0_8px_24px_rgba(44,44,42,0.05)]"
-                }`}
-              >
+              <Card featured={p.featured} className="relative h-full flex flex-col p-8 sm:p-10">
                 {p.featured && (
-                  <span className="absolute top-0 right-8 -translate-y-1/2 bg-terracotta text-white text-[0.68rem] font-semibold uppercase tracking-[0.1em] px-4 py-1.5 rounded-full">
+                  <Badge className="absolute top-0 right-8 -translate-y-1/2 uppercase tracking-[0.1em] !bg-terracotta !text-white">
                     {b.popular}
-                  </span>
+                  </Badge>
                 )}
 
                 <h3 className="font-display text-[1.6rem] font-semibold text-charcoal">{p.name}</h3>
@@ -51,11 +46,7 @@ export default function Benefits() {
                   <span className="font-display text-[3rem] font-semibold text-forest leading-none">{p.price}</span>
                   <span className="text-[0.9rem] text-warm-gray">{p.period}</span>
                 </div>
-                {p.badge && (
-                  <span className="inline-block self-start text-[0.74rem] font-semibold text-terracotta bg-terracotta/10 px-3 py-1 rounded-full mt-3">
-                    {p.badge}
-                  </span>
-                )}
+                {p.badge && <Badge tone="amber" className="self-start mt-3">{p.badge}</Badge>}
 
                 <ul className="grid gap-3 my-7">
                   {p.features.map((f, j) => (
@@ -66,17 +57,10 @@ export default function Benefits() {
                   ))}
                 </ul>
 
-                <Link
-                  to="/ready"
-                  className={`mt-auto text-center py-3.5 rounded-full text-[0.95rem] font-semibold transition-all ${
-                    p.featured
-                      ? "bg-terracotta text-white hover:bg-terracotta-dark hover:-translate-y-0.5 shadow-[0_8px_24px_rgba(176,125,31,0.3)]"
-                      : "border-2 border-terracotta text-terracotta hover:bg-terracotta hover:text-white"
-                  }`}
-                >
+                <Button as={Link} to="/ready" variant={p.featured ? "primary" : "secondary"} className="mt-auto w-full">
                   {b.cta}
-                </Link>
-              </div>
+                </Button>
+              </Card>
             </Reveal>
           ))}
         </div>
@@ -97,16 +81,14 @@ export default function Benefits() {
           <div className="grid sm:grid-cols-3 gap-4 max-w-[800px] mx-auto">
             {h.steps.map((step, i) => (
               <Reveal key={i} delay={i * 0.1} className="h-full">
-                <div className="h-full flex flex-col bg-white rounded-2xl border border-sand p-5 shadow-[0_8px_24px_rgba(44,44,42,0.05)]">
+                <Card className="h-full flex flex-col p-5">
                   <div className="font-display text-[2rem] font-semibold text-terracotta/25 leading-none mb-2.5">
                     {step.num}
                   </div>
                   <h4 className="font-display text-[1.05rem] font-semibold text-charcoal mb-1.5">{step.h}</h4>
                   <p className="text-[0.8rem] text-warm-gray leading-[1.6]">{step.p}</p>
-                  <span className="inline-block self-start mt-3 text-[0.68rem] font-semibold tracking-wide text-forest bg-sage-light/50 px-3 py-1 rounded-full">
-                    {step.badge}
-                  </span>
-                </div>
+                  <Badge tone="sage" className="self-start mt-3 tracking-wide">{step.badge}</Badge>
+                </Card>
               </Reveal>
             ))}
           </div>

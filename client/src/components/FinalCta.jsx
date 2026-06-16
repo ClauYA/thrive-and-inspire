@@ -1,5 +1,6 @@
 import Reveal from "./Reveal";
 import { useLanguage } from "../i18n/LanguageContext";
+import { Button } from "./ui";
 
 export default function FinalCta() {
   const { t } = useLanguage();
@@ -38,18 +39,8 @@ export default function FinalCta() {
         </h2>
         <p className="text-[1.05rem] text-white/55 max-w-[560px] mx-auto mb-10 leading-[1.75] font-light">{c.sub}</p>
         <div className="flex flex-wrap gap-4 justify-center">
-          <a
-            href="#apply"
-            className="inline-flex items-center gap-2 bg-white text-charcoal px-8 py-4 rounded-full text-[0.95rem] font-semibold shadow-[0_8px_24px_rgba(0,0,0,0.2)] hover:-translate-y-[3px] hover:shadow-[0_16px_40px_rgba(0,0,0,0.3)] transition-all"
-          >
-            {c.ctaApply}
-          </a>
-          <a
-            href="#how"
-            className="inline-flex items-center gap-2 border-2 border-white/25 text-white/80 px-[30px] py-3.5 rounded-full text-[0.95rem] font-medium hover:border-white hover:text-white transition-all"
-          >
-            {c.ctaHow}
-          </a>
+          <Button as="a" href="#apply" variant="white" size="lg">{c.ctaApply}</Button>
+          <Button as="a" href="#how" variant="outlineLight" size="lg">{c.ctaHow}</Button>
         </div>
       </Reveal>
     </section>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Reveal from "./Reveal";
 import { useLanguage } from "../i18n/LanguageContext";
+import { Button } from "./ui";
 
 const initialForm = {
   firstName: "",
@@ -129,15 +130,15 @@ export default function ApplyForm() {
               </select>
             </div>
 
-            <button
+            <Button
               type="submit"
               disabled={status === "sending" || status === "success"}
-              className={`w-full py-4 rounded-full text-[1rem] font-semibold text-white transition-all mt-2 shadow-[0_8px_24px_rgba(176,125,31,0.3)] disabled:cursor-not-allowed ${
-                status === "success" ? "bg-forest" : "bg-terracotta hover:bg-terracotta-dark hover:-translate-y-0.5"
-              }`}
+              variant={status === "success" ? "forest" : "primary"}
+              size="lg"
+              className="w-full mt-2"
             >
               {status === "sending" ? a.submitting : status === "success" ? a.success : a.submit}
-            </button>
+            </Button>
 
             {status === "error" && <p className="text-center text-[0.82rem] text-red-500 mt-3">{errorMsg}</p>}
             <p className="text-center text-[0.78rem] text-light-gray mt-3.5">{a.note}</p>
