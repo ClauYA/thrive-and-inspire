@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLanguage } from "../i18n/LanguageContext";
+import { Button, Input, Field } from "./ui";
 
 const STORAGE_KEY = "ti-guide-popup";
 
@@ -55,9 +56,6 @@ export default function GuidePopup() {
     }
   };
 
-  const inputClass =
-    "w-full px-[18px] py-3.5 border-[1.5px] border-sand rounded-2xl text-[0.9rem] text-charcoal bg-cream outline-none transition-all placeholder:text-light-gray focus:border-terracotta-light focus:bg-white focus:ring-[3px] focus:ring-terracotta/10";
-
   return (
     <AnimatePresence>
       {open && (
@@ -89,13 +87,9 @@ export default function GuidePopup() {
               <div className="text-center py-6">
                 <div className="text-5xl mb-4">💌</div>
                 <h3 className="font-display text-[1.6rem] font-semibold text-charcoal mb-2">{g.success}</h3>
-                <button
-                  type="button"
-                  onClick={dismiss}
-                  className="mt-4 bg-terracotta text-white text-[0.9rem] font-semibold px-6 py-3 rounded-full hover:bg-terracotta-dark transition-colors"
-                >
+                <Button type="button" onClick={dismiss} className="mt-4">
                   {g.close}
-                </button>
+                </Button>
               </div>
             ) : (
               <>
@@ -106,22 +100,16 @@ export default function GuidePopup() {
                 <p className="text-[0.9rem] text-warm-gray leading-[1.65] mb-6">{g.body}</p>
 
                 <form onSubmit={handleSubmit} className="grid gap-4">
-                  <div>
-                    <label htmlFor="guideFirstName" className="block text-[0.82rem] font-semibold text-charcoal mb-2">{g.firstName}</label>
-                    <input id="guideFirstName" type="text" value={form.firstName} onChange={update("firstName")} placeholder={g.firstNamePh} className={inputClass} />
-                  </div>
-                  <div>
-                    <label htmlFor="guideEmail" className="block text-[0.82rem] font-semibold text-charcoal mb-2">{g.email}</label>
-                    <input id="guideEmail" type="email" value={form.email} onChange={update("email")} placeholder={g.emailPh} className={inputClass} />
-                  </div>
+                  <Field label={g.firstName}>
+                    <Input id="guideFirstName" type="text" value={form.firstName} onChange={update("firstName")} placeholder={g.firstNamePh} />
+                  </Field>
+                  <Field label={g.email}>
+                    <Input id="guideEmail" type="email" value={form.email} onChange={update("email")} placeholder={g.emailPh} />
+                  </Field>
 
-                  <button
-                    type="submit"
-                    disabled={status === "sending"}
-                    className="w-full py-3.5 rounded-full text-[1rem] font-semibold text-white bg-terracotta hover:bg-terracotta-dark hover:-translate-y-0.5 transition-all mt-1 shadow-[0_8px_24px_rgba(176,125,31,0.3)] disabled:cursor-not-allowed disabled:opacity-70"
-                  >
+                  <Button type="submit" disabled={status === "sending"} size="lg" className="w-full mt-1">
                     {status === "sending" ? g.submitting : g.submit}
-                  </button>
+                  </Button>
 
                   {status === "error" && <p className="text-center text-[0.82rem] text-red-500">{errorMsg}</p>}
                   <p className="text-center text-[0.76rem] text-light-gray">{g.note}</p>
