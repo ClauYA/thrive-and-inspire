@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { marked } from "marked";
 import { dbEnabled, query, pool } from "./db.js";
 
@@ -84,6 +85,42 @@ function applicantAutoReply(firstName, lang) {
         <a href="${CALENDLY_URL}" style="background:#b07d1f;color:#fff;text-decoration:none;font-weight:bold;padding:14px 28px;border-radius:999px;display:inline-block">${button}</a>
       </p>
       <p style="margin:0 0 16px">${closing}</p>
+      <p style="margin:0;color:#6b6560">${signature}</p>
+    </div>`;
+  return { subject, text, html };
+}
+
+// Public base URL of the site, used to build links in transactional emails
+// (e.g. the password-reset link). Falls back to the request's own host.
+const APP_BASE_URL = process.env.APP_BASE_URL || "";
+
+// Builds the password-reset email in the member's language.
+function passwordResetEmail(name, resetUrl, lang) {
+  const es = lang !== "en";
+  const firstName = (name || "").split(" ")[0] || (es ? "ahí" : "there");
+  const subject = es ? "Restablece tu contraseña 🔑" : "Reset your password 🔑";
+  const intro = es
+    ? `¡Hola ${firstName}! Recibimos una solicitud para restablecer la contraseña de tu cuenta de Lift & Inspire.`
+    : `Hi ${firstName}! We received a request to reset the password for your Lift & Inspire account.`;
+  const cta = es
+    ? "Haz clic en el botón para elegir una nueva contraseña. Este enlace caduca en 1 hora."
+    : "Click the button below to choose a new password. This link expires in 1 hour.";
+  const button = es ? "Restablecer contraseña →" : "Reset password →";
+  const ignore = es
+    ? "Si no solicitaste esto, puedes ignorar este correo; tu contraseña no cambiará."
+    : "If you didn't request this, you can safely ignore this email — your password won't change.";
+  const signature = es ? "Con cariño,<br>Lift & Inspire" : "Warmly,<br>Lift & Inspire";
+
+  const text = `${intro}\n\n${cta}\n${resetUrl}\n\n${ignore}\n\n${es ? "Con cariño, Lift & Inspire" : "Warmly, Lift & Inspire"}`;
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:540px;margin:0 auto;color:#2c2c2a;line-height:1.6">
+      <h2 style="color:#b07d1f;margin:0 0 16px">${es ? "Restablece tu contraseña" : "Reset your password"}</h2>
+      <p style="margin:0 0 16px">${intro}</p>
+      <p style="margin:0 0 20px">${cta}</p>
+      <p style="margin:0 0 28px">
+        <a href="${resetUrl}" style="background:#b07d1f;color:#fff;text-decoration:none;font-weight:bold;padding:14px 28px;border-radius:999px;display:inline-block">${button}</a>
+      </p>
+      <p style="margin:0 0 16px;color:#6b6560;font-size:13px">${ignore}</p>
       <p style="margin:0;color:#6b6560">${signature}</p>
     </div>`;
   return { subject, text, html };
@@ -625,6 +662,84 @@ app.post("/api/auth/login", async (req, res) => {
   } catch (err) {
     console.error("Login failed:", err);
     res.status(500).json({ ok: false, error: "Could not log you in." });
+  }
+});
+
+// ── Forgot password (request a reset link) ──
+// Always responds with { ok: true } regardless of whether the email exists,
+// so the endpoint can't be used to discover which emails have accounts.
+app.post("/api/auth/forgot-password", async (req, res) => {
+  if (!userAuthEnabled) return res.status(503).json({ ok: false, error: "The workout tracker is not configured on the server." });
+  const { email, lang } = req.body || {};
+  if (!isValidEmail(email)) return res.status(400).json({ ok: false, error: "Please enter a valid email." });
+  try {
+    const { rows } = await query(`select id, name, email from users where email = $1`, [String(email).trim().toLowerCase()]);
+    const user = rows[0];
+    if (user) {
+      // Invalidate any earlier outstanding tokens for this user.
+      await query(`update password_resets set used_at = now() where user_id = $1 and used_at is null`, [user.id]);
+      const rawToken = crypto.randomBytes(32).toString("hex");
+      const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+      const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      await query(
+        `insert into password_resets (user_id, token_hash, expires_at) values ($1, $2, $3)`,
+        [user.id, tokenHash, expires]
+      );
+
+      const base = APP_BASE_URL || `${req.protocol}://${req.get("host")}`;
+      const resetUrl = `${base.replace(/\/$/, "")}/reset-password?token=${rawToken}`;
+
+      if (transporter) {
+        try {
+          const mail = passwordResetEmail(user.name, resetUrl, lang);
+          await transporter.sendMail({
+            from: `"Lift & Inspire" <${mailFrom}>`,
+            to: user.email,
+            subject: mail.subject,
+            text: mail.text,
+            html: mail.html,
+          });
+          console.log("✉️  Password reset email sent to:", user.email);
+        } catch (err) {
+          console.error("Failed to send password reset email:", err);
+        }
+      } else {
+        // No email configured (local dev) — log the link so it can still be used.
+        console.log("🔑 Password reset link (email not configured):", resetUrl);
+      }
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Forgot password failed:", err);
+    res.status(500).json({ ok: false, error: "Could not process your request." });
+  }
+});
+
+// ── Reset password (consume the token) ──
+app.post("/api/auth/reset-password", async (req, res) => {
+  if (!userAuthEnabled) return res.status(503).json({ ok: false, error: "The workout tracker is not configured on the server." });
+  const { token, password } = req.body || {};
+  if (!token || typeof token !== "string") return res.status(400).json({ ok: false, error: "Invalid or missing reset token." });
+  if (!isStrongEnough(password)) return res.status(400).json({ ok: false, error: "Password must be at least 6 characters." });
+  try {
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const { rows } = await query(
+      `select id, user_id from password_resets where token_hash = $1 and used_at is null and expires_at > now()`,
+      [tokenHash]
+    );
+    const record = rows[0];
+    if (!record) return res.status(400).json({ ok: false, error: "This reset link is invalid or has expired. Please request a new one." });
+
+    const hash = await bcrypt.hash(password, 10);
+    await query(`update users set password_hash = $1 where id = $2`, [hash, record.user_id]);
+    await query(`update password_resets set used_at = now() where id = $1`, [record.id]);
+
+    const { rows: urows } = await query(`select id, name, email from users where id = $1`, [record.user_id]);
+    const user = urows[0];
+    res.json({ ok: true, token: signUserToken(user), user: { id: user.id, name: user.name, email: user.email } });
+  } catch (err) {
+    console.error("Reset password failed:", err);
+    res.status(500).json({ ok: false, error: "Could not reset your password." });
   }
 });
 

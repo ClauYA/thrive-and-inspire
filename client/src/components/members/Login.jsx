@@ -60,6 +60,10 @@ export default function Login() {
         </Button>
         {error && <p className="text-center text-[0.82rem] text-red-500 mt-4">{error}</p>}
 
+        <p className="text-center text-[0.82rem] mt-4">
+          <Link to="/forgot-password" className="text-warm-gray hover:text-terracotta">{a.forgotLink}</Link>
+        </p>
+
         <p className="text-center text-[0.85rem] text-warm-gray mt-6">
           {a.noAccount}{" "}
           <Link to="/signup" className="text-terracotta font-semibold hover:text-terracotta-dark">{a.signupLink}</Link>
