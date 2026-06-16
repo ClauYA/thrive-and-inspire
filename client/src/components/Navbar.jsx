@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext";
+import { Button } from "./ui";
 
 const links = [
   { href: "#struggles", key: "about" },
@@ -59,12 +60,7 @@ export default function Navbar() {
           </Link>
         </li>
         <li>
-          <a
-            href="#apply"
-            className="bg-terracotta text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-terracotta-dark hover:-translate-y-0.5 transition-all"
-          >
-            {t.nav.apply}
-          </a>
+          <Button as="a" href="#apply" size="sm">{t.nav.apply}</Button>
         </li>
       </ul>
 
@@ -112,13 +108,9 @@ export default function Navbar() {
           >
             {t.nav.train}
           </Link>
-          <a
-            href="#apply"
-            onClick={() => setMenuOpen(false)}
-            className="bg-terracotta text-white px-5 py-2.5 rounded-full text-sm font-semibold text-center"
-          >
+          <Button as="a" href="#apply" size="sm" onClick={() => setMenuOpen(false)} className="w-full">
             {t.nav.apply}
-          </a>
+          </Button>
         </div>
       )}
     </nav>

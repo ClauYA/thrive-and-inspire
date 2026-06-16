@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLanguage } from "../i18n/LanguageContext";
+import { Button } from "./ui";
 
 export default function Hero() {
   const { t } = useLanguage();
@@ -50,15 +51,12 @@ export default function Hero() {
         <p className="text-[1.1rem] text-warm-gray max-w-[480px] leading-[1.75] mb-10 font-light">{h.sub}</p>
 
         <div className="flex flex-wrap gap-4 items-center">
-          <a
-            href="#apply"
-            className="group inline-flex items-center gap-2.5 bg-terracotta text-white px-8 py-4 rounded-full text-[0.95rem] font-semibold shadow-[0_8px_30px_rgba(176,125,31,0.12)] hover:bg-terracotta-dark hover:-translate-y-[3px] hover:shadow-[0_16px_40px_rgba(176,125,31,0.3)] transition-all"
-          >
+          <Button as="a" href="#apply" size="lg" className="group">
             {h.ctaApply}
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="group-hover:translate-x-1 transition-transform">
               <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-          </a>
+          </Button>
         </div>
 
         <div className="flex items-center gap-4 mt-12 pt-8 border-t border-sand">
