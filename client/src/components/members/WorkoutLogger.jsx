@@ -11,47 +11,70 @@ const inputClass =
   "w-full px-3 py-2 border-[1.5px] border-sand rounded-xl text-[0.88rem] text-charcoal bg-cream outline-none transition-all focus:border-terracotta-light focus:bg-white";
 const emptySet = () => ({ weight: "", reps: "", rir: "" });
 
-// Predefined templates reference exercise names from the starter library.
-const TEMPLATES = {
-  upper: ["Bench Press", "Overhead Press", "Lat Pulldown", "Seated Row", "Lateral Raise", "Bicep Curl", "Tricep Pushdown"],
-  lower: ["Back Squat", "Romanian Deadlift", "Leg Press", "Leg Curl", "Leg Extension", "Hip Thrust"],
-  full: ["Back Squat", "Bench Press", "Barbell Row", "Overhead Press", "Romanian Deadlift", "Plank"],
-  custom: [],
+// Muscle groups (lowercase) used to generate each workout type.
+const GEN_GROUPS = {
+  push: ["chest", "shoulders", "triceps"],
+  pull: ["back", "biceps"],
+  legs: ["legs", "hamstrings", "quads", "glutes"],
+  full: ["legs", "chest", "back", "shoulders", "core"],
 };
 
-function ExerciseMedia({ url }) {
+function youtubeEmbed(url) {
+  if (!url) return null;
+  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([\w-]{11})/);
+  return m ? `https://www.youtube.com/embed/${m[1]}` : null;
+}
+
+// Shows the exercise demo via YouTube: embeds a specific video if media_url is
+// a YouTube link, otherwise links to a YouTube search for the exercise.
+function ExerciseMedia({ url, name }) {
   const { t } = useLanguage();
   const tr = t.tracker;
   const [show, setShow] = useState(false);
-  if (!url) return null;
-  const isVideo = /\.(mp4|webm|mov)$/i.test(url);
-  const isImage = /\.(gif|png|jpe?g|webp)$/i.test(url);
-  const label = isVideo ? tr.watchVideo : tr.watchDemo;
+  const embed = youtubeEmbed(url);
 
+  if (embed) {
+    return (
+      <div className="mt-3">
+        <button type="button" onClick={() => setShow((s) => !s)} className="inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark">
+          ▶ {show ? tr.hideMedia : tr.watchVideo}
+        </button>
+        {show && (
+          <div className="mt-2 aspect-video">
+            <iframe className="w-full h-full rounded-xl" src={embed} title={name || "video"} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+          </div>
+        )}
+      </div>
+    );
+  }
+  if (url) {
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark">
+        ▶ {tr.watchVideo} ↗
+      </a>
+    );
+  }
+  if (!name) return null;
+  const search = `https://www.youtube.com/results?search_query=${encodeURIComponent("how to " + name)}`;
   return (
-    <div className="mt-3">
-      {isVideo || isImage ? (
-        <>
-          <button
-            type="button"
-            onClick={() => setShow((s) => !s)}
-            className="inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark"
-          >
-            🎬 {show ? tr.hideMedia : label}
-          </button>
-          {show &&
-            (isVideo ? (
-              <video src={url} controls autoPlay loop muted playsInline className="w-full max-h-64 object-contain rounded-xl bg-charcoal/5 mt-2" />
-            ) : (
-              <img src={url} alt="" className="w-full max-h-64 object-contain rounded-xl bg-charcoal/5 mt-2" />
-            ))}
-        </>
-      ) : (
-        // Not a direct media file (e.g. a YouTube link) — open in a new tab.
-        <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark">
-          🎬 {tr.watchVideo} ↗
-        </a>
-      )}
+    <a href={search} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark">
+      ▶ {tr.watchYoutube} ↗
+    </a>
+  );
+}
+
+function GuideCard({ title, steps }) {
+  return (
+    <div className="bg-sage-light/25 border border-sage-light rounded-2xl p-4 sm:p-5 mb-4">
+      <h3 className="text-[0.9rem] font-semibold text-forest mb-2">{title}</h3>
+      <ul className="grid gap-1.5">
+        {steps.map((s, i) => (
+          <li key={i} className="flex items-start gap-2 text-[0.84rem] text-charcoal/80 leading-[1.5]">
+            <span className="text-forest mt-0.5 shrink-0">•</span>
+            {s}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -72,6 +95,7 @@ export default function WorkoutLogger() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [showRirInfo, setShowRirInfo] = useState(false);
+  const [muscle, setMuscle] = useState("");
   const uid = useRef(0);
 
   useEffect(() => {
@@ -86,7 +110,6 @@ export default function WorkoutLogger() {
         if (!active) return;
         setExercises(d.exercises);
 
-        // If launched from a routine day (?day=N), prefill its exercises.
         const dayParam = searchParams.get("day");
         if (dayParam != null) {
           const r = await userApi("/api/routine");
@@ -95,10 +118,7 @@ export default function WorkoutLogger() {
           if (day) {
             setTitle(day.name);
             setFromRoutine(true);
-            const newBlocks = day.exerciseIds
-              .map((id) => d.exercises.find((ex) => ex.id === id))
-              .filter(Boolean)
-              .map((ex) => makeBlock(ex));
+            const newBlocks = day.exerciseIds.map((id) => d.exercises.find((ex) => ex.id === id)).filter(Boolean).map((ex) => makeBlock(ex));
             setBlocks(newBlocks);
             setStarted(true);
             newBlocks.forEach((b) => loadLast(b.uid, b.exerciseId));
@@ -120,49 +140,53 @@ export default function WorkoutLogger() {
     exerciseName: ex?.name || "",
     mediaUrl: ex?.media_url || "",
     sets: [emptySet(), emptySet(), emptySet()],
-    last: ex ? undefined : null, // undefined = loading, null = none/manual-empty
+    last: ex ? undefined : null,
   });
 
-  // Load last performance for a block (by uid) once an exercise is chosen.
   const loadLast = (blockUid, exerciseId) => {
     if (!exerciseId) return;
     userApi(`/api/last-performance/${exerciseId}`)
-      .then((d) => {
-        setBlocks((bs) => bs.map((b) => (b.uid === blockUid ? { ...b, last: { sets: d.sets, performedAt: d.performedAt } } : b)));
-      })
-      .catch(() => {
-        setBlocks((bs) => bs.map((b) => (b.uid === blockUid ? { ...b, last: { sets: [], performedAt: null } } : b)));
-      });
+      .then((d) => setBlocks((bs) => bs.map((b) => (b.uid === blockUid ? { ...b, last: { sets: d.sets, performedAt: d.performedAt } } : b))))
+      .catch(() => setBlocks((bs) => bs.map((b) => (b.uid === blockUid ? { ...b, last: { sets: [], performedAt: null } } : b))));
   };
 
-  const applyTemplate = (key) => {
-    const names = TEMPLATES[key];
-    if (key === "custom" || names.length === 0) {
-      const b = { ...makeBlock(null), sets: [emptySet(), emptySet(), emptySet()] };
-      setBlocks([b]);
-    } else {
-      const newBlocks = names
-        .map((n) => exercises.find((ex) => ex.name.toLowerCase() === n.toLowerCase()))
-        .filter(Boolean)
-        .map((ex) => makeBlock(ex));
-      setBlocks(newBlocks);
-      newBlocks.forEach((b) => loadLast(b.uid, b.exerciseId));
-      if (key !== "full") setTitle(tr[`tpl_${key}`] || tr.defaultTitle);
-    }
+  const startWith = (picks, newTitle) => {
+    const nb = picks.map((ex) => makeBlock(ex));
+    setBlocks(nb.length ? nb : [makeBlock(null)]);
+    if (newTitle) setTitle(newTitle);
     setStarted(true);
+    nb.forEach((b) => loadLast(b.uid, b.exerciseId));
   };
+
+  const pickFrom = (groups, count) => {
+    const pool = exercises.filter((e) => groups.includes((e.muscle_group || "").toLowerCase()));
+    return [...pool].sort(() => Math.random() - 0.5).slice(0, count);
+  };
+
+  const generate = (key) => {
+    let picks;
+    if (key === "full") {
+      picks = GEN_GROUPS.full.map((g) => pickFrom([g], 1)[0]).filter(Boolean);
+    } else {
+      picks = pickFrom(GEN_GROUPS[key], 5);
+    }
+    startWith(picks, tr[`gen_${key}`]);
+  };
+
+  const generateMuscle = (group) => {
+    if (!group) return;
+    startWith(pickFrom([group.toLowerCase()], 5), group);
+  };
+
+  const muscleGroups = [...new Set(exercises.map((e) => e.muscle_group).filter(Boolean))].sort();
 
   const addBlock = () => setBlocks((b) => [...b, makeBlock(null)]);
   const removeBlock = (u) => setBlocks((b) => b.filter((blk) => blk.uid !== u));
-
   const pickExercise = (u) => (e) => {
     const ex = exercises.find((x) => x.id === e.target.value);
-    setBlocks((bs) =>
-      bs.map((b) => (b.uid === u ? { ...b, exerciseId: ex?.id || "", exerciseName: ex?.name || "", mediaUrl: ex?.media_url || "", last: ex ? undefined : null } : b))
-    );
+    setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, exerciseId: ex?.id || "", exerciseName: ex?.name || "", mediaUrl: ex?.media_url || "", last: ex ? undefined : null } : b)));
     if (ex) loadLast(u, ex.id);
   };
-
   const addSet = (u) => setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, sets: [...b.sets, emptySet()] } : b)));
   const removeSet = (u, si) => setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, sets: b.sets.filter((_, j) => j !== si) } : b)));
   const updateSet = (u, si, field) => (e) => {
@@ -175,15 +199,7 @@ export default function WorkoutLogger() {
     for (const blk of blocks) {
       if (!blk.exerciseName) continue;
       blk.sets.forEach((s, idx) => {
-        flatSets.push({
-          exerciseId: blk.exerciseId || null,
-          exerciseName: blk.exerciseName,
-          setNumber: idx + 1,
-          weight: s.weight,
-          reps: s.reps,
-          rir: s.rir,
-          rpe: "",
-        });
+        flatSets.push({ exerciseId: blk.exerciseId || null, exerciseName: blk.exerciseName, setNumber: idx + 1, weight: s.weight, reps: s.reps, rir: s.rir, rpe: "" });
       });
     }
     if (flatSets.length === 0) {
@@ -210,11 +226,11 @@ export default function WorkoutLogger() {
     }
   };
 
-  const templates = [
-    { key: "upper", emoji: "💪", label: tr.tpl_upper },
-    { key: "lower", emoji: "🦵", label: tr.tpl_lower },
-    { key: "full", emoji: "🔥", label: tr.tpl_full },
-    { key: "custom", emoji: "✏️", label: tr.tpl_custom },
+  const generators = [
+    { key: "push", emoji: "🙌", label: tr.gen_push },
+    { key: "pull", emoji: "💪", label: tr.gen_pull },
+    { key: "legs", emoji: "🦵", label: tr.gen_legs },
+    { key: "full", emoji: "🔥", label: tr.gen_full },
   ];
 
   return (
@@ -227,22 +243,33 @@ export default function WorkoutLogger() {
 
         <h1 className="font-display text-[1.8rem] font-semibold text-charcoal mb-6">{tr.newWorkout}</h1>
 
-        {/* Template picker */}
+        {/* Start screen: generate a workout or start blank */}
         {!started && (
           <div className="bg-white rounded-2xl border border-sand p-6 mb-5">
-            <h2 className="font-semibold text-charcoal mb-1">{tr.chooseTemplate}</h2>
-            <p className="text-[0.84rem] text-warm-gray mb-5">{tr.chooseTemplateSub}</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {templates.map((tpl) => (
+            <h2 className="font-semibold text-charcoal mb-1">{tr.chooseWorkout}</h2>
+            <p className="text-[0.84rem] text-warm-gray mb-5">{tr.chooseWorkoutSub}</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+              {generators.map((gen) => (
                 <button
-                  key={tpl.key}
-                  onClick={() => applyTemplate(tpl.key)}
+                  key={gen.key}
+                  onClick={() => generate(gen.key)}
                   className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-sand hover:border-terracotta hover:bg-terracotta/5 hover:-translate-y-0.5 transition-all"
                 >
-                  <span className="text-2xl">{tpl.emoji}</span>
-                  <span className="text-[0.82rem] font-semibold text-charcoal text-center">{tpl.label}</span>
+                  <span className="text-2xl">{gen.emoji}</span>
+                  <span className="text-[0.82rem] font-semibold text-charcoal text-center">{gen.label}</span>
                 </button>
               ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <select value={muscle} onChange={(e) => { setMuscle(e.target.value); generateMuscle(e.target.value); }} className={`${inputClass} cursor-pointer max-w-[240px]`}>
+                <option value="">{tr.byMuscle}</option>
+                {muscleGroups.map((g) => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+              </select>
+              <button onClick={() => startWith([], tr.defaultTitle)} className="text-[0.85rem] font-semibold text-forest border border-sage-light px-4 py-2 rounded-full hover:bg-sage-light/30 transition-colors">
+                ✏️ {tr.tpl_custom}
+              </button>
             </div>
           </div>
         )}
@@ -265,6 +292,9 @@ export default function WorkoutLogger() {
                 <textarea rows="2" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={tr.notesPh} className={`${inputClass} resize-none`} />
               </div>
             </div>
+
+            {/* Warm-up */}
+            <GuideCard title={`🔥 ${tr.warmupTitle}`} steps={tr.warmupSteps} />
 
             {/* RIR info */}
             <div className="mb-4">
@@ -294,9 +324,8 @@ export default function WorkoutLogger() {
                     </button>
                   </div>
 
-                  <ExerciseMedia url={blk.mediaUrl} />
+                  <ExerciseMedia url={blk.mediaUrl} name={blk.exerciseName} />
 
-                  {/* Last time + recommendation */}
                   {blk.exerciseId && (
                     <div className="mt-3 text-[0.8rem]">
                       {blk.last === undefined ? (
@@ -323,7 +352,6 @@ export default function WorkoutLogger() {
                     </div>
                   )}
 
-                  {/* Sets table (RIR only) */}
                   <div className="mt-4">
                     <div className="grid grid-cols-[28px_1fr_1fr_1fr_28px] gap-2 items-center text-[0.72rem] font-semibold text-warm-gray mb-1.5 px-1">
                       <span>{tr.set}</span>
@@ -359,16 +387,16 @@ export default function WorkoutLogger() {
               );
             })}
 
-            <button
-              onClick={addBlock}
-              className="w-full border-2 border-dashed border-sage-light text-forest font-semibold py-3.5 rounded-2xl hover:bg-sage-light/20 transition-colors mb-6"
-            >
+            <button onClick={addBlock} className="w-full border-2 border-dashed border-sage-light text-forest font-semibold py-3.5 rounded-2xl hover:bg-sage-light/20 transition-colors mb-4">
               + {tr.addExercise}
             </button>
 
+            {/* Cool-down */}
+            <GuideCard title={`🧘 ${tr.cooldownTitle}`} steps={tr.cooldownSteps} />
+
             {error && <p className="text-red-500 text-[0.85rem] mb-3">{error}</p>}
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 mt-2">
               <button onClick={save} disabled={saving} className="bg-terracotta text-white text-[0.95rem] font-semibold px-6 py-3.5 rounded-full hover:bg-terracotta-dark transition-colors shadow-[0_8px_24px_rgba(176,125,31,0.3)] disabled:opacity-70 disabled:cursor-not-allowed">
                 {saving ? tr.saving : tr.save}
               </button>
