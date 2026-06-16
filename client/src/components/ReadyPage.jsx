@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Reveal from "./Reveal";
 import { useLanguage } from "../i18n/LanguageContext";
+import { Button } from "./ui";
 
 /* ──────────────────────────────────────────────────────────────
    ⬇️  PEGA AQUÍ TUS DATOS DE PAGO  ⬇️
@@ -164,14 +165,9 @@ export default function ReadyPage() {
                 <div className="border-t border-sand pt-8 mb-8">
                   <div className="font-display text-[1.4rem] font-semibold text-charcoal mb-2">{r.schedTitle}</div>
                   <p className="text-[0.88rem] text-warm-gray mb-6">{r.schedSub}</p>
-                  <a
-                    href={CALENDLY_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-[0.95rem] font-semibold text-white bg-forest hover:bg-forest-light hover:-translate-y-0.5 transition-all shadow-[0_8px_24px_rgba(61,90,71,0.25)]"
-                  >
+                  <Button as="a" href={CALENDLY_URL} target="_blank" rel="noopener noreferrer" variant="forest">
                     📅 {r.schedBtn}
-                  </a>
+                  </Button>
                 </div>
 
                 <div className="border-t border-sand pt-8">
@@ -179,14 +175,9 @@ export default function ReadyPage() {
                   <p className="text-[0.88rem] text-warm-gray mb-6">{r.payP}</p>
 
                   <div className="grid sm:grid-cols-2 gap-3">
-                    <a
-                      href={STRIPE_PAYMENT_LINK}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 py-4 rounded-full text-[0.95rem] font-semibold text-white bg-terracotta hover:bg-terracotta-dark hover:-translate-y-0.5 transition-all shadow-[0_8px_24px_rgba(176,125,31,0.3)]"
-                    >
+                    <Button as="a" href={STRIPE_PAYMENT_LINK} target="_blank" rel="noopener noreferrer" className="w-full">
                       💳 {r.payStripe}
-                    </a>
+                    </Button>
                     <a
                       href={buildVenmoLink("Asesoria Lift & Inspire")}
                       target="_blank"
@@ -316,13 +307,9 @@ export default function ReadyPage() {
                   <textarea id="message" rows="3" value={form.message} onChange={update("message")} placeholder={r.messagePh} className={`${inputClass} resize-none`} />
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={status === "sending"}
-                  className="w-full py-4 rounded-full text-[1rem] font-semibold text-white transition-all mt-2 shadow-[0_8px_24px_rgba(176,125,31,0.3)] disabled:cursor-not-allowed bg-terracotta hover:bg-terracotta-dark hover:-translate-y-0.5"
-                >
+                <Button type="submit" disabled={status === "sending"} size="lg" className="w-full mt-2">
                   {status === "sending" ? r.submitting : r.submit}
-                </button>
+                </Button>
 
                 {status === "error" && <p className="text-center text-[0.82rem] text-red-500 mt-3">{errorMsg}</p>}
                 <p className="text-center text-[0.78rem] text-light-gray mt-3.5">{r.note}</p>
