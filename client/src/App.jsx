@@ -22,6 +22,7 @@ import MemberDashboard from "./components/members/Dashboard";
 import WorkoutLogger from "./components/members/WorkoutLogger";
 import RoutineEditor from "./components/members/RoutineEditor";
 import Progress from "./components/members/Progress";
+import DesignSystem from "./components/DesignSystem";
 
 function Landing() {
   return (
@@ -59,6 +60,7 @@ export default function App() {
         <Route path="/app/new" element={<WorkoutLogger />} />
         <Route path="/app/routine" element={<RoutineEditor />} />
         <Route path="/app/progress" element={<Progress />} />
+        <Route path="/design" element={<DesignSystem />} />
       </Routes>
     </LanguageProvider>
   );
