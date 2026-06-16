@@ -1,155 +1,134 @@
 import { Link } from "react-router-dom";
+import { Button, Card, Badge, Input, Textarea, Select, Field, SectionHeading } from "./ui";
 
-/* ── Design System — Hevy-inspired dark UI ──
-   A living style guide showing the dark, card-based components for the
-   workout-tracker area. Visit at /design. Not linked in the public nav. */
+/* ── Design System — the shared building blocks (light, on-brand) ──
+   Documents the reusable <Button>, <Card>, <Badge>, form fields and
+   <SectionHeading> used consistently across the whole site. Visit /design. */
 
-// Sample routines (mirrors the Hevy "Routines" screen layout).
-const ROUTINES = [
-  { name: "Quads and hams", items: "Bulgarian Split Squat, Deadlift (Smith Machine), Hip Abduction (Machine), Seated Leg…" },
-  { name: "Shoulders · Back · Biceps", items: "Chin Up, Lat Pulldown (Cable), Single Arm Lateral Raise (Cable), Front Raise (Dumbbell…" },
-  { name: "Leg day", items: "Squat (Barbell), Split Squat (Dumbbell), Back Extension (Weighted Hyperextension)…" },
-  { name: "Upper body", items: "Iso-Lateral Row (Machine), Seated Lateral Raise (Dumbbell), Shoulder Press (Dumbbell…" },
+const COLORS = [
+  ["Terracotta (primary)", "bg-terracotta", "#b07d1f"],
+  ["Terracotta Dark", "bg-terracotta-dark", "#916615"],
+  ["Gold (accent)", "bg-gold", "#d9a441"],
+  ["Forest", "bg-forest", "#3e564a"],
+  ["Sage", "bg-sage", "#82a392"],
+  ["Sage Light", "bg-sage-light", "#c6dbac"],
+  ["Cream (bg)", "bg-cream", "#f6f1e6"],
+  ["Sand (border)", "bg-sand", "#e7dcc9"],
+  ["Charcoal (text)", "bg-charcoal", "#303a33"],
+  ["Warm Gray", "bg-warm-gray", "#61706a"],
 ];
 
-const SURFACES = [
-  { name: "Background", hex: "#0c0d0f", cls: "bg-[#0c0d0f]" },
-  { name: "Card", hex: "#18191c", cls: "bg-[#18191c]" },
-  { name: "Card hover", hex: "#212327", cls: "bg-[#212327]" },
-  { name: "Border", hex: "#2a2c31", cls: "bg-[#2a2c31]" },
-];
-const ACCENTS = [
-  { name: "Accent (Amber)", hex: "#d9a441", cls: "bg-gold" },
-  { name: "Accent dark", hex: "#b07d1f", cls: "bg-terracotta" },
-  { name: "Text", hex: "#f2f3f5", cls: "bg-[#f2f3f5]" },
-  { name: "Muted text", hex: "#9aa0a6", cls: "bg-[#9aa0a6]" },
-];
-
-function Section({ title, children }) {
+function Block({ title, children }) {
   return (
     <section className="mb-14">
-      <h2 className="text-[1.4rem] font-bold text-white mb-1">{title}</h2>
-      <div className="h-px bg-[#2a2c31] mb-6" />
+      <h2 className="font-display text-[1.7rem] font-semibold text-charcoal mb-1">{title}</h2>
+      <div className="h-px bg-sand mb-6" />
       {children}
     </section>
   );
 }
 
-function Swatch({ c }) {
-  return (
-    <div className="rounded-xl overflow-hidden border border-[#2a2c31] bg-[#18191c]">
-      <div className={`h-16 ${c.cls}`} />
-      <div className="p-2.5">
-        <div className="text-[0.82rem] font-semibold text-white">{c.name}</div>
-        <div className="text-[0.72rem] text-[#9aa0a6] mt-0.5 font-mono">{c.hex}</div>
-      </div>
-    </div>
-  );
-}
-
 export default function DesignSystem() {
   return (
-    <div className="min-h-screen bg-[#0c0d0f] text-[#f2f3f5] relative z-[1]">
-      <header className="px-[5%] py-8 border-b border-[#2a2c31]">
-        <div className="max-w-[1040px] mx-auto">
-          <Link to="/" className="text-[0.8rem] text-[#9aa0a6] font-semibold hover:text-white transition-colors">← Lift &amp; Inspire</Link>
-          <h1 className="text-[clamp(1.8rem,4vw,2.6rem)] font-bold mt-3">Design System</h1>
-          <p className="text-[#9aa0a6] mt-2 max-w-[560px]">Dark, card-based UI for the workout tracker — inspired by Hevy.</p>
+    <div className="min-h-screen bg-cream relative z-[1]">
+      <header className="bg-forest text-white px-[5%] py-12">
+        <div className="max-w-[1000px] mx-auto">
+          <Link to="/" className="text-[0.8rem] text-sage-light font-semibold hover:text-white transition-colors">← Lift &amp; Inspire</Link>
+          <h1 className="font-display text-[clamp(2rem,5vw,3rem)] font-semibold mt-3">Design System</h1>
+          <p className="text-white/70 mt-2 max-w-[560px]">Reusable building blocks — buttons, cards, fields and layout — used consistently across the whole site.</p>
         </div>
       </header>
 
-      <main className="max-w-[1040px] mx-auto px-[5%] py-12">
-        {/* Routines layout (the Hevy screen) */}
-        <Section title="Routines screen">
-          <div className="grid lg:grid-cols-[1fr_300px] gap-5 items-start">
-            <div>
-              <button className="flex items-center gap-2 text-[#9aa0a6] text-[0.85rem] font-medium mb-3">
-                <span>▾</span> My Routines (4)
-              </button>
-              <div className="grid gap-3">
-                {ROUTINES.map((r) => (
-                  <div key={r.name} className="bg-[#18191c] hover:bg-[#212327] border border-[#2a2c31] rounded-2xl p-5 transition-colors cursor-pointer">
-                    <div className="flex items-start justify-between gap-3">
-                      <h3 className="text-[1.05rem] font-bold text-white">{r.name}</h3>
-                      <button className="text-[#9aa0a6] hover:text-white text-lg leading-none">⋯</button>
-                    </div>
-                    <p className="text-[0.85rem] text-[#9aa0a6] mt-1.5 leading-[1.5]">{r.items}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Side panel */}
-            <div className="bg-[#18191c] border border-[#2a2c31] rounded-2xl p-3">
-              {[
-                { icon: "📋", label: "New Routine" },
-                { icon: "📁", label: "New Folder" },
-              ].map((a, i) => (
-                <button key={a.label} className={`w-full flex items-center gap-3 p-3 rounded-xl hover:bg-[#212327] transition-colors text-left ${i ? "mt-1" : ""}`}>
-                  <span className="w-9 h-9 rounded-lg bg-[#0c0d0f] border border-[#2a2c31] flex items-center justify-center">{a.icon}</span>
-                  <span className="flex-1 font-semibold text-white text-[0.92rem]">{a.label}</span>
-                  <span className="text-[#9aa0a6]">›</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </Section>
-
+      <main className="max-w-[1000px] mx-auto px-[5%] py-14">
         {/* Colors */}
-        <Section title="Surfaces & accents">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-            {SURFACES.map((c) => <Swatch key={c.name} c={c} />)}
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {ACCENTS.map((c) => <Swatch key={c.name} c={c} />)}
-          </div>
-        </Section>
-
-        {/* Buttons */}
-        <Section title="Buttons">
-          <div className="flex flex-wrap items-center gap-4">
-            <button className="bg-gold text-[#0c0d0f] px-6 py-3 rounded-xl text-[0.92rem] font-bold hover:brightness-110 transition-all">Primary</button>
-            <button className="bg-[#212327] text-white px-6 py-3 rounded-xl text-[0.92rem] font-semibold border border-[#2a2c31] hover:bg-[#2a2c31] transition-colors">Secondary</button>
-            <button className="border border-[#3a3d43] text-[#9aa0a6] px-6 py-3 rounded-xl text-[0.92rem] font-semibold hover:text-white hover:border-white transition-colors">Ghost</button>
-            <button className="bg-gold text-[#0c0d0f] text-[0.82rem] font-bold px-4 py-2 rounded-lg">Small</button>
-          </div>
-        </Section>
-
-        {/* Inputs */}
-        <Section title="Form fields">
-          <div className="grid gap-4 max-w-[440px]">
-            <input type="text" placeholder="Routine name" className="w-full px-4 py-3 rounded-xl bg-[#18191c] border border-[#2a2c31] text-white placeholder:text-[#6b7178] outline-none focus:border-gold transition-colors" />
-            <select className="w-full px-4 py-3 rounded-xl bg-[#18191c] border border-[#2a2c31] text-white outline-none focus:border-gold transition-colors cursor-pointer">
-              <option>Choose an exercise…</option>
-            </select>
-          </div>
-        </Section>
-
-        {/* Chips & stat */}
-        <Section title="Chips & stats">
-          <div className="flex flex-wrap gap-2.5 mb-5">
-            <span className="text-[0.76rem] font-semibold text-gold bg-gold/15 px-3 py-1.5 rounded-full">🔥 28-Day Streak</span>
-            <span className="text-[0.76rem] font-semibold text-[#9aa0a6] bg-[#212327] px-3 py-1.5 rounded-full">RIR 2</span>
-            <span className="text-[0.76rem] font-semibold text-emerald-300 bg-emerald-500/15 px-3 py-1.5 rounded-full">↑ Strength</span>
-          </div>
-          <div className="inline-flex gap-6 bg-[#18191c] border border-[#2a2c31] rounded-2xl px-6 py-4">
-            {[["12", "Workouts"], ["3", "Routines"], ["28", "Day streak"]].map(([n, l]) => (
-              <div key={l} className="text-center">
-                <div className="text-[1.8rem] font-bold text-white leading-none">{n}</div>
-                <div className="text-[0.74rem] text-[#9aa0a6] mt-1">{l}</div>
-              </div>
+        <Block title="Colors">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            {COLORS.map(([name, cls, hex]) => (
+              <Card key={name} className="overflow-hidden">
+                <div className={`h-16 ${cls}`} />
+                <div className="p-3">
+                  <div className="text-[0.82rem] font-semibold text-charcoal">{name}</div>
+                  <div className="text-[0.72rem] text-warm-gray font-mono mt-0.5">{hex}</div>
+                </div>
+              </Card>
             ))}
           </div>
-        </Section>
+        </Block>
 
-        {/* Typography */}
-        <Section title="Typography">
-          <div className="bg-[#18191c] border border-[#2a2c31] rounded-2xl p-6">
-            <p className="text-[2rem] font-bold text-white">Routines</p>
-            <p className="text-[1.1rem] font-semibold text-white mt-3">Section heading</p>
-            <p className="text-[0.92rem] text-[#9aa0a6] mt-2 max-w-[560px]">Body / secondary text uses a muted gray on dark surfaces for comfortable reading and clear hierarchy.</p>
+        {/* Buttons */}
+        <Block title="Button">
+          <div className="flex flex-wrap items-center gap-4 mb-5">
+            <Button variant="primary">Primary</Button>
+            <Button variant="secondary">Secondary</Button>
+            <Button variant="forest">Forest</Button>
+            <Button variant="ghost">Ghost</Button>
           </div>
-        </Section>
+          <div className="flex flex-wrap items-center gap-4">
+            <Button size="sm">Small</Button>
+            <Button size="md">Medium</Button>
+            <Button size="lg">Large</Button>
+          </div>
+          <p className="text-[0.8rem] text-warm-gray mt-4 font-mono">&lt;Button variant="primary" size="md"&gt;…&lt;/Button&gt;</p>
+        </Block>
+
+        {/* Cards */}
+        <Block title="Card">
+          <div className="grid sm:grid-cols-2 gap-5">
+            <Card className="p-7">
+              <h3 className="font-display text-[1.4rem] font-semibold text-charcoal mb-1">Standard card</h3>
+              <p className="text-[0.9rem] text-warm-gray">Soft border, subtle shadow, 16px radius.</p>
+            </Card>
+            <Card featured className="p-7 relative">
+              <Badge className="absolute top-0 right-8 -translate-y-1/2 uppercase tracking-[0.1em] !text-white !bg-terracotta">Featured</Badge>
+              <h3 className="font-display text-[1.4rem] font-semibold text-charcoal mb-1">Featured card</h3>
+              <p className="text-[0.9rem] text-warm-gray">Amber border for the highlighted option.</p>
+            </Card>
+          </div>
+        </Block>
+
+        {/* List row pattern (Hevy-style) */}
+        <Block title="List row">
+          <div className="grid gap-3 max-w-[640px]">
+            {[
+              ["Quads & hams", "Bulgarian Split Squat, Romanian Deadlift, Leg Press, Leg Curl…"],
+              ["Upper body", "Bench Press, Overhead Press, Lat Pulldown, Bicep Curl…"],
+            ].map(([name, items]) => (
+              <Card key={name} className="p-5 hover:border-sage-light cursor-pointer">
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="font-semibold text-charcoal">{name}</h3>
+                  <span className="text-warm-gray">⋯</span>
+                </div>
+                <p className="text-[0.85rem] text-warm-gray mt-1.5 leading-[1.5]">{items}</p>
+              </Card>
+            ))}
+          </div>
+        </Block>
+
+        {/* Badges */}
+        <Block title="Badge">
+          <div className="flex flex-wrap gap-2.5">
+            <Badge tone="amber">Amber</Badge>
+            <Badge tone="sage">Sage</Badge>
+            <Badge tone="gold">Gold</Badge>
+            <Badge tone="neutral">Neutral</Badge>
+          </div>
+        </Block>
+
+        {/* Form */}
+        <Block title="Form fields">
+          <Card className="p-6 grid gap-4 max-w-[440px]">
+            <Field label="Text input"><Input placeholder="Your name" /></Field>
+            <Field label="Select"><Select><option>Choose…</option><option>Option A</option></Select></Field>
+            <Field label="Textarea"><Textarea rows="3" placeholder="Write something…" /></Field>
+          </Card>
+        </Block>
+
+        {/* Section heading */}
+        <Block title="Section heading">
+          <Card className="p-7">
+            <SectionHeading eyebrow="Programs & Pricing" title="Two simple ways to" em="finally stay consistent." sub="Used at the top of every major section for a consistent rhythm." />
+          </Card>
+        </Block>
       </main>
     </div>
   );
