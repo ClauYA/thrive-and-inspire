@@ -594,6 +594,137 @@ app.delete("/api/admin/posts/:id", requireAuth, async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// Testimonials — clients submit feedback; coach approves + shares
+// ─────────────────────────────────────────────────────────────
+function toTestimonial(row, { withEmail = false } = {}) {
+  const t = {
+    id: row.id,
+    name: row.name,
+    detail: row.detail || "",
+    rating: row.rating,
+    text: row.text,
+    image: row.image || "",
+    lang: row.lang || "",
+    published: row.published,
+    featured: row.featured,
+    createdAt: row.created_at,
+  };
+  if (withEmail) t.email = row.email || "";
+  return t;
+}
+
+// ── Public: submit a testimonial (awaits approval) ──
+app.post("/api/testimonials", async (req, res) => {
+  if (!dbEnabled) return res.status(503).json({ ok: false, error: "Testimonials are not configured on the server." });
+  const { name, detail, email, rating, text, lang } = req.body || {};
+  if (!name || !String(name).trim()) return res.status(400).json({ ok: false, error: "Please enter your name." });
+  if (!text || !String(text).trim()) return res.status(400).json({ ok: false, error: "Please share a few words about your experience." });
+  if (email && !isValidEmail(email)) return res.status(400).json({ ok: false, error: "Please enter a valid email." });
+  const r = Math.min(5, Math.max(1, parseInt(rating, 10) || 5));
+  try {
+    const { rows } = await query(
+      `insert into testimonials (name, detail, email, rating, text, lang)
+       values ($1, $2, $3, $4, $5, $6) returning *`,
+      [String(name).trim(), String(detail || "").trim(), String(email || "").trim().toLowerCase(), r, String(text).trim(), lang === "en" ? "en" : "es"]
+    );
+    // Notify the coach if email is configured (the testimonial is already saved).
+    if (transporter) {
+      try {
+        await transporter.sendMail({
+          from: `"Lift & Inspire" <${mailFrom}>`,
+          to: APPLY_TO,
+          replyTo: email || undefined,
+          subject: `New testimonial from ${String(name).trim()} (${r}★)`,
+          text: `${String(name).trim()}${detail ? ` — ${detail}` : ""}\nRating: ${r}/5\n\n${String(text).trim()}\n\nReview & publish it in the admin dashboard.`,
+        });
+      } catch (err) {
+        console.error("Failed to send testimonial notification:", err);
+      }
+    }
+    res.json({ ok: true, testimonial: toTestimonial(rows[0]) });
+  } catch (err) {
+    console.error("Submit testimonial failed:", err);
+    res.status(500).json({ ok: false, error: "Could not submit your testimonial." });
+  }
+});
+
+// ── Public: list published testimonials (optionally by language) ──
+app.get("/api/testimonials", async (req, res) => {
+  if (!dbEnabled) return res.json({ ok: true, testimonials: [] });
+  try {
+    const lang = req.query.lang;
+    const rows = lang
+      ? (await query(
+          `select * from testimonials where published = true and (lang = $1 or lang is null or lang = '')
+           order by featured desc, created_at desc`,
+          [lang]
+        )).rows
+      : (await query(`select * from testimonials where published = true order by featured desc, created_at desc`)).rows;
+    res.json({ ok: true, testimonials: rows.map((r) => toTestimonial(r)) });
+  } catch (err) {
+    console.error("Fetch testimonials failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load testimonials." });
+  }
+});
+
+// ── Admin: list all testimonials (incl. pending) ──
+app.get("/api/admin/testimonials", requireAuth, async (req, res) => {
+  try {
+    const { rows } = await query(`select * from testimonials order by created_at desc`);
+    res.json({ ok: true, testimonials: rows.map((r) => toTestimonial(r, { withEmail: true })) });
+  } catch (err) {
+    console.error("Admin fetch testimonials failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load testimonials." });
+  }
+});
+
+// ── Admin: update a testimonial (approve, feature, edit, add avatar) ──
+app.put("/api/admin/testimonials/:id", requireAuth, async (req, res) => {
+  const { name, detail, text, image, rating, published, featured, lang } = req.body || {};
+  try {
+    const { rows } = await query(
+      `update testimonials set
+         name = coalesce($2, name),
+         detail = coalesce($3, detail),
+         text = coalesce($4, text),
+         image = coalesce($5, image),
+         rating = coalesce($6, rating),
+         published = coalesce($7, published),
+         featured = coalesce($8, featured),
+         lang = coalesce($9, lang)
+       where id = $1 returning *`,
+      [
+        req.params.id,
+        name != null ? String(name).trim() : null,
+        detail != null ? String(detail).trim() : null,
+        text != null ? String(text).trim() : null,
+        image != null ? String(image).trim() : null,
+        rating != null ? Math.min(5, Math.max(1, parseInt(rating, 10) || 5)) : null,
+        published != null ? Boolean(published) : null,
+        featured != null ? Boolean(featured) : null,
+        lang != null ? (lang === "en" ? "en" : "es") : null,
+      ]
+    );
+    if (!rows[0]) return res.status(404).json({ ok: false, error: "Testimonial not found." });
+    res.json({ ok: true, testimonial: toTestimonial(rows[0], { withEmail: true }) });
+  } catch (err) {
+    console.error("Update testimonial failed:", err);
+    res.status(500).json({ ok: false, error: "Could not update the testimonial." });
+  }
+});
+
+// ── Admin: delete a testimonial ──
+app.delete("/api/admin/testimonials/:id", requireAuth, async (req, res) => {
+  try {
+    await query(`delete from testimonials where id = $1`, [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Delete testimonial failed:", err);
+    res.status(500).json({ ok: false, error: "Could not delete the testimonial." });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────
 // Workout tracker — member accounts + workout logging
 // ─────────────────────────────────────────────────────────────
 const userAuthEnabled = Boolean(JWT_SECRET && dbEnabled);

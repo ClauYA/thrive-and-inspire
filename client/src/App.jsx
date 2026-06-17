@@ -11,6 +11,7 @@ import FinalCta from "./components/FinalCta";
 import Footer from "./components/Footer";
 import ReadyPage from "./components/ReadyPage";
 import GuidePopup from "./components/GuidePopup";
+import FeedbackForm from "./components/FeedbackForm";
 import BackToTop from "./components/BackToTop";
 import Blog from "./components/Blog";
 import BlogPost from "./components/BlogPost";
@@ -52,6 +53,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/ready" element={<ReadyPage />} />
+        <Route path="/feedback" element={<FeedbackForm />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/admin/login" element={<AdminLogin />} />

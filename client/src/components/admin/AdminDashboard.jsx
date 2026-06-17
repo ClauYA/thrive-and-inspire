@@ -4,11 +4,13 @@ import { useLanguage } from "../../i18n/LanguageContext";
 import { apiAuth, getToken, clearToken } from "../../lib/api";
 import { formatDate } from "../../lib/format";
 import PostEditor from "./PostEditor";
+import TestimonialsAdmin from "./TestimonialsAdmin";
 
 export default function AdminDashboard() {
   const { t, lang } = useLanguage();
   const a = t.admin;
   const navigate = useNavigate();
+  const [tab, setTab] = useState("posts"); // "posts" | "testimonials"
   const [posts, setPosts] = useState(null); // null = loading
   const [editing, setEditing] = useState(null); // null | post | "new"
   const [error, setError] = useState("");
@@ -79,6 +81,25 @@ export default function AdminDashboard() {
           />
         ) : (
           <>
+            <div className="flex items-center gap-2 mb-8 bg-white border border-sand rounded-full p-1 w-fit">
+              <button
+                onClick={() => setTab("posts")}
+                className={`text-[0.85rem] font-semibold px-5 py-2 rounded-full transition-colors ${tab === "posts" ? "bg-terracotta text-white" : "text-warm-gray"}`}
+              >
+                {a.tabPosts}
+              </button>
+              <button
+                onClick={() => setTab("testimonials")}
+                className={`text-[0.85rem] font-semibold px-5 py-2 rounded-full transition-colors ${tab === "testimonials" ? "bg-terracotta text-white" : "text-warm-gray"}`}
+              >
+                {a.tabTestimonials}
+              </button>
+            </div>
+
+            {tab === "testimonials" ? (
+              <TestimonialsAdmin onAuthError={goLogin} />
+            ) : (
+              <>
             <div className="flex items-center justify-between mb-8">
               <h1 className="font-display text-[2rem] font-semibold text-charcoal">{a.dashboard}</h1>
               <button
@@ -134,6 +155,8 @@ export default function AdminDashboard() {
                   </div>
                 ))}
               </div>
+            )}
+              </>
             )}
           </>
         )}

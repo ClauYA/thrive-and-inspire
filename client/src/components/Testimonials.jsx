@@ -1,23 +1,49 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import Reveal from "./Reveal";
 import { useLanguage } from "../i18n/LanguageContext";
 
 export default function Testimonials() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const tt = t.testimonials;
-  const items = tt.items;
+  const [submitted, setSubmitted] = useState([]);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
+  // Pull in any client-submitted, approved testimonials and show them first.
+  useEffect(() => {
+    fetch(`/api/testimonials?lang=${lang}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.ok && Array.isArray(d.testimonials)) {
+          setSubmitted(
+            d.testimonials.map((r) => ({
+              tag: tt.verified,
+              avatar: (r.name || "·").trim().charAt(0).toUpperCase(),
+              image: r.image,
+              text: `“${r.text}”`,
+              name: r.name,
+              detail: r.detail,
+              rating: r.rating,
+              featured: r.featured,
+            }))
+          );
+        }
+      })
+      .catch(() => {});
+  }, [lang, tt.verified]);
+
+  const items = [...submitted, ...tt.items];
+
   // Auto-rotate through the reviews, one at a time.
   useEffect(() => {
-    if (paused) return;
+    if (paused || items.length === 0) return;
     const id = setInterval(() => setIndex((i) => (i + 1) % items.length), 5500);
     return () => clearInterval(id);
   }, [paused, items.length]);
 
-  const item = items[index];
+  const item = items[index % items.length];
 
   return (
     <section id="testimonials" className="relative bg-warm-white border-y border-sand">
@@ -56,7 +82,7 @@ export default function Testimonials() {
               >
                 {item.tag}
               </span>
-              <div className={`text-[1rem] mb-4 tracking-[2px] ${item.featured ? "brightness-150" : ""}`}>★★★★★</div>
+              <div className={`text-[1rem] mb-4 tracking-[2px] ${item.featured ? "brightness-150" : ""}`}>{"★".repeat(item.rating || 5)}</div>
               <p
                 className={`font-display text-[1.25rem] italic leading-[1.6] mb-7 ${
                   item.featured ? "text-white" : "text-charcoal"
@@ -93,9 +119,20 @@ export default function Testimonials() {
               key={i}
               onClick={() => setIndex(i)}
               aria-label={`Review ${i + 1}`}
-              className={`h-2 rounded-full transition-all ${i === index ? "w-6 bg-terracotta" : "w-2 bg-sand hover:bg-light-gray"}`}
+              className={`h-2 rounded-full transition-all ${i === index % items.length ? "w-6 bg-terracotta" : "w-2 bg-sand hover:bg-light-gray"}`}
             />
           ))}
+        </div>
+
+        {/* Share-your-story CTA */}
+        <div className="text-center mt-12">
+          <p className="text-[0.95rem] text-warm-gray mb-4">{tt.shareCta}</p>
+          <Link
+            to="/feedback"
+            className="inline-block bg-terracotta text-white text-[0.9rem] font-semibold px-7 py-3.5 rounded-full hover:bg-terracotta-dark transition-colors shadow-[0_8px_24px_rgba(176,125,31,0.3)]"
+          >
+            {tt.shareBtn}
+          </Link>
         </div>
       </div>
     </section>
