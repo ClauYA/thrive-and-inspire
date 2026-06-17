@@ -58,7 +58,7 @@ const CALENDLY_URL = process.env.CALENDLY_URL || "https://calendly.com/cyabittne
 
 // Builds the friendly auto-reply we send to an applicant, in their language,
 // inviting them to book the discovery call via Calendly.
-function applicantAutoReply(firstName, lang) {
+function applicantAutoReply(firstName, lang, feedbackUrl) {
   const es = lang !== "en";
   const subject = es
     ? `¡Gracias por aplicar, ${firstName}! Agenda tu llamada 🌿`
@@ -74,8 +74,13 @@ function applicantAutoReply(firstName, lang) {
     ? "Nos vemos pronto. ¡Estoy muy emocionada de acompañarte!"
     : "Talk soon — I'm so excited to support you!";
   const signature = es ? "Con cariño,<br>Claudia · Lift & Inspire" : "Warmly,<br>Claudia · Lift & Inspire";
+  // Gentle P.S. for anyone who has already worked with Claudia.
+  const psText = es ? "¿Ya trabajaste conmigo?" : "Already worked with me?";
+  const psLink = es ? "Comparte tu experiencia" : "Share your experience";
 
-  const text = `${intro}\n\n${cta}\n${CALENDLY_URL}\n\n${closing}\n\n${es ? "Con cariño, Claudia · Lift & Inspire" : "Warmly, Claudia · Lift & Inspire"}`;
+  const text =
+    `${intro}\n\n${cta}\n${CALENDLY_URL}\n\n${closing}\n\n${es ? "Con cariño, Claudia · Lift & Inspire" : "Warmly, Claudia · Lift & Inspire"}` +
+    (feedbackUrl ? `\n\nP.D. ${psText} ${psLink}: ${feedbackUrl}` : "");
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:540px;margin:0 auto;color:#2c2c2a;line-height:1.6">
       <h2 style="color:#b07d1f;margin:0 0 16px">${es ? "¡Gracias por aplicar!" : "Thanks for applying!"}</h2>
@@ -85,7 +90,8 @@ function applicantAutoReply(firstName, lang) {
         <a href="${CALENDLY_URL}" style="background:#b07d1f;color:#fff;text-decoration:none;font-weight:bold;padding:14px 28px;border-radius:999px;display:inline-block">${button}</a>
       </p>
       <p style="margin:0 0 16px">${closing}</p>
-      <p style="margin:0;color:#6b6560">${signature}</p>
+      <p style="margin:0 0 20px;color:#6b6560">${signature}</p>
+      ${feedbackUrl ? `<p style="margin:0;padding-top:16px;border-top:1px solid #e8ddd0;color:#6b6560;font-size:13px">${psText} <a href="${feedbackUrl}" style="color:#b07d1f;font-weight:bold;text-decoration:none">${psLink} →</a></p>` : ""}
     </div>`;
   return { subject, text, html };
 }
@@ -211,7 +217,9 @@ app.post("/api/apply", async (req, res) => {
 
     // Auto-reply to the applicant with the Calendly booking link.
     try {
-      const reply = applicantAutoReply(submission.firstName, lang);
+      const base = APP_BASE_URL || `${req.protocol}://${req.get("host")}`;
+      const feedbackUrl = `${base.replace(/\/$/, "")}/feedback`;
+      const reply = applicantAutoReply(submission.firstName, lang, feedbackUrl);
       await transporter.sendMail({
         from: `"Lift & Inspire" <${mailFrom}>`,
         to: submission.email,
