@@ -305,6 +305,7 @@ export const translations = {
     },
     footer: {
       copy: "© 2026 Lift & Inspire. Built with intention, for beginners who dare to begin.",
+      feedback: "Share your experience",
     },
     guide: {
       badge: "Free Gift 🎁",
@@ -815,6 +816,7 @@ export const translations = {
     },
     footer: {
       copy: "© 2026 Lift & Inspire. Hecho con intención, para principiantes que se atreven a empezar.",
+      feedback: "Comparte tu experiencia",
     },
     guide: {
       badge: "Regalo Gratis 🎁",
