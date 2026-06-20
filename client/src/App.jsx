@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
@@ -62,11 +62,13 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/gym" element={<Navigate to="/app" replace />} />
         <Route path="/app" element={<MemberDashboard />} />
         <Route path="/app/new" element={<WorkoutLogger />} />
         <Route path="/app/routine" element={<RoutineEditor />} />
         <Route path="/app/progress" element={<Progress />} />
         <Route path="/design" element={<DesignSystem />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </LanguageProvider>
   );
