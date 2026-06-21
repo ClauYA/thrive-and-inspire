@@ -1393,6 +1393,22 @@ app.get("/api/progress/:exerciseId", requireUser, async (req, res) => {
   }
 });
 
+// ── Imported progress baseline (e.g. Hipertrofit snapshot) ──
+app.get("/api/progress-baseline", requireUser, async (req, res) => {
+  try {
+    const { rows } = await query(
+      `select exercise_name, muscle_group, evolution_pct::float as evolution_pct,
+              vol_max::float as vol_max, vol_current::float as vol_current, source
+       from progress_baseline where user_id = $1 order by exercise_name`,
+      [req.user.sub]
+    );
+    res.json({ ok: true, baseline: rows });
+  } catch (err) {
+    console.error("Progress baseline failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load your progress baseline." });
+  }
+});
+
 // ── Flat export of all the user's sets (for Excel) ──
 app.get("/api/export", requireUser, async (req, res) => {
   try {
