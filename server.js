@@ -54,7 +54,7 @@ if (process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) {
 const APPLY_TO = process.env.APPLY_TO || mailFrom;
 
 // Booking link sent to applicants in the auto-reply (override via env var).
-const CALENDLY_URL = process.env.CALENDLY_URL || "https://calendly.com/cyabittner/30min";
+const CALENDLY_URL = process.env.CALENDLY_URL || "https://calendly.com/0liftandinspire0/30min";
 
 // Builds the friendly auto-reply we send to an applicant, in their language,
 // inviting them to book the discovery call via Calendly.
