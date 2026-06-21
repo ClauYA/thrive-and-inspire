@@ -1,3 +1,16 @@
+// RIR is stored as a label/range ("fallo", "0-1", "1", "1-2", "2", "2-3") or,
+// for older data, a plain number. Convert it to a single number (the upper
+// bound of a range) so the progression logic below can compare it.
+//   "fallo"/"failure" → 0 · "2-3" → 3 · "1-2" → 2 · "2" → 2
+function rirToNumber(rir) {
+  if (rir == null || rir === "") return null;
+  const str = String(rir).toLowerCase();
+  if (str.includes("fallo") || str.includes("fail")) return 0;
+  const nums = str.match(/\d+(?:\.\d+)?/g);
+  if (!nums) return null;
+  return Number(nums[nums.length - 1]); // upper bound of a range
+}
+
 // Evidence-based progressive-overload suggestion from the last session,
 // using RIR (reps in reserve) + double progression.
 //   - RIR >= 3  → too easy, add weight/reps
@@ -19,7 +32,7 @@ export function recommendation(lastSets, lang = "en") {
   });
   const w = Number(top.weight) || 0;
   const reps = Number(top.reps) || 0;
-  const rir = top.rir == null ? null : Number(top.rir);
+  const rir = rirToNumber(top.rir);
   const inc = w >= 20 ? 2.5 : w > 0 ? 1 : 0;
 
   if (rir == null) {

@@ -24,6 +24,7 @@ import ResetPassword from "./components/members/ResetPassword";
 import MemberDashboard from "./components/members/Dashboard";
 import WorkoutLogger from "./components/members/WorkoutLogger";
 import RoutineEditor from "./components/members/RoutineEditor";
+import ExerciseCatalog from "./components/members/ExerciseCatalog";
 import Progress from "./components/members/Progress";
 import DesignSystem from "./components/DesignSystem";
 
@@ -66,6 +67,7 @@ export default function App() {
         <Route path="/app" element={<MemberDashboard />} />
         <Route path="/app/new" element={<WorkoutLogger />} />
         <Route path="/app/routine" element={<RoutineEditor />} />
+        <Route path="/app/exercises" element={<ExerciseCatalog />} />
         <Route path="/app/progress" element={<Progress />} />
         <Route path="/design" element={<DesignSystem />} />
         <Route path="*" element={<Navigate to="/" replace />} />
