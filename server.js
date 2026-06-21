@@ -1035,7 +1035,7 @@ app.get("/api/last-performance/:exerciseId", requireUser, async (req, res) => {
 
 // ── Create a workout (with its sets) ──
 app.post("/api/workouts", requireUser, async (req, res) => {
-  const { title, performedAt, notes, sets } = req.body || {};
+  const { title, performedAt, notes, sets, planId } = req.body || {};
   if (!Array.isArray(sets) || sets.length === 0) {
     return res.status(400).json({ ok: false, error: "Add at least one set before saving." });
   }
@@ -1043,9 +1043,9 @@ app.post("/api/workouts", requireUser, async (req, res) => {
   try {
     await client.query("begin");
     const w = await client.query(
-      `insert into workouts (user_id, title, performed_at, notes)
-       values ($1, $2, coalesce($3, now()), $4) returning *`,
-      [req.user.sub, String(title || "Workout").trim(), performedAt || null, String(notes || "").trim()]
+      `insert into workouts (user_id, title, performed_at, notes, plan_id)
+       values ($1, $2, coalesce($3, now()), $4, $5) returning *`,
+      [req.user.sub, String(title || "Workout").trim(), performedAt || null, String(notes || "").trim(), planId || null]
     );
     const workout = w.rows[0];
     for (const s of sets) {
@@ -1191,6 +1191,183 @@ app.post("/api/routine/advance", requireUser, async (req, res) => {
   } catch (err) {
     console.error("Advance routine failed:", err);
     res.status(500).json({ ok: false, error: "Could not advance your routine." });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────
+// Plans / mesocycles (multiple per user, one active)
+// ─────────────────────────────────────────────────────────────
+function shapePlan(p, days) {
+  return {
+    id: p.id,
+    name: p.name,
+    objective: p.objective || "",
+    weeks: p.weeks,
+    startDate: p.start_date,
+    endDate: p.end_date,
+    isActive: p.is_active,
+    nextIndex: p.next_index,
+    days: (days || []).map((x) => ({ position: x.position, name: x.name, exerciseIds: x.exercise_ids || [], notes: x.notes || "" })),
+  };
+}
+
+async function loadPlan(planId, userId) {
+  const r = await query(`select * from plans where id = $1 and user_id = $2`, [planId, userId]);
+  if (!r.rows[0]) return null;
+  const d = await query(`select position, name, exercise_ids, notes from plan_days where plan_id = $1 order by position`, [planId]);
+  return shapePlan(r.rows[0], d.rows);
+}
+
+// Replace a plan's days inside an open transaction client.
+async function writePlanDays(client, planId, days) {
+  await client.query(`delete from plan_days where plan_id = $1`, [planId]);
+  for (let i = 0; i < days.length; i++) {
+    const day = days[i] || {};
+    const ids = Array.isArray(day.exerciseIds) ? day.exerciseIds.filter(Boolean) : [];
+    await client.query(
+      `insert into plan_days (plan_id, position, name, exercise_ids, notes) values ($1, $2, $3, $4, $5)`,
+      [planId, i, String(day.name || `Day ${i + 1}`).trim(), ids, String(day.notes || "").trim()]
+    );
+  }
+}
+
+// ── List the member's plans ──
+app.get("/api/plans", requireUser, async (req, res) => {
+  try {
+    const { rows } = await query(
+      `select p.*, count(d.id)::int as day_count
+       from plans p left join plan_days d on d.plan_id = p.id
+       where p.user_id = $1 group by p.id order by p.is_active desc, p.created_at desc`,
+      [req.user.sub]
+    );
+    res.json({
+      ok: true,
+      plans: rows.map((p) => ({
+        id: p.id, name: p.name, objective: p.objective || "", weeks: p.weeks,
+        startDate: p.start_date, endDate: p.end_date, isActive: p.is_active, dayCount: p.day_count,
+      })),
+    });
+  } catch (err) {
+    console.error("List plans failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load your plans." });
+  }
+});
+
+// ── The active plan (drives the dashboard "up next") ──
+app.get("/api/plans/active", requireUser, async (req, res) => {
+  try {
+    const r = await query(`select id from plans where user_id = $1 and is_active = true limit 1`, [req.user.sub]);
+    if (!r.rows[0]) return res.json({ ok: true, plan: null });
+    const plan = await loadPlan(r.rows[0].id, req.user.sub);
+    res.json({ ok: true, plan });
+  } catch (err) {
+    console.error("Active plan failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load your active plan." });
+  }
+});
+
+// ── A single plan with its days ──
+app.get("/api/plans/:id", requireUser, async (req, res) => {
+  try {
+    const plan = await loadPlan(req.params.id, req.user.sub);
+    if (!plan) return res.status(404).json({ ok: false, error: "Plan not found." });
+    res.json({ ok: true, plan });
+  } catch (err) {
+    console.error("Get plan failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load the plan." });
+  }
+});
+
+// ── Create a plan (first plan becomes active automatically) ──
+app.post("/api/plans", requireUser, async (req, res) => {
+  const { name, objective, weeks, startDate, endDate, days } = req.body || {};
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    const count = await client.query(`select count(*)::int as n from plans where user_id = $1`, [req.user.sub]);
+    const makeActive = count.rows[0].n === 0;
+    const ins = await client.query(
+      `insert into plans (user_id, name, objective, weeks, start_date, end_date, is_active)
+       values ($1, $2, $3, $4, $5, $6, $7) returning id`,
+      [req.user.sub, String(name || "My Plan").trim(), String(objective || "").trim(), Number(weeks) || 8, startDate || null, endDate || null, makeActive]
+    );
+    await writePlanDays(client, ins.rows[0].id, Array.isArray(days) ? days : []);
+    await client.query("commit");
+    res.json({ ok: true, plan: await loadPlan(ins.rows[0].id, req.user.sub) });
+  } catch (err) {
+    await client.query("rollback");
+    console.error("Create plan failed:", err);
+    res.status(500).json({ ok: false, error: "Could not create the plan." });
+  } finally {
+    client.release();
+  }
+});
+
+// ── Update a plan (fields + days) ──
+app.put("/api/plans/:id", requireUser, async (req, res) => {
+  const { name, objective, weeks, startDate, endDate, days } = req.body || {};
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    const owned = await client.query(`select id, next_index from plans where id = $1 and user_id = $2`, [req.params.id, req.user.sub]);
+    if (!owned.rows[0]) {
+      await client.query("rollback");
+      return res.status(404).json({ ok: false, error: "Plan not found." });
+    }
+    const clamp = Array.isArray(days) && days.length > 0 ? owned.rows[0].next_index % days.length : 0;
+    await client.query(
+      `update plans set name = $2, objective = $3, weeks = $4, start_date = $5, end_date = $6, next_index = $7 where id = $1`,
+      [req.params.id, String(name || "My Plan").trim(), String(objective || "").trim(), Number(weeks) || 8, startDate || null, endDate || null, clamp]
+    );
+    if (Array.isArray(days)) await writePlanDays(client, req.params.id, days);
+    await client.query("commit");
+    res.json({ ok: true, plan: await loadPlan(req.params.id, req.user.sub) });
+  } catch (err) {
+    await client.query("rollback");
+    console.error("Update plan failed:", err);
+    res.status(500).json({ ok: false, error: "Could not update the plan." });
+  } finally {
+    client.release();
+  }
+});
+
+// ── Make a plan the active one ──
+app.post("/api/plans/:id/activate", requireUser, async (req, res) => {
+  try {
+    const owned = await query(`select id from plans where id = $1 and user_id = $2`, [req.params.id, req.user.sub]);
+    if (!owned.rows[0]) return res.status(404).json({ ok: false, error: "Plan not found." });
+    await query(`update plans set is_active = (id = $1) where user_id = $2`, [req.params.id, req.user.sub]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Activate plan failed:", err);
+    res.status(500).json({ ok: false, error: "Could not activate the plan." });
+  }
+});
+
+// ── Advance the active plan's rotation pointer ──
+app.post("/api/plans/:id/advance", requireUser, async (req, res) => {
+  try {
+    const r = await query(`select p.id, p.next_index, count(d.id)::int as day_count
+                           from plans p left join plan_days d on d.plan_id = p.id
+                           where p.id = $1 and p.user_id = $2 group by p.id`, [req.params.id, req.user.sub]);
+    if (!r.rows[0] || r.rows[0].day_count === 0) return res.json({ ok: true });
+    const { id, next_index, day_count } = r.rows[0];
+    await query(`update plans set next_index = $2 where id = $1`, [id, (next_index + 1) % day_count]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Advance plan failed:", err);
+    res.status(500).json({ ok: false, error: "Could not advance the plan." });
+  }
+});
+
+// ── Delete a plan ──
+app.delete("/api/plans/:id", requireUser, async (req, res) => {
+  try {
+    await query(`delete from plans where id = $1 and user_id = $2`, [req.params.id, req.user.sub]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Delete plan failed:", err);
+    res.status(500).json({ ok: false, error: "Could not delete the plan." });
   }
 });
 

@@ -27,7 +27,7 @@ export default function Dashboard() {
   const tr = t.tracker;
   const navigate = useNavigate();
   const [workouts, setWorkouts] = useState(null);
-  const [routine, setRoutine] = useState(undefined); // undefined = loading
+  const [plan, setPlan] = useState(undefined); // undefined = loading
   const [exMap, setExMap] = useState({});
   const [expanded, setExpanded] = useState(null);
   const [detail, setDetail] = useState({});
@@ -36,9 +36,9 @@ export default function Dashboard() {
 
   const load = useCallback(async () => {
     try {
-      const [w, r, ex] = await Promise.all([userApi("/api/workouts"), userApi("/api/routine"), userApi("/api/exercises")]);
+      const [w, p, ex] = await Promise.all([userApi("/api/workouts"), userApi("/api/plans/active"), userApi("/api/exercises")]);
       setWorkouts(w.workouts);
-      setRoutine(r.routine);
+      setPlan(p.plan);
       const map = {};
       ex.exercises.forEach((e) => (map[e.id] = e.name));
       setExMap(map);
@@ -46,7 +46,7 @@ export default function Dashboard() {
       if (e.unauthorized) return navigate("/login");
       setError(e.message);
       setWorkouts([]);
-      setRoutine(null);
+      setPlan(null);
     }
   }, [navigate]);
 
@@ -95,7 +95,7 @@ export default function Dashboard() {
     }
   };
 
-  const nextDay = routine && routine.days.length ? routine.days[routine.nextIndex % routine.days.length] : null;
+  const nextDay = plan && plan.days.length ? plan.days[plan.nextIndex % plan.days.length] : null;
 
   return (
     <div className="min-h-screen bg-cream relative z-[1]">
@@ -103,33 +103,33 @@ export default function Dashboard() {
       <main className="max-w-[820px] mx-auto px-[5%] py-10">
         <h1 className="font-display text-[2rem] font-semibold text-charcoal mb-6">{tr.appTitle}</h1>
 
-        {/* Up next / routine card */}
-        {routine !== undefined && (
+        {/* Up next / active plan card */}
+        {plan !== undefined && (
           <div className="bg-forest text-white rounded-2xl p-5 sm:p-6 mb-6">
             {nextDay ? (
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
-                  <div className="text-[0.72rem] uppercase tracking-[0.12em] text-sage-light mb-1">{tr.upNext}</div>
+                  <div className="text-[0.72rem] uppercase tracking-[0.12em] text-sage-light mb-1">{tr.upNext} · {plan.name}</div>
                   <div className="font-display text-[1.5rem] font-semibold">{nextDay.name}</div>
                   <div className="text-[0.8rem] text-white/60 mt-0.5">{nextDay.exerciseIds.length} {tr.exercises}</div>
                 </div>
                 <div className="flex gap-2">
-                  <Button as={Link} to={`/app/new?day=${routine.nextIndex % routine.days.length}`} size="sm">
+                  <Button as={Link} to={`/app/new?plan=${plan.id}&day=${plan.nextIndex % plan.days.length}`} size="sm">
                     {tr.startDay}
                   </Button>
-                  <Button as={Link} to="/app/routine" variant="outlineLight" size="sm">
-                    {tr.editRoutine}
+                  <Button as={Link} to={`/app/plans/${plan.id}`} variant="outlineLight" size="sm">
+                    {tr.editPlanBtn}
                   </Button>
                 </div>
               </div>
             ) : (
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
-                  <div className="font-display text-[1.3rem] font-semibold">{tr.noRoutineTitle}</div>
-                  <div className="text-[0.82rem] text-white/60 mt-0.5">{tr.noRoutineSub}</div>
+                  <div className="font-display text-[1.3rem] font-semibold">{tr.noPlanTitle}</div>
+                  <div className="text-[0.82rem] text-white/60 mt-0.5">{tr.noPlanSub}</div>
                 </div>
-                <Button as={Link} to="/app/routine" size="sm">
-                  {tr.setupRoutine}
+                <Button as={Link} to="/app/plans" size="sm">
+                  {tr.createPlan}
                 </Button>
               </div>
             )}
@@ -137,8 +137,8 @@ export default function Dashboard() {
         )}
 
         {/* This week strip */}
-        {workouts !== null && routine && routine.days.length > 0 && (
-          <WeekStrip workouts={workouts} routine={routine} exMap={exMap} onPick={pickFromCalendar} />
+        {workouts !== null && plan && plan.days.length > 0 && (
+          <WeekStrip workouts={workouts} routine={plan} exMap={exMap} onPick={pickFromCalendar} />
         )}
 
         {/* Toolbar: new workout + view toggle */}

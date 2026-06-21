@@ -21,6 +21,9 @@ export default function MemberHeader() {
         <Link to="/app" className="text-[0.85rem] font-medium text-warm-gray hover:text-forest transition-colors">
           {tr.appTitle}
         </Link>
+        <Link to="/app/plans" className="text-[0.85rem] font-medium text-warm-gray hover:text-forest transition-colors">
+          {tr.plansLink}
+        </Link>
         <Link to="/app/exercises" className="text-[0.85rem] font-medium text-warm-gray hover:text-forest transition-colors">
           {tr.catalogLink}
         </Link>

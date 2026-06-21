@@ -93,6 +93,8 @@ export default function WorkoutLogger() {
   const [blocks, setBlocks] = useState([]);
   const [started, setStarted] = useState(false);
   const [fromRoutine, setFromRoutine] = useState(false);
+  const [planId, setPlanId] = useState(null);
+  const [dayNotes, setDayNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [showRirInfo, setShowRirInfo] = useState(false);
@@ -111,14 +113,17 @@ export default function WorkoutLogger() {
         if (!active) return;
         setExercises(d.exercises);
 
+        const planParam = searchParams.get("plan");
         const dayParam = searchParams.get("day");
-        if (dayParam != null) {
-          const r = await userApi("/api/routine");
+        if (planParam && dayParam != null) {
+          const r = await userApi(`/api/plans/${planParam}`);
           if (!active) return;
-          const day = r.routine?.days?.[Number(dayParam)];
+          const day = r.plan?.days?.[Number(dayParam)];
           if (day) {
             setTitle(day.name);
             setFromRoutine(true);
+            setPlanId(planParam);
+            setDayNotes(day.notes || "");
             const newBlocks = day.exerciseIds.map((id) => d.exercises.find((ex) => ex.id === id)).filter(Boolean).map((ex) => makeBlock(ex));
             setBlocks(newBlocks);
             setStarted(true);
@@ -210,10 +215,10 @@ export default function WorkoutLogger() {
     setSaving(true);
     setError("");
     try {
-      await userApi("/api/workouts", "POST", { title, performedAt: date || null, notes, sets: flatSets });
-      if (fromRoutine) {
+      await userApi("/api/workouts", "POST", { title, performedAt: date || null, notes, sets: flatSets, planId });
+      if (fromRoutine && planId) {
         try {
-          await userApi("/api/routine/advance", "POST");
+          await userApi(`/api/plans/${planId}/advance`, "POST");
         } catch {
           /* non-blocking */
         }
@@ -293,6 +298,14 @@ export default function WorkoutLogger() {
                 <textarea rows="2" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={tr.notesPh} className={`${inputClass} resize-none`} />
               </div>
             </div>
+
+            {/* Plan day notes (tempo, intensity, cues) */}
+            {dayNotes && (
+              <div className="bg-gold/10 border border-gold/40 rounded-2xl p-4 mb-4">
+                <div className="text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-charcoal/70 mb-1">{tr.planNotesLabel}</div>
+                <p className="text-[0.86rem] text-charcoal leading-[1.5] whitespace-pre-wrap">{dayNotes}</p>
+              </div>
+            )}
 
             {/* Warm-up */}
             <GuideCard title={`🔥 ${tr.warmupTitle}`} steps={tr.warmupSteps} />
