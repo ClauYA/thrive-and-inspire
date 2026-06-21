@@ -56,6 +56,34 @@ const APPLY_TO = process.env.APPLY_TO || mailFrom;
 // Booking link sent to applicants in the auto-reply (override via env var).
 const CALENDLY_URL = process.env.CALENDLY_URL || "https://calendly.com/0liftandinspire0/30min";
 
+// Sends an email through the configured transport AND records it in the
+// email_log table (best-effort) so every message is auditable from the admin
+// dashboard. `type` groups messages (e.g. "application_autoreply").
+async function sendMail(type, options) {
+  let status = "sent";
+  let errorMessage = null;
+  try {
+    if (!transporter) {
+      status = "skipped"; // no email transport configured on this server
+      return;
+    }
+    await transporter.sendMail(options);
+  } catch (err) {
+    status = "failed";
+    errorMessage = err.message;
+    throw err; // let the caller's existing catch log/handle it too
+  } finally {
+    if (dbEnabled) {
+      const to = Array.isArray(options.to) ? options.to.join(", ") : options.to || "";
+      query(
+        `insert into email_log (type, recipient, subject, body, status, error)
+         values ($1, $2, $3, $4, $5, $6)`,
+        [type, to, options.subject || "", options.text || "", status, errorMessage]
+      ).catch((e) => console.error("email_log insert failed:", e.message));
+    }
+  }
+}
+
 // Builds the friendly auto-reply we send to an applicant, in their language,
 // inviting them to book the discovery call via Calendly.
 function applicantAutoReply(firstName, lang, feedbackUrl) {
@@ -189,7 +217,7 @@ app.post("/api/apply", async (req, res) => {
       ["Received", submission.receivedAt],
     ];
     try {
-      await transporter.sendMail({
+      await sendMail("application", {
         from: `"Lift & Inspire" <${mailFrom}>`,
         to: APPLY_TO,
         replyTo: submission.email, // hitting reply goes straight to the applicant
@@ -220,7 +248,7 @@ app.post("/api/apply", async (req, res) => {
       const base = APP_BASE_URL || `${req.protocol}://${req.get("host")}`;
       const feedbackUrl = `${base.replace(/\/$/, "")}/feedback`;
       const reply = applicantAutoReply(submission.firstName, lang, feedbackUrl);
-      await transporter.sendMail({
+      await sendMail("application_autoreply", {
         from: `"Lift & Inspire" <${mailFrom}>`,
         to: submission.email,
         replyTo: APPLY_TO, // replies from the applicant reach the coach
@@ -306,7 +334,7 @@ app.post("/api/ready", async (req, res) => {
       ["Received", submission.receivedAt],
     ];
     try {
-      await transporter.sendMail({
+      await sendMail("intake", {
         from: `"Lift & Inspire" <${mailFrom}>`,
         to: APPLY_TO,
         replyTo: submission.email,
@@ -381,7 +409,7 @@ app.post("/api/guide", async (req, res) => {
       ["Received", submission.receivedAt],
     ];
     try {
-      await transporter.sendMail({
+      await sendMail("guide_lead", {
         from: `"Lift & Inspire" <${mailFrom}>`,
         to: APPLY_TO,
         replyTo: submission.email,
@@ -638,7 +666,7 @@ app.post("/api/testimonials", async (req, res) => {
     // Notify the coach if email is configured (the testimonial is already saved).
     if (transporter) {
       try {
-        await transporter.sendMail({
+        await sendMail("testimonial", {
           from: `"Lift & Inspire" <${mailFrom}>`,
           to: APPLY_TO,
           replyTo: email || undefined,
@@ -683,6 +711,17 @@ app.get("/api/admin/testimonials", requireAuth, async (req, res) => {
   } catch (err) {
     console.error("Admin fetch testimonials failed:", err);
     res.status(500).json({ ok: false, error: "Could not load testimonials." });
+  }
+});
+
+// ── Admin: list sent emails (most recent first) ──
+app.get("/api/admin/emails", requireAuth, async (req, res) => {
+  try {
+    const { rows } = await query(`select * from email_log order by created_at desc limit 200`);
+    res.json({ ok: true, emails: rows });
+  } catch (err) {
+    console.error("Admin fetch emails failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load the email log." });
   }
 });
 
@@ -831,7 +870,7 @@ app.post("/api/auth/forgot-password", async (req, res) => {
       if (transporter) {
         try {
           const mail = passwordResetEmail(user.name, resetUrl, lang);
-          await transporter.sendMail({
+          await sendMail("password_reset", {
             from: `"Lift & Inspire" <${mailFrom}>`,
             to: user.email,
             subject: mail.subject,

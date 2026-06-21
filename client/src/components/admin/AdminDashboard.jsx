@@ -5,6 +5,7 @@ import { apiAuth, getToken, clearToken } from "../../lib/api";
 import { formatDate } from "../../lib/format";
 import PostEditor from "./PostEditor";
 import TestimonialsAdmin from "./TestimonialsAdmin";
+import EmailLog from "./EmailLog";
 
 export default function AdminDashboard() {
   const { t, lang } = useLanguage();
@@ -94,10 +95,18 @@ export default function AdminDashboard() {
               >
                 {a.tabTestimonials}
               </button>
+              <button
+                onClick={() => setTab("emails")}
+                className={`text-[0.85rem] font-semibold px-5 py-2 rounded-full transition-colors ${tab === "emails" ? "bg-terracotta text-white" : "text-warm-gray"}`}
+              >
+                {a.tabEmails}
+              </button>
             </div>
 
             {tab === "testimonials" ? (
               <TestimonialsAdmin onAuthError={goLogin} />
+            ) : tab === "emails" ? (
+              <EmailLog onAuthError={goLogin} />
             ) : (
               <>
             <div className="flex items-center justify-between mb-8">
