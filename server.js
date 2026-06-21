@@ -167,6 +167,41 @@ function isValidEmail(email) {
   return typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+// ── Health / diagnostics ──
+// Open /api/health in a browser to see whether the database connects, which
+// tables exist, and how many blog posts are stored. Never exposes secrets.
+app.get("/api/health", async (req, res) => {
+  const health = { ok: true, dbConfigured: dbEnabled, email: Boolean(transporter) };
+  if (!dbEnabled) {
+    health.db = "not_configured"; // DATABASE_URL is not set
+    return res.json(health);
+  }
+  try {
+    await query("select 1");
+    health.db = "connected";
+    const want = ["posts", "users", "applications", "intakes", "guide_leads", "password_resets", "testimonials", "email_log"];
+    const { rows } = await query(
+      `select table_name from information_schema.tables where table_schema = 'public' and table_name = any($1)`,
+      [want]
+    );
+    const present = rows.map((r) => r.table_name);
+    health.tables = Object.fromEntries(want.map((t) => [t, present.includes(t)]));
+    if (present.includes("posts")) {
+      const c = await query(`select count(*)::int as total, count(*) filter (where published)::int as published from posts`);
+      health.posts = c.rows[0];
+    }
+    if (present.includes("users")) {
+      const u = await query(`select count(*)::int as total from users`);
+      health.users = u.rows[0].total;
+    }
+  } catch (err) {
+    health.ok = false;
+    health.db = "error";
+    health.dbError = err.message; // e.g. "password authentication failed" — no secrets
+  }
+  res.json(health);
+});
+
 // ── Application endpoint ──
 app.post("/api/apply", async (req, res) => {
   const { firstName, lastName, email, goal, obstacles, findUs, lang } = req.body || {};
