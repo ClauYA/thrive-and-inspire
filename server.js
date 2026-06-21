@@ -959,11 +959,53 @@ app.post("/api/auth/reset-password", async (req, res) => {
 // ── Exercise library ──
 app.get("/api/exercises", requireUser, async (req, res) => {
   try {
-    const { rows } = await query(`select id, name, muscle_group, equipment, media_url, instructions from exercises order by name`);
+    // The shared default library (owner_id is null) plus this member's own.
+    const { rows } = await query(
+      `select id, name, muscle_group, equipment, media_url, instructions, owner_id
+       from exercises where owner_id is null or owner_id = $1 order by name`,
+      [req.user.sub]
+    );
     res.json({ ok: true, exercises: rows });
   } catch (err) {
     console.error("Fetch exercises failed:", err);
     res.status(500).json({ ok: false, error: "Could not load exercises." });
+  }
+});
+
+// ── Add an exercise to the member's catalog ──
+app.post("/api/exercises", requireUser, async (req, res) => {
+  const { name, muscleGroup, mediaUrl, instructions, equipment } = req.body || {};
+  if (!name || !String(name).trim()) return res.status(400).json({ ok: false, error: "An exercise name is required." });
+  try {
+    const { rows } = await query(
+      `insert into exercises (name, muscle_group, equipment, media_url, instructions, owner_id)
+       values ($1, $2, $3, $4, $5, $6)
+       returning id, name, muscle_group, equipment, media_url, instructions, owner_id`,
+      [
+        String(name).trim(),
+        String(muscleGroup || "").trim().toLowerCase(),
+        String(equipment || "").trim(),
+        String(mediaUrl || "").trim(),
+        String(instructions || "").trim(),
+        req.user.sub,
+      ]
+    );
+    res.json({ ok: true, exercise: rows[0] });
+  } catch (err) {
+    console.error("Create exercise failed:", err);
+    res.status(500).json({ ok: false, error: "Could not add the exercise." });
+  }
+});
+
+// ── Delete one of the member's own exercises (defaults can't be removed) ──
+app.delete("/api/exercises/:id", requireUser, async (req, res) => {
+  try {
+    const { rowCount } = await query(`delete from exercises where id = $1 and owner_id = $2`, [req.params.id, req.user.sub]);
+    if (rowCount === 0) return res.status(403).json({ ok: false, error: "You can only delete exercises you added." });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Delete exercise failed:", err);
+    res.status(500).json({ ok: false, error: "Could not delete the exercise." });
   }
 });
 
@@ -1017,7 +1059,7 @@ app.post("/api/workouts", requireUser, async (req, res) => {
           Number(s.setNumber) || 1,
           s.weight === "" || s.weight == null ? 0 : Number(s.weight),
           s.reps === "" || s.reps == null ? 0 : Number(s.reps),
-          s.rir === "" || s.rir == null ? null : Number(s.rir),
+          s.rir === "" || s.rir == null ? null : String(s.rir).trim(),
           s.rpe === "" || s.rpe == null ? null : Number(s.rpe),
         ]
       );

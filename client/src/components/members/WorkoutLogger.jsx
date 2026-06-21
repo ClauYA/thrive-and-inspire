@@ -368,12 +368,12 @@ export default function WorkoutLogger() {
                         <input type="number" inputMode="numeric" value={s.reps} onChange={updateSet(blk.uid, si, "reps")} className={inputClass} />
                         <select value={s.rir} onChange={updateSet(blk.uid, si, "rir")} className={`${inputClass} cursor-pointer`}>
                           <option value="">–</option>
-                          <option value="0">{`0 · ${tr.failure}`}</option>
+                          <option value="fallo">{tr.failure}</option>
+                          <option value="0-1">0–1</option>
                           <option value="1">1</option>
+                          <option value="1-2">1–2</option>
                           <option value="2">2</option>
-                          <option value="3">3</option>
-                          <option value="4">4</option>
-                          <option value="5">5+</option>
+                          <option value="2-3">2–3</option>
                         </select>
                         <button onClick={() => removeSet(blk.uid, si)} aria-label={tr.removeSet} className="text-warm-gray hover:text-red-500 transition-colors text-lg leading-none">
                           −
