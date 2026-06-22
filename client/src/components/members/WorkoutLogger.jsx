@@ -4,6 +4,7 @@ import { useLanguage } from "../../i18n/LanguageContext";
 import { userApi, getUserToken } from "../../lib/userApi";
 import { recommendation, toneStyles } from "../../lib/recommend";
 import { formatDate } from "../../lib/format";
+import { RIR_OPTIONS, rirLabel } from "../../lib/rir";
 import MemberHeader from "./MemberHeader";
 import { Button } from "../ui";
 
@@ -147,10 +148,9 @@ export default function WorkoutLogger() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, searchParams]);
 
-  const RIR_VALID = ["fallo", "0-1", "1", "1-2", "2", "2-3"];
   const makeBlock = (ex, target) => {
     const count = target && Number(target.sets) > 0 ? Number(target.sets) : 3;
-    const rir = target && RIR_VALID.includes(target.rir) ? target.rir : "";
+    const rir = target && RIR_OPTIONS.includes(target.rir) ? target.rir : "";
     return {
       uid: ++uid.current,
       exerciseId: ex?.id || "",
@@ -403,12 +403,9 @@ export default function WorkoutLogger() {
                         <input type="number" inputMode="numeric" value={s.reps} onChange={updateSet(blk.uid, si, "reps")} className={inputClass} />
                         <select value={s.rir} onChange={updateSet(blk.uid, si, "rir")} className={`${inputClass} cursor-pointer`}>
                           <option value="">–</option>
-                          <option value="fallo">{tr.failure}</option>
-                          <option value="0-1">0–1</option>
-                          <option value="1">1</option>
-                          <option value="1-2">1–2</option>
-                          <option value="2">2</option>
-                          <option value="2-3">2–3</option>
+                          {RIR_OPTIONS.map((o) => (
+                            <option key={o} value={o}>{rirLabel(o, tr.failure)}</option>
+                          ))}
                         </select>
                         <button onClick={() => removeSet(blk.uid, si)} aria-label={tr.removeSet} className="text-warm-gray hover:text-red-500 transition-colors text-lg leading-none">
                           −
