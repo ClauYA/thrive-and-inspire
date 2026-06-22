@@ -90,7 +90,7 @@ export default function PlansList() {
                     </div>
                     {p.objective && <div className="text-[0.84rem] text-warm-gray mt-0.5">{p.objective}</div>}
                     <div className="text-[0.76rem] text-light-gray mt-1">
-                      {p.dayCount} {tr.daysLabel} · {p.weeks} {tr.weeksShort}
+                      {p.weekCount} {tr.weekCountLabel}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 flex-wrap">

@@ -95,7 +95,15 @@ export default function Dashboard() {
     }
   };
 
-  const nextDay = plan && plan.days.length ? plan.days[plan.nextIndex % plan.days.length] : null;
+  const weekList = plan && plan.weeks ? plan.weeks : [];
+  const curWeekIdx = weekList.length ? plan.currentWeek % weekList.length : 0;
+  const curWeek = weekList.length ? weekList[curWeekIdx] : null;
+  const curDayIdx = curWeek && curWeek.days.length ? plan.nextIndex % curWeek.days.length : 0;
+  const nextDay = curWeek && curWeek.days.length ? curWeek.days[curDayIdx] : null;
+  // Shape the current week for the WeekStrip (expects { nextIndex, days:[{name, exerciseIds}] }).
+  const weekForStrip = curWeek
+    ? { nextIndex: curDayIdx, days: curWeek.days.map((d) => ({ name: d.name, exerciseIds: (d.exercises || []).map((e) => e.exerciseId).filter(Boolean) })) }
+    : null;
 
   return (
     <div className="min-h-screen bg-cream relative z-[1]">
@@ -109,12 +117,12 @@ export default function Dashboard() {
             {nextDay ? (
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
-                  <div className="text-[0.72rem] uppercase tracking-[0.12em] text-sage-light mb-1">{tr.upNext} · {plan.name}</div>
+                  <div className="text-[0.72rem] uppercase tracking-[0.12em] text-sage-light mb-1">{tr.upNext} · {plan.name} · {curWeek.name}</div>
                   <div className="font-display text-[1.5rem] font-semibold">{nextDay.name}</div>
-                  <div className="text-[0.8rem] text-white/60 mt-0.5">{nextDay.exerciseIds.length} {tr.exercises}</div>
+                  <div className="text-[0.8rem] text-white/60 mt-0.5">{(nextDay.exercises || []).length} {tr.exercises}</div>
                 </div>
                 <div className="flex gap-2">
-                  <Button as={Link} to={`/app/new?plan=${plan.id}&day=${plan.nextIndex % plan.days.length}`} size="sm">
+                  <Button as={Link} to={`/app/new?plan=${plan.id}&week=${curWeekIdx}&day=${curDayIdx}`} size="sm">
                     {tr.startDay}
                   </Button>
                   <Button as={Link} to={`/app/plans/${plan.id}`} variant="outlineLight" size="sm">
@@ -137,8 +145,8 @@ export default function Dashboard() {
         )}
 
         {/* This week strip */}
-        {workouts !== null && plan && plan.days.length > 0 && (
-          <WeekStrip workouts={workouts} routine={plan} exMap={exMap} onPick={pickFromCalendar} />
+        {workouts !== null && weekForStrip && weekForStrip.days.length > 0 && (
+          <WeekStrip workouts={workouts} routine={weekForStrip} exMap={exMap} onPick={pickFromCalendar} />
         )}
 
         {/* Toolbar: new workout + view toggle */}

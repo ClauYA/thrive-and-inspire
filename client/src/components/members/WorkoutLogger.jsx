@@ -114,17 +114,24 @@ export default function WorkoutLogger() {
         setExercises(d.exercises);
 
         const planParam = searchParams.get("plan");
+        const weekParam = searchParams.get("week");
         const dayParam = searchParams.get("day");
-        if (planParam && dayParam != null) {
+        if (planParam && weekParam != null && dayParam != null) {
           const r = await userApi(`/api/plans/${planParam}`);
           if (!active) return;
-          const day = r.plan?.days?.[Number(dayParam)];
+          const week = r.plan?.weeks?.[Number(weekParam)];
+          const day = week?.days?.[Number(dayParam)];
           if (day) {
             setTitle(day.name);
             setFromRoutine(true);
             setPlanId(planParam);
-            setDayNotes(day.notes || "");
-            const newBlocks = day.exerciseIds.map((id) => d.exercises.find((ex) => ex.id === id)).filter(Boolean).map((ex) => makeBlock(ex));
+            setDayNotes([week?.notes, day.notes].filter(Boolean).join(" · "));
+            const newBlocks = (day.exercises || [])
+              .map((pe) => {
+                const ex = d.exercises.find((x) => x.id === pe.exerciseId);
+                return ex ? makeBlock(ex, pe) : null;
+              })
+              .filter(Boolean);
             setBlocks(newBlocks);
             setStarted(true);
             newBlocks.forEach((b) => loadLast(b.uid, b.exerciseId));
@@ -140,14 +147,20 @@ export default function WorkoutLogger() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, searchParams]);
 
-  const makeBlock = (ex) => ({
-    uid: ++uid.current,
-    exerciseId: ex?.id || "",
-    exerciseName: ex?.name || "",
-    mediaUrl: ex?.media_url || "",
-    sets: [emptySet(), emptySet(), emptySet()],
-    last: ex ? undefined : null,
-  });
+  const RIR_VALID = ["fallo", "0-1", "1", "1-2", "2", "2-3"];
+  const makeBlock = (ex, target) => {
+    const count = target && Number(target.sets) > 0 ? Number(target.sets) : 3;
+    const rir = target && RIR_VALID.includes(target.rir) ? target.rir : "";
+    return {
+      uid: ++uid.current,
+      exerciseId: ex?.id || "",
+      exerciseName: ex?.name || "",
+      mediaUrl: ex?.media_url || "",
+      sets: Array.from({ length: count }, () => ({ weight: "", reps: "", rir })),
+      target: target ? { reps: target.reps || "", rir: target.rir || "", notes: target.notes || "" } : null,
+      last: ex ? undefined : null,
+    };
+  };
 
   const loadLast = (blockUid, exerciseId) => {
     if (!exerciseId) return;
@@ -339,6 +352,15 @@ export default function WorkoutLogger() {
                   </div>
 
                   <ExerciseMedia url={blk.mediaUrl} name={blk.exerciseName} />
+
+                  {blk.target && (blk.target.reps || blk.target.rir || blk.sets.length) && (
+                    <div className="mt-2 inline-block bg-gold/15 text-charcoal/80 text-[0.76rem] font-medium px-2.5 py-1 rounded-full">
+                      {tr.targetLabel}: {blk.sets.length}{blk.target.reps ? `×${blk.target.reps}` : ""}{blk.target.rir ? ` · RIR ${blk.target.rir}` : ""}
+                    </div>
+                  )}
+                  {blk.target && blk.target.notes && (
+                    <div className="mt-1 text-[0.78rem] text-warm-gray italic">{blk.target.notes}</div>
+                  )}
 
                   {blk.exerciseId && (
                     <div className="mt-3 text-[0.8rem]">
