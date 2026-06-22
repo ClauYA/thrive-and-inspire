@@ -195,34 +195,17 @@ export default function Dashboard() {
                 {expanded === w.id && detail[w.id] && (
                   <div className="px-4 sm:px-5 pb-5 border-t border-sand pt-4">
                     {detail[w.id].workout.notes && <p className="text-[0.82rem] text-warm-gray italic mb-4">"{detail[w.id].workout.notes}"</p>}
-                    {groupByExercise(detail[w.id].sets).map((g, gi) => (
-                      <div key={gi} className="mb-4">
-                        <h4 className="text-[0.88rem] font-semibold text-charcoal mb-1.5">{g.name}</h4>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-[0.8rem]">
-                            <thead>
-                              <tr className="text-warm-gray text-left">
-                                <th className="font-medium py-1 pr-3">{tr.set}</th>
-                                <th className="font-medium py-1 pr-3">{tr.weight}</th>
-                                <th className="font-medium py-1 pr-3">{tr.reps}</th>
-                                <th className="font-medium py-1">{tr.rir}</th>
-                              </tr>
-                            </thead>
-                            <tbody className="text-charcoal">
-                              {g.sets.map((s, si) => (
-                                <tr key={si} className="border-t border-sand/60">
-                                  <td className="py-1.5 pr-3">{s.set_number}</td>
-                                  <td className="py-1.5 pr-3">{s.weight}</td>
-                                  <td className="py-1.5 pr-3">{s.reps}</td>
-                                  <td className="py-1.5">{s.rir ?? "—"}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                    <div className="divide-y divide-sand/60">
+                      {groupByExercise(detail[w.id].sets).map((g, gi) => (
+                        <div key={gi} className="flex items-baseline justify-between gap-3 py-2">
+                          <span className="text-[0.88rem] font-medium text-charcoal">{g.name}</span>
+                          <span className="text-[0.78rem] text-warm-gray text-right shrink-0">
+                            {g.sets.map((s) => `${s.weight || 0}×${s.reps || 0}${s.rir ? ` (${s.rir})` : ""}`).join(" · ")}
+                          </span>
                         </div>
-                      </div>
-                    ))}
-                    <button onClick={() => remove(w.id)} className="text-[0.8rem] font-semibold text-red-500 hover:text-red-600 transition-colors mt-2">
+                      ))}
+                    </div>
+                    <button onClick={() => remove(w.id)} className="text-[0.8rem] font-semibold text-red-500 hover:text-red-600 transition-colors mt-4">
                       {tr.delete}
                     </button>
                   </div>
