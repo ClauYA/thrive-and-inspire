@@ -1,54 +1,295 @@
 -- ─────────────────────────────────────────────────────────────
--- Pre-load the WELLNESS mesocycle (8 weeks) for Claudia.
---
--- Run AFTER: schema-plans.sql  +  schema-plan-weeks.sql
--- and AFTER the account yaczoe@gmail.com has registered at /login.
---
--- Creates the mesocycle WELLNESS with its 8 weeks (Come back … Sunflower),
--- each with one starter day "Día 1". Add the exercises + targets from the
--- members editor (/app/plans). Safe to run once — it skips if WELLNESS
--- already exists for this user.
+-- Build the WELLNESS plan structure: 8 weeks -> days (Día N) -> exercises
+-- with targets (sets / reps range / RIR), derived from Claudia's log.
+-- Run AFTER the schema files; safe to re-run (rebuilds the structure only,
+-- never touches logged workouts). Creates the account-linked WELLNESS plan.
 -- ─────────────────────────────────────────────────────────────
 do $$
-declare
-  uid       uuid;
-  plan_id   uuid;
-  wid       uuid;
-  wk        text;
-  i         int := 0;
-  weeks     text[] := array[
-    'Come back (1)',
-    'Yellow Ledbetter (2)',
-    'Dont Cry (3)',
-    'November rain (4)',
-    'Stranged (5)',
-    'Girls just wanna have fun (6)',
-    'im not the highway (7)',
-    'Sunflower (8)'
-  ];
+declare uid uuid; pid uuid;
 begin
   select id into uid from users where lower(email) = lower('yaczoe@gmail.com');
-  if uid is null then
-    raise exception 'No existe usuario con email yaczoe@gmail.com. Regístrate primero en /login y vuelve a correr esto.';
+  if uid is null then raise exception 'Registra yaczoe@gmail.com primero.'; end if;
+
+  select id into pid from plans where user_id = uid and name = 'WELLNESS' limit 1;
+  if pid is null then
+    insert into plans (user_id, name, objective, weeks, end_date, is_active, current_week, next_index)
+    values (uid, 'WELLNESS', 'Acumulación y descarga Wellness', 8, '2026-06-30', true, 0, 0)
+    returning id into pid;
+    update plans set is_active = (id = pid) where user_id = uid;
   end if;
 
-  if exists (select 1 from plans where user_id = uid and name = 'WELLNESS') then
-    raise notice 'Ya existe un plan WELLNESS para este usuario; no se crea de nuevo.';
-    return;
-  end if;
+  create temp table pstruct(wpos int, wname text, dpos int, dname text, epos int, ename text, egrp text, sets int, reps text, rir text) on commit drop;
+  insert into pstruct values
+(0, 'Come back', 0, 'Día 1', 0, 'Hip Thrust a Una Pierna con Mancuerna', 'Gluteos', 2, '12', '1'),
+(0, 'Come back', 0, 'Día 1', 1, 'Desplantes con barra (cuádriceps)', 'Cuadriceps', 3, '8', '0-1'),
+(0, 'Come back', 0, 'Día 1', 2, 'Extensión de rodilla unilateral en máquina', 'Cuadriceps', 4, '12-15', 'fallo'),
+(0, 'Come back', 0, 'Día 1', 3, 'Peso muerto rumano con barra, piernas rígidas.', 'Gluteos', 2, '8', '2'),
+(0, 'Come back', 0, 'Día 1', 4, 'Curl para isquiosurales acostado en máquina', 'Isquios', 2, '8-9', '0-1'),
+(0, 'Come back', 0, 'Día 1', 5, 'Abducción de cadera en polea a media altura', 'Gluteos', 2, '10', '0-1'),
+(0, 'Come back', 0, 'Día 1', 6, 'Elevación de talón en prensa a 45° parciales en elongación', 'Pantorrilla', 2, '14', '0-1'),
+(0, 'Come back', 1, 'Día 2', 0, 'Jalón al pecho con agarre neutro', 'Espalda', 2, '7-8', '0'),
+(0, 'Come back', 1, 'Día 2', 1, 'Remo a una mano sentado en máquina', 'Espalda', 2, '8-9', '0-1'),
+(0, 'Come back', 1, 'Día 2', 2, 'Hammer curl inclinado', 'Biceps', 2, '10-11', '0-1'),
+(0, 'Come back', 1, 'Día 2', 3, 'Curl para bíceps de pie con barra Z', 'Biceps', 2, '10-11', '0'),
+(0, 'Come back', 1, 'Día 2', 4, 'Abdominales en V', 'Core', 2, '15', '0-1'),
+(0, 'Come back', 1, 'Día 2', 5, 'Elevación de rodillas colgando', 'Core', 2, '6', '0-1'),
+(0, 'Come back', 2, 'Día 3', 0, 'Sentadilla hack', 'Cuadriceps', 2, '7-8', '1-2'),
+(0, 'Come back', 2, 'Día 3', 1, 'Sentadilla búlgara con mancuerna', 'Gluteos', 2, '8-9', '0-1'),
+(0, 'Come back', 2, 'Día 3', 2, 'Extensión para cuádriceps sentado en máquina', 'Cuadriceps', 3, '10-11', '0'),
+(0, 'Come back', 2, 'Día 3', 3, 'Extensión de tronco en banco romano a 45°', 'Gluteos', 3, '12-13', '0'),
+(0, 'Come back', 2, 'Día 3', 4, 'Abducción de cadera sentado en máquina', 'Gluteos', 2, '2-12', '0-1'),
+(0, 'Come back', 2, 'Día 3', 5, 'Curl para isquiosurales acostado en máquina', 'Isquios', 3, '6-7', '0'),
+(0, 'Come back', 3, 'Día 4', 0, 'Prensa militar sentado con mancuernas', 'Hombro anterior', 2, '6-7', '0-1'),
+(0, 'Come back', 3, 'Día 4', 1, 'Elevaciones laterales de pie con mancuernas', 'Hombro lateral', 2, '15', '0'),
+(0, 'Come back', 3, 'Día 4', 2, 'JM Press con cable', 'Triceps', 2, '7-9', '0'),
+(0, 'Come back', 3, 'Día 4', 3, 'Dragon flag excéntrica', 'Core', 2, '10-12', '0-1'),
+(0, 'Come back', 3, 'Día 4', 4, 'bird dog', 'Core', 2, '10', '0-1'),
+(0, 'Come back', 4, 'Día 5', 0, 'sentadilla pendular', 'Cuadriceps', 3, '9-10', '0-1'),
+(0, 'Come back', 4, 'Día 5', 1, 'Extensión para cuádriceps sentado en máquina', 'Cuadriceps', 3, '8-11', '0-1'),
+(0, 'Come back', 4, 'Día 5', 2, 'Hip thrust tradicional en máquina', 'Gluteos', 2, '9-10', '0-1'),
+(0, 'Come back', 4, 'Día 5', 3, 'Patada para glúteo con grillete en polea baja', 'Gluteos', 2, '12', '0'),
+(0, 'Come back', 4, 'Día 5', 4, 'Curl para isquiosurales sentado en máquina', 'Isquios', 2, '8', '0-1'),
+(0, 'Come back', 4, 'Día 5', 5, 'Cable Pull Over', 'Dorsales', 2, '8-10', '0-1'),
+(1, 'Yellow Ledbetter', 0, 'Día 1', 0, 'Hip Thrust a Una Pierna con Mancuerna', 'Gluteos', 2, '14', '0-1'),
+(1, 'Yellow Ledbetter', 0, 'Día 1', 1, 'Desplantes con barra (cuádriceps)', 'Cuadriceps', 3, '8-9', '0'),
+(1, 'Yellow Ledbetter', 0, 'Día 1', 2, 'Extensión de rodilla unilateral en máquina', 'Cuadriceps', 4, '11-14', 'fallo'),
+(1, 'Yellow Ledbetter', 0, 'Día 1', 3, 'Peso muerto rumano con barra, piernas rígidas.', 'Gluteos', 2, '7-8', '0'),
+(1, 'Yellow Ledbetter', 0, 'Día 1', 4, 'Curl para isquiosurales acostado en máquina', 'Isquios', 2, '10-12', '0'),
+(1, 'Yellow Ledbetter', 0, 'Día 1', 5, 'Abducción de cadera en polea a media altura', 'Gluteos', 2, '12', '0'),
+(1, 'Yellow Ledbetter', 0, 'Día 1', 6, 'Elevación de talón en prensa a 45° parciales en elongación', 'Pantorrilla', 2, '12-14', '0'),
+(1, 'Yellow Ledbetter', 1, 'Día 2', 0, 'Jalón al pecho con agarre neutro', 'Espalda Alta', 3, '8', '0-1'),
+(1, 'Yellow Ledbetter', 1, 'Día 2', 1, 'Elevación lateral con polea detrás del cuerpo (media altura)', 'Hombro medio', 3, '6-8', '0-1'),
+(1, 'Yellow Ledbetter', 1, 'Día 2', 2, 'Elevaciones frontales de pie alternado con mancuernas', 'Hombro anterior', 3, '14-15', '0-1'),
+(1, 'Yellow Ledbetter', 1, 'Día 2', 3, 'Remo a una mano sentado en máquina', 'Dorsales', 3, '7-8', '0'),
+(1, 'Yellow Ledbetter', 1, 'Día 2', 4, 'Curl para bíceps de pie con barra Z', 'Biceps', 2, '8-10', '0'),
+(1, 'Yellow Ledbetter', 1, 'Día 2', 5, 'Abdominales en V', 'Core', 3, '12', '0-1'),
+(1, 'Yellow Ledbetter', 1, 'Día 2', 6, 'Elevación de rodillas colgando', 'Core', 3, '8', '0-1'),
+(1, 'Yellow Ledbetter', 2, 'Día 3', 0, 'Sentadilla hack', 'Cuadriceps', 2, '11-12', '0-1'),
+(1, 'Yellow Ledbetter', 2, 'Día 3', 1, 'Sentadilla búlgara con mancuerna', 'Gluteos', 2, '8-9', '0'),
+(1, 'Yellow Ledbetter', 2, 'Día 3', 2, 'Extensión para cuádriceps sentado en máquina', 'Cuadriceps', 3, '10-11', '0'),
+(1, 'Yellow Ledbetter', 2, 'Día 3', 3, 'Extensión de tronco en banco romano a 45°', 'Gluteos', 3, '7-8', '0'),
+(1, 'Yellow Ledbetter', 2, 'Día 3', 4, 'Abducción de cadera sentado en máquina', 'Gluteos', 2, '13-14', '0-1'),
+(1, 'Yellow Ledbetter', 2, 'Día 3', 5, 'Curl para isquiosurales acostado en máquina', 'Isquios', 3, '5-8', '0-1'),
+(1, 'Yellow Ledbetter', 3, 'Día 4', 0, 'Prensa militar sentado con mancuernas', 'Hombro anterior', 4, '6', '0'),
+(1, 'Yellow Ledbetter', 3, 'Día 4', 1, 'Elevaciones laterales de lado a una mano con mancuerna en banco inclinado', 'Hombro lateral', 3, '10-12', '0'),
+(1, 'Yellow Ledbetter', 3, 'Día 4', 2, 'Abducción unilateral de hombro - parciales largas', 'Hombro posterior', 3, '7-9', '0'),
+(1, 'Yellow Ledbetter', 3, 'Día 4', 3, 'JM Press con cable', 'Triceps', 3, '7-8', '0'),
+(1, 'Yellow Ledbetter', 3, 'Día 4', 4, 'Dragon flag excéntrica', 'Core', 4, '6-8', '0-1'),
+(1, 'Yellow Ledbetter', 3, 'Día 4', 5, 'bird dog', 'Core', 4, '10-12', '0-1'),
+(1, 'Yellow Ledbetter', 4, 'Día 5', 0, 'sentadilla pendular', 'Cuadriceps', 3, '10-11', '0'),
+(1, 'Yellow Ledbetter', 4, 'Día 5', 1, 'Extensión para cuádriceps sentado en máquina', 'Cuadriceps', 3, '10-11', '0'),
+(1, 'Yellow Ledbetter', 4, 'Día 5', 2, 'Hip thrust tradicional en máquina', 'Gluteos', 2, '10', '0'),
+(1, 'Yellow Ledbetter', 4, 'Día 5', 3, 'Patada para glúteo con grillete en polea baja', 'Gluteos', 2, '12-13', '0'),
+(1, 'Yellow Ledbetter', 4, 'Día 5', 4, 'Curl para isquiosurales sentado en máquina', 'Isquios', 2, '10-12', '0-1'),
+(1, 'Yellow Ledbetter', 4, 'Día 5', 5, 'Cable Pull Over', 'Dorsales', 2, '13-14', '0'),
+(2, 'Dont Cry', 0, 'Día 1', 0, 'Hip Thrust a Una Pierna con Mancuerna', 'Gluteos', 2, '12', '0-1'),
+(2, 'Dont Cry', 0, 'Día 1', 1, 'Desplantes con barra (cuádriceps)', 'Cuadriceps', 4, '6-8', '0-1'),
+(2, 'Dont Cry', 0, 'Día 1', 2, 'Extensión de rodilla unilateral en máquina', 'Cuadriceps', 5, '12-14', '0'),
+(2, 'Dont Cry', 0, 'Día 1', 3, 'Curl para isquiosurales acostado en máquina', 'Isquios', 4, '13-16', '0'),
+(2, 'Dont Cry', 0, 'Día 1', 4, 'Abducción de cadera en polea a media altura', 'Gluteos', 3, '12-15', 'fallo'),
+(2, 'Dont Cry', 0, 'Día 1', 5, 'Elevación de talón en prensa a 45° parciales en elongación', 'Pantorrilla', 4, '14-16', '0'),
+(2, 'Dont Cry', 1, 'Día 2', 0, 'Jalón al pecho con agarre neutro', 'Espalda Alta', 2, '9', '0-1'),
+(2, 'Dont Cry', 1, 'Día 2', 1, 'Elevación lateral con polea detrás del cuerpo (media altura)', 'Hombro medio', 4, '8-10', '0'),
+(2, 'Dont Cry', 1, 'Día 2', 2, 'Elevaciones frontales de pie alternado con mancuernas', 'Hombro anterior', 3, '16-17', '0'),
+(2, 'Dont Cry', 1, 'Día 2', 3, 'Remo a una mano sentado en máquina', 'Dorsales', 3, '7-8', '0'),
+(2, 'Dont Cry', 1, 'Día 2', 4, 'Curl para bíceps de pie con barra Z', 'Biceps', 2, '11', '0'),
+(2, 'Dont Cry', 1, 'Día 2', 5, 'Abdominales en V', 'Core', 3, '13-14', '0'),
+(2, 'Dont Cry', 1, 'Día 2', 6, 'Elevación de rodillas colgando', 'Core', 3, '10', '0-1'),
+(2, 'Dont Cry', 2, 'Día 3', 0, 'Sentadilla hack', 'Cuadriceps', 3, '10-12', '0'),
+(2, 'Dont Cry', 2, 'Día 3', 1, 'Sentadilla búlgara con mancuerna', 'Gluteos', 2, '6', '0'),
+(2, 'Dont Cry', 2, 'Día 3', 2, 'Extensión para cuádriceps sentado en máquina', 'Cuadriceps', 6, '12-13', '0'),
+(2, 'Dont Cry', 2, 'Día 3', 3, 'Extensión de tronco en banco romano a 45°', 'Gluteos', 2, '9-10', 'fallo'),
+(2, 'Dont Cry', 2, 'Día 3', 4, 'Abducción de cadera sentado en máquina', 'Gluteos', 2, '13', '0-1'),
+(2, 'Dont Cry', 2, 'Día 3', 5, 'Curl para isquiosurales acostado en máquina', 'Isquios', 4, '10-13', '0'),
+(2, 'Dont Cry', 3, 'Día 4', 0, 'Prensa militar sentado con mancuernas', 'Hombro anterior', 4, '5-7', '0'),
+(2, 'Dont Cry', 3, 'Día 4', 1, 'Elevaciones laterales de lado a una mano con mancuerna en banco inclinado', 'Hombro lateral', 3, '13-16', '0'),
+(2, 'Dont Cry', 3, 'Día 4', 2, 'Abducción unilateral de hombro - parciales largas', 'Hombro posterior', 3, '10-12', '0'),
+(2, 'Dont Cry', 3, 'Día 4', 3, 'JM Press con cable', 'Triceps', 3, '8-9', 'fallo'),
+(2, 'Dont Cry', 3, 'Día 4', 4, 'Dragon flag excéntrica', 'Core', 4, '7-9', '0'),
+(2, 'Dont Cry', 3, 'Día 4', 5, 'bird dog', 'Core', 4, '12-15', '0-1'),
+(2, 'Dont Cry', 4, 'Día 5', 0, 'sentadilla pendular', 'Cuadriceps', 3, '5-6', '0'),
+(2, 'Dont Cry', 4, 'Día 5', 1, 'Extensión para cuádriceps sentado en máquina', 'Cuadriceps', 4, '9-12', 'fallo'),
+(2, 'Dont Cry', 4, 'Día 5', 2, 'Hip thrust tradicional en máquina', 'Gluteos', 2, '9', '0'),
+(2, 'Dont Cry', 4, 'Día 5', 3, 'Patada para glúteo con grillete en polea baja', 'Gluteos', 2, '8-13', '0'),
+(2, 'Dont Cry', 4, 'Día 5', 4, 'Curl para isquiosurales sentado en máquina', 'Isquios', 4, '9-12', '0'),
+(2, 'Dont Cry', 4, 'Día 5', 5, 'Cable Pull Over', 'Dorsales', 2, '8-15', '0-1'),
+(3, 'November rain', 0, 'Día 1', 0, 'Hip Thrust a Una Pierna con Mancuerna', 'Gluteos', 2, '9-10', '0-1'),
+(3, 'November rain', 0, 'Día 1', 1, 'Desplantes con barra (cuádriceps)', 'Cuadriceps', 4, '9-10', '0'),
+(3, 'November rain', 0, 'Día 1', 2, 'Extensión de rodilla unilateral en máquina', 'Cuadriceps', 5, '11-14', '0'),
+(3, 'November rain', 0, 'Día 1', 3, 'Curl para isquiosurales acostado en máquina', 'Isquios', 4, '8-10', '0-1'),
+(3, 'November rain', 0, 'Día 1', 4, 'Abducción de cadera en polea a media altura', 'Gluteos', 3, '10', '0-1'),
+(3, 'November rain', 0, 'Día 1', 5, 'Elevación de talón en prensa a 45° parciales en elongación', 'Pantorrilla', 4, '12', '0-1'),
+(3, 'November rain', 1, 'Día 2', 0, 'Jalón al pecho con agarre neutro', 'Espalda Alta', 2, '9-10', '0-1'),
+(3, 'November rain', 1, 'Día 2', 1, 'Elevación lateral con polea detrás del cuerpo (media altura)', 'Hombro medio', 4, '10-11', '0'),
+(3, 'November rain', 1, 'Día 2', 2, 'Elevaciones frontales de pie alternado con mancuernas', 'Hombro anterior', 3, '20', '0-1'),
+(3, 'November rain', 1, 'Día 2', 3, 'Curl para bíceps de pie con barra Z', 'Biceps', 2, '12', '0'),
+(3, 'November rain', 1, 'Día 2', 4, 'Abdominales en V', 'Core', 3, '15', '0-1'),
+(3, 'November rain', 1, 'Día 2', 5, 'Elevación de rodillas colgando', 'Core', 3, '12-13', '0'),
+(3, 'November rain', 2, 'Día 3', 0, 'Sentadilla hack', 'Cuadriceps', 3, '9-10', '0'),
+(3, 'November rain', 2, 'Día 3', 1, 'Sentadilla búlgara con mancuerna', 'Gluteos', 2, '7-9', '0'),
+(3, 'November rain', 2, 'Día 3', 2, 'Extensión para cuádriceps sentado en máquina', 'Cuadriceps', 6, '11-13', 'fallo'),
+(3, 'November rain', 2, 'Día 3', 3, 'Extensión de tronco en banco romano a 45°', 'Gluteos', 2, '6', 'fallo'),
+(3, 'November rain', 2, 'Día 3', 4, 'Abducción de cadera sentado en máquina', 'Gluteos', 2, '11', '0-1'),
+(3, 'November rain', 2, 'Día 3', 5, 'Curl para isquiosurales acostado en máquina', 'Isquios', 4, '10-12', '0'),
+(3, 'November rain', 3, 'Día 4', 0, 'Prensa militar sentado con mancuernas', 'Hombro anterior', 4, '5-8', '0'),
+(3, 'November rain', 3, 'Día 4', 1, 'Elevaciones laterales de lado a una mano con mancuerna en banco inclinado', 'Hombro lateral', 3, '14-15', '0'),
+(3, 'November rain', 3, 'Día 4', 2, 'Abducción unilateral de hombro - parciales largas', 'Hombro posterior', 3, '12-14', '0'),
+(3, 'November rain', 3, 'Día 4', 3, 'JM Press con cable', 'Triceps', 3, '9', '0'),
+(3, 'November rain', 3, 'Día 4', 4, 'Dragon flag excéntrica', 'Core', 4, '10-11', '0'),
+(3, 'November rain', 3, 'Día 4', 5, 'bird dog', 'Core', 4, '12', '0-1'),
+(3, 'November rain', 4, 'Día 5', 0, 'sentadilla pendular', 'Cuadriceps', 3, '6', '0'),
+(3, 'November rain', 4, 'Día 5', 1, 'Extensión para cuádriceps sentado en máquina', 'Cuadriceps', 4, '9-12', 'fallo'),
+(3, 'November rain', 4, 'Día 5', 2, 'Hip thrust tradicional en máquina', 'Gluteos', 2, '9', '0'),
+(3, 'November rain', 4, 'Día 5', 3, 'Patada para glúteo con grillete en polea baja', 'Gluteos', 2, '11-12', '0'),
+(3, 'November rain', 4, 'Día 5', 4, 'Curl para isquiosurales sentado en máquina', 'Isquios', 4, '10-11', '0-1'),
+(3, 'November rain', 4, 'Día 5', 5, 'Cable Pull Over', 'Dorsales', 2, '10', '0'),
+(4, 'Stranged', 0, 'Día 1', 0, 'Hip Thrust a Una Pierna con Mancuerna', 'Gluteos', 2, '11-12', '0'),
+(4, 'Stranged', 0, 'Día 1', 1, 'Desplantes con barra (cuádriceps)', 'Cuadriceps', 2, '8-9', '0'),
+(4, 'Stranged', 0, 'Día 1', 2, 'Extensión de rodilla unilateral en máquina', 'Cuadriceps', 2, '10', '0'),
+(4, 'Stranged', 0, 'Día 1', 3, 'Curl para isquiosurales acostado en máquina', 'Isquios', 2, '10-11', '1'),
+(4, 'Stranged', 0, 'Día 1', 4, 'Abducción de cadera en polea a media altura', 'Gluteos', 2, '15-16', '0'),
+(4, 'Stranged', 0, 'Día 1', 5, 'Elevación de talón en prensa a 45° parciales en elongación', 'Pantorrilla', 2, '12', '0-1'),
+(4, 'Stranged', 1, 'Día 2', 0, 'Jalón al pecho con agarre neutro', 'Espalda Alta', 2, '9-10', '0'),
+(4, 'Stranged', 1, 'Día 2', 1, 'Elevación lateral con polea detrás del cuerpo (media altura)', 'Hombro medio', 2, '10-11', '0'),
+(4, 'Stranged', 1, 'Día 2', 2, 'Elevaciones frontales de pie alternado con mancuernas', 'Hombro anterior', 2, '18-20', '0'),
+(4, 'Stranged', 1, 'Día 2', 3, 'Curl para bíceps de pie con barra Z1', 'Biceps', 1, '12', '0'),
+(4, 'Stranged', 1, 'Día 2', 4, 'Curl para bíceps de pie con barra Z', 'Biceps', 1, '11', '0'),
+(4, 'Stranged', 1, 'Día 2', 5, 'Abdominales en V', 'Core', 3, '12', '1'),
+(4, 'Stranged', 1, 'Día 2', 6, 'Elevación de rodillas colgando', 'Core', 3, '12', '0'),
+(4, 'Stranged', 2, 'Día 3', 0, 'Sentadilla hack', 'Cuadriceps', 2, '9', '0-1'),
+(4, 'Stranged', 2, 'Día 3', 1, 'Extensión para cuádriceps sentado en máquina', 'Cuadriceps', 2, '12-15', 'fallo'),
+(4, 'Stranged', 2, 'Día 3', 2, 'Extensión de tronco en banco romano a 45°', 'Gluteos', 2, '8', '0-1'),
+(4, 'Stranged', 2, 'Día 3', 3, 'Abducción de cadera sentado en máquina', 'Gluteos', 2, '15', '0-1'),
+(4, 'Stranged', 2, 'Día 3', 4, 'Curl para isquiosurales acostado en máquina', 'Isquios', 2, '12', '0-1'),
+(4, 'Stranged', 3, 'Día 4', 0, 'Prensa militar sentado con mancuernas', 'Hombro anterior', 1, '8', '0'),
+(4, 'Stranged', 3, 'Día 4', 1, 'Elevaciones laterales de lado a una mano con mancuerna en banco inclinado', 'Hombro lateral', 2, '15-18', '0'),
+(4, 'Stranged', 3, 'Día 4', 2, 'Abducción unilateral de hombro - parciales largas', 'Hombro posterior', 2, '15', 'fallo'),
+(4, 'Stranged', 3, 'Día 4', 3, 'JM Press con cable', 'Triceps', 2, '10-11', '0'),
+(4, 'Stranged', 3, 'Día 4', 4, 'Dragon flag excéntrica', 'Core', 3, '10-11', '0'),
+(4, 'Stranged', 3, 'Día 4', 5, 'bird dog', 'Core', 3, '15', '0-1'),
+(4, 'Stranged', 4, 'Día 5', 0, 'sentadilla pendular', 'Cuadriceps', 1, '6', '1-2'),
+(4, 'Stranged', 4, 'Día 5', 1, 'Extensión para cuádriceps sentado en máquina', 'Cuadriceps', 2, '10-11', 'fallo'),
+(4, 'Stranged', 4, 'Día 5', 2, 'Hip thrust tradicional en máquina', 'Gluteos', 2, '9-10', '0'),
+(4, 'Stranged', 4, 'Día 5', 3, 'Patada para glúteo con grillete en polea baja', 'Gluteos', 2, '14-15', 'fallo'),
+(4, 'Stranged', 4, 'Día 5', 4, 'Curl para isquiosurales sentado en máquina', 'Isquios', 2, '13', 'fallo'),
+(5, 'Girls just wanna have fun', 0, 'Día 1', 0, 'Hip Thrust a Una Pierna con Mancuerna', 'Gluteos', 2, '12', '0'),
+(5, 'Girls just wanna have fun', 0, 'Día 1', 1, 'Desplantes con barra (cuádriceps)', 'Cuadriceps', 2, '8-9', '0'),
+(5, 'Girls just wanna have fun', 0, 'Día 1', 2, 'Extensión de rodilla unilateral en máquina', 'Cuadriceps', 2, '12-15', 'fallo'),
+(5, 'Girls just wanna have fun', 0, 'Día 1', 3, 'Curl para isquiosurales acostado en máquina', 'Isquios', 2, '10-11', '0'),
+(5, 'Girls just wanna have fun', 0, 'Día 1', 4, 'Abducción de cadera en polea a media altura', 'Gluteos', 2, '16', '0'),
+(5, 'Girls just wanna have fun', 0, 'Día 1', 5, 'Elevación de talón en prensa a 45° parciales en elongación', 'Pantorrilla', 2, '12-13', '0'),
+(5, 'Girls just wanna have fun', 1, 'Día 2', 0, 'Jalón al pecho con agarre neutro', 'Espalda Alta', 2, '', ''),
+(5, 'Girls just wanna have fun', 1, 'Día 2', 1, 'Elevación lateral con polea detrás del cuerpo (media altura)', 'Hombro medio', 2, '', ''),
+(5, 'Girls just wanna have fun', 1, 'Día 2', 2, 'Elevaciones frontales de pie alternado con mancuernas', 'Hombro anterior', 2, '', ''),
+(5, 'Girls just wanna have fun', 1, 'Día 2', 3, 'Curl para bíceps de pie con barra Z1', 'Biceps', 1, '', ''),
+(5, 'Girls just wanna have fun', 1, 'Día 2', 4, 'Curl para bíceps de pie con barra Z', 'Biceps', 1, '', ''),
+(5, 'Girls just wanna have fun', 1, 'Día 2', 5, 'Abdominales en V', 'Core', 3, '', ''),
+(5, 'Girls just wanna have fun', 1, 'Día 2', 6, 'Elevación de rodillas colgando', 'Core', 3, '', ''),
+(5, 'Girls just wanna have fun', 2, 'Día 3', 0, 'Sentadilla hack', 'Cuadriceps', 2, '', ''),
+(5, 'Girls just wanna have fun', 2, 'Día 3', 1, 'Extensión para cuádriceps sentado en máquina', 'Cuadriceps', 2, '', ''),
+(5, 'Girls just wanna have fun', 2, 'Día 3', 2, 'Extensión de tronco en banco romano a 45°', 'Gluteos', 2, '', ''),
+(5, 'Girls just wanna have fun', 2, 'Día 3', 3, 'Abducción de cadera sentado en máquina', 'Gluteos', 2, '', ''),
+(5, 'Girls just wanna have fun', 2, 'Día 3', 4, 'Curl para isquiosurales acostado en máquina', 'Isquios', 2, '', ''),
+(5, 'Girls just wanna have fun', 3, 'Día 4', 0, 'Prensa militar sentado con mancuernas', 'Hombro anterior', 1, '', ''),
+(5, 'Girls just wanna have fun', 3, 'Día 4', 1, 'Elevaciones laterales de lado a una mano con mancuerna en banco inclinado', 'Hombro lateral', 2, '', ''),
+(5, 'Girls just wanna have fun', 3, 'Día 4', 2, 'Abducción unilateral de hombro - parciales largas', 'Hombro posterior', 2, '', ''),
+(5, 'Girls just wanna have fun', 3, 'Día 4', 3, 'JM Press con cable', 'Triceps', 2, '', ''),
+(5, 'Girls just wanna have fun', 3, 'Día 4', 4, 'Dragon flag excéntrica', 'Core', 3, '', ''),
+(5, 'Girls just wanna have fun', 3, 'Día 4', 5, 'bird dog', 'Core', 3, '', ''),
+(5, 'Girls just wanna have fun', 4, 'Día 5', 0, 'sentadilla pendular', 'Cuadriceps', 1, '', ''),
+(5, 'Girls just wanna have fun', 4, 'Día 5', 1, 'Extensión para cuádriceps sentado en máquina', 'Cuadriceps', 2, '', ''),
+(5, 'Girls just wanna have fun', 4, 'Día 5', 2, 'Hip thrust tradicional en máquina', 'Gluteos', 2, '', ''),
+(5, 'Girls just wanna have fun', 4, 'Día 5', 3, 'Patada para glúteo con grillete en polea baja', 'Gluteos', 2, '', ''),
+(5, 'Girls just wanna have fun', 4, 'Día 5', 4, 'Curl para isquiosurales sentado en máquina', 'Isquios', 2, '', ''),
+(6, 'im not the highway', 0, 'Día 1', 0, 'Prensa para pierna inclinada a 45°', 'Cuadriceps', 3, '', ''),
+(6, 'im not the highway', 0, 'Día 1', 1, 'Extensión de rodilla unilateral en máquina', 'Cuadriceps', 5, '', ''),
+(6, 'im not the highway', 0, 'Día 1', 2, 'Hip Thrust a Una Pierna con Mancuerna', 'Gluteos', 3, '', ''),
+(6, 'im not the highway', 0, 'Día 1', 3, 'Curl para isquiosurales acostado en máquina', 'Isquios', 5, '', ''),
+(6, 'im not the highway', 0, 'Día 1', 4, 'Abducción de cadera en polea a media altura', 'Gluteos', 5, '', ''),
+(6, 'im not the highway', 0, 'Día 1', 5, 'Elevación de talón en prensa a 45° parciales en elongación', 'Pantorrilla', 3, '', ''),
+(6, 'im not the highway', 1, 'Día 2', 0, 'Jalón al pecho con agarre neutro', 'Espalda alta', 2, '', ''),
+(6, 'im not the highway', 1, 'Día 2', 1, 'Elevación lateral con polea detrás del cuerpo (media altura)', 'Hombro anterior', 4, '', ''),
+(6, 'im not the highway', 1, 'Día 2', 2, 'Elevaciones frontales de pie alternado con mancuernas', 'Hombro lateral', 4, '', ''),
+(6, 'im not the highway', 1, 'Día 2', 3, 'Curl para bíceps de pie con barra Z', 'Biceps', 2, '', ''),
+(6, 'im not the highway', 1, 'Día 2', 4, 'Abdominales en V', 'Core', 3, '', ''),
+(6, 'im not the highway', 2, 'Día 3', 0, 'Abdominales en V', 'Core', 1, '', ''),
+(6, 'im not the highway', 2, 'Día 3', 1, 'Elevación de rodillas colgando', 'Core', 5, '', ''),
+(6, 'im not the highway', 3, 'Día 4', 0, 'Sentadilla búlgara con mancuerna (glúteo)', 'Gluteos', 4, '', ''),
+(6, 'im not the highway', 3, 'Día 4', 1, 'Extensión de rodilla unilateral en máquina', 'Cuadriceps', 4, '', ''),
+(6, 'im not the highway', 3, 'Día 4', 2, 'Extensión de tronco en banco romano a 45°', 'Gluteos', 4, '', ''),
+(6, 'im not the highway', 3, 'Día 4', 3, 'Patada de corredora', 'Gluteos', 3, '', ''),
+(6, 'im not the highway', 3, 'Día 4', 4, 'Abducción de cadera sentado en máquina', 'Gluteos', 3, '', ''),
+(6, 'im not the highway', 3, 'Día 4', 5, 'Elevación de talones en costurera', 'Pantorrilla', 3, '', ''),
+(6, 'im not the highway', 4, 'Día 5', 0, 'Prensa militar sentado con mancuernas', 'Hombro anterior', 4, '', ''),
+(6, 'im not the highway', 4, 'Día 5', 1, 'Elevaciones laterales de lado a una mano con mancuerna en banco inclinado', 'Hombro lateral', 4, '', ''),
+(6, 'im not the highway', 4, 'Día 5', 2, 'Abducción unilateral de hombro - parciales largas', 'Hombro posterior', 4, '', ''),
+(6, 'im not the highway', 4, 'Día 5', 3, 'JM Press con cable', 'Tríceps', 3, '', ''),
+(6, 'im not the highway', 4, 'Día 5', 4, 'Dragon flag excéntrica', 'Abdomen', 4, '', ''),
+(6, 'im not the highway', 4, 'Día 5', 5, 'bird dog', 'Abdomen', 4, '', ''),
+(6, 'im not the highway', 5, 'Día 6', 0, 'Peso muerto rumano con mancuernas - piernas rígidas', 'Isquiosurales', 2, '', ''),
+(6, 'im not the highway', 5, 'Día 6', 1, 'Extensión para cuádriceps sentado en máquina', 'Cuádriceps', 5, '', ''),
+(6, 'im not the highway', 5, 'Día 6', 2, 'Aducción de cadera sentado en máquina', 'Aductores de cadera', 4, '', ''),
+(6, 'im not the highway', 5, 'Día 6', 3, 'Patada para glúteo con grillete en polea baja', 'Glúteos', 3, '', ''),
+(6, 'im not the highway', 5, 'Día 6', 4, 'Curl para isquiosurales sentado en máquina', 'Isquiosurales', 2, '', ''),
+(6, 'im not the highway', 5, 'Día 6', 5, 'Remo horizontal de pie con barra', 'Espalda alta', 2, '', ''),
+(7, 'Sunflower', 0, 'Día 1', 0, 'Prensa para pierna inclinada a 45°', 'Cuadriceps', 3, '', ''),
+(7, 'Sunflower', 0, 'Día 1', 1, 'Extensión de rodilla unilateral en máquina', 'Cuadriceps', 5, '', ''),
+(7, 'Sunflower', 0, 'Día 1', 2, 'Hip Thrust a Una Pierna con Mancuerna', 'Gluteos', 3, '', ''),
+(7, 'Sunflower', 0, 'Día 1', 3, 'Curl para isquiosurales acostado en máquina', 'Isquios', 5, '', ''),
+(7, 'Sunflower', 0, 'Día 1', 4, 'Abducción de cadera en polea a media altura', 'Gluteos', 5, '', ''),
+(7, 'Sunflower', 0, 'Día 1', 5, 'Elevación de talón en prensa a 45° parciales en elongación', 'Pantorrilla', 3, '', ''),
+(7, 'Sunflower', 1, 'Día 2', 0, 'Jalón al pecho con agarre neutro', 'Espalda alta', 2, '', ''),
+(7, 'Sunflower', 1, 'Día 2', 1, 'Elevación lateral con polea detrás del cuerpo (media altura)', 'Hombro anterior', 4, '', ''),
+(7, 'Sunflower', 1, 'Día 2', 2, 'Elevaciones frontales de pie alternado con mancuernas', 'Hombro lateral', 4, '', ''),
+(7, 'Sunflower', 1, 'Día 2', 3, 'Curl para bíceps de pie con barra Z', 'Biceps', 2, '', ''),
+(7, 'Sunflower', 1, 'Día 2', 4, 'Abdominales en V', 'Core', 4, '', ''),
+(7, 'Sunflower', 1, 'Día 2', 5, 'Elevación de rodillas colgando', 'Core', 5, '', ''),
+(7, 'Sunflower', 2, 'Día 3', 0, 'Sentadilla búlgara con mancuerna (glúteo)', 'Gluteos', 4, '', ''),
+(7, 'Sunflower', 2, 'Día 3', 1, 'Extensión de rodilla unilateral en máquina', 'Cuadriceps', 4, '', ''),
+(7, 'Sunflower', 2, 'Día 3', 2, 'Extensión de tronco en banco romano a 45°', 'Gluteos', 4, '', ''),
+(7, 'Sunflower', 2, 'Día 3', 3, 'Patada de corredora', 'Gluteos', 3, '', ''),
+(7, 'Sunflower', 2, 'Día 3', 4, 'Abducción de cadera sentado en máquina', 'Gluteos', 3, '', ''),
+(7, 'Sunflower', 2, 'Día 3', 5, 'Elevación de talones en costurera', 'Pantorrilla', 3, '', ''),
+(7, 'Sunflower', 3, 'Día 4', 0, 'Prensa militar sentado con mancuernas', 'Hombro anterior', 4, '', ''),
+(7, 'Sunflower', 3, 'Día 4', 1, 'Elevaciones laterales de lado a una mano con mancuerna en banco inclinado', 'Hombro lateral', 4, '', ''),
+(7, 'Sunflower', 3, 'Día 4', 2, 'Abducción unilateral de hombro - parciales largas', 'Hombro posterior', 4, '', ''),
+(7, 'Sunflower', 3, 'Día 4', 3, 'JM Press con cable', 'Tríceps', 3, '', ''),
+(7, 'Sunflower', 3, 'Día 4', 4, 'Dragon flag excéntrica', 'Abdomen', 4, '', ''),
+(7, 'Sunflower', 3, 'Día 4', 5, 'bird dog', 'Abdomen', 4, '', ''),
+(7, 'Sunflower', 4, 'Día 5', 0, 'Peso muerto rumano con mancuernas - piernas rígidas', 'Isquiosurales', 2, '', ''),
+(7, 'Sunflower', 4, 'Día 5', 1, 'Extensión para cuádriceps sentado en máquina', 'Cuádriceps', 5, '', ''),
+(7, 'Sunflower', 4, 'Día 5', 2, 'Aducción de cadera sentado en máquina', 'Aductores de cadera', 4, '', ''),
+(7, 'Sunflower', 4, 'Día 5', 3, 'Patada para glúteo con grillete en polea baja', 'Glúteos', 3, '', ''),
+(7, 'Sunflower', 4, 'Día 5', 4, 'Curl para isquiosurales sentado en máquina', 'Isquiosurales', 2, '', ''),
+(7, 'Sunflower', 4, 'Día 5', 5, 'Remo horizontal de pie con barra', 'Espalda alta', 2, '', '');
 
-  insert into plans (user_id, name, objective, weeks, end_date, is_active, current_week, next_index)
-  values (uid, 'WELLNESS', 'Acumulación y descarga Wellness', 8, '2026-06-30', true, 0, 0)
-  returning id into plan_id;
+  -- Ensure all exercises exist in the catalog (so plan_exercises can link).
+  insert into exercises (owner_id, name, muscle_group)
+  select uid, ename, (array_agg(egrp))[1] from pstruct p
+  where not exists (select 1 from exercises e where (e.owner_id is null or e.owner_id = uid) and lower(trim(e.name)) = lower(trim(p.ename)))
+  group by ename;
 
-  -- Make WELLNESS the only active plan for this user.
-  update plans set is_active = (id = plan_id) where user_id = uid;
+  -- Rebuild the week -> day -> exercise tree (leaves workouts untouched).
+  delete from plan_weeks where plan_id = pid;
 
-  foreach wk in array weeks loop
-    insert into plan_weeks (plan_id, position, name) values (plan_id, i, wk) returning id into wid;
-    insert into plan_days (plan_id, week_id, position, name) values (plan_id, wid, 0, 'Día 1');
-    i := i + 1;
-  end loop;
+  insert into plan_weeks (plan_id, position, name)
+  select pid, wpos, wname from (select distinct wpos, wname from pstruct) s;
 
-  raise notice 'WELLNESS creado con 8 semanas (Come back … Sunflower).';
+  insert into plan_days (plan_id, week_id, position, name)
+  select pid, w.id, s.dpos, s.dname
+  from (select distinct wpos, dpos, dname from pstruct) s
+  join plan_weeks w on w.plan_id = pid and w.position = s.wpos;
+
+  insert into plan_exercises (day_id, position, exercise_id, sets, reps, rir)
+  select pdy.id, p.epos,
+    (select e.id from exercises e where (e.owner_id is null or e.owner_id = uid) and lower(trim(e.name)) = lower(trim(p.ename)) order by e.owner_id nulls last limit 1),
+    p.sets, p.reps, nullif(p.rir,'')
+  from pstruct p
+  join plan_weeks w   on w.plan_id = pid and w.position = p.wpos
+  join plan_days  pdy on pdy.week_id = w.id and pdy.position = p.dpos;
+
+  raise notice 'WELLNESS estructurado: % semanas, % días, % ejercicios.',
+    (select count(*) from plan_weeks where plan_id=pid),
+    (select count(*) from plan_days where plan_id=pid),
+    (select count(*) from plan_exercises pe join plan_days d on d.id=pe.day_id where d.plan_id=pid);
 end $$;
