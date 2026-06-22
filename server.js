@@ -1197,37 +1197,84 @@ app.post("/api/routine/advance", requireUser, async (req, res) => {
 // ─────────────────────────────────────────────────────────────
 // Plans / mesocycles (multiple per user, one active)
 // ─────────────────────────────────────────────────────────────
-function shapePlan(p, days) {
+function shapePlan(p, weeks) {
   return {
     id: p.id,
     name: p.name,
     objective: p.objective || "",
-    weeks: p.weeks,
     startDate: p.start_date,
     endDate: p.end_date,
     isActive: p.is_active,
-    nextIndex: p.next_index,
-    days: (days || []).map((x) => ({ position: x.position, name: x.name, exerciseIds: x.exercise_ids || [], notes: x.notes || "" })),
+    currentWeek: p.current_week || 0,
+    nextIndex: p.next_index || 0,
+    weeks: weeks || [],
   };
 }
 
+// Load a plan as the nested mesocycle → weeks → days → exercises tree.
 async function loadPlan(planId, userId) {
   const r = await query(`select * from plans where id = $1 and user_id = $2`, [planId, userId]);
   if (!r.rows[0]) return null;
-  const d = await query(`select position, name, exercise_ids, notes from plan_days where plan_id = $1 order by position`, [planId]);
-  return shapePlan(r.rows[0], d.rows);
+  const weeks = (await query(`select id, position, name, notes from plan_weeks where plan_id = $1 order by position`, [planId])).rows;
+  const weekIds = weeks.map((w) => w.id);
+  let days = [];
+  let exs = [];
+  if (weekIds.length) {
+    days = (await query(`select id, week_id, position, name, notes from plan_days where week_id = any($1) order by position`, [weekIds])).rows;
+    const dayIds = days.map((d) => d.id);
+    if (dayIds.length) {
+      exs = (await query(
+        `select day_id, position, exercise_id, sets, reps, rir, notes from plan_exercises where day_id = any($1) order by position`,
+        [dayIds]
+      )).rows;
+    }
+  }
+  const exByDay = {};
+  for (const e of exs) {
+    (exByDay[e.day_id] = exByDay[e.day_id] || []).push({
+      exerciseId: e.exercise_id, sets: e.sets, reps: e.reps || "", rir: e.rir || "", notes: e.notes || "",
+    });
+  }
+  const daysByWeek = {};
+  for (const d of days) {
+    (daysByWeek[d.week_id] = daysByWeek[d.week_id] || []).push({
+      position: d.position, name: d.name, notes: d.notes || "", exercises: exByDay[d.id] || [],
+    });
+  }
+  return shapePlan(
+    r.rows[0],
+    weeks.map((w) => ({ position: w.position, name: w.name, notes: w.notes || "", days: daysByWeek[w.id] || [] }))
+  );
 }
 
-// Replace a plan's days inside an open transaction client.
-async function writePlanDays(client, planId, days) {
-  await client.query(`delete from plan_days where plan_id = $1`, [planId]);
-  for (let i = 0; i < days.length; i++) {
-    const day = days[i] || {};
-    const ids = Array.isArray(day.exerciseIds) ? day.exerciseIds.filter(Boolean) : [];
-    await client.query(
-      `insert into plan_days (plan_id, position, name, exercise_ids, notes) values ($1, $2, $3, $4, $5)`,
-      [planId, i, String(day.name || `Day ${i + 1}`).trim(), ids, String(day.notes || "").trim()]
+// Replace a plan's whole week→day→exercise tree inside an open transaction.
+async function writePlanStructure(client, planId, weeks) {
+  await client.query(`delete from plan_weeks where plan_id = $1`, [planId]);
+  for (let wi = 0; wi < weeks.length; wi++) {
+    const w = weeks[wi] || {};
+    const wins = await client.query(
+      `insert into plan_weeks (plan_id, position, name, notes) values ($1, $2, $3, $4) returning id`,
+      [planId, wi, String(w.name || `Week ${wi + 1}`).trim(), String(w.notes || "").trim()]
     );
+    const weekId = wins.rows[0].id;
+    const days = Array.isArray(w.days) ? w.days : [];
+    for (let di = 0; di < days.length; di++) {
+      const d = days[di] || {};
+      const dins = await client.query(
+        `insert into plan_days (plan_id, week_id, position, name, notes) values ($1, $2, $3, $4, $5) returning id`,
+        [planId, weekId, di, String(d.name || `Day ${di + 1}`).trim(), String(d.notes || "").trim()]
+      );
+      const dayId = dins.rows[0].id;
+      const exs = Array.isArray(d.exercises) ? d.exercises : [];
+      let pos = 0;
+      for (const e of exs) {
+        if (!e || !e.exerciseId) continue;
+        await client.query(
+          `insert into plan_exercises (day_id, position, exercise_id, sets, reps, rir, notes) values ($1, $2, $3, $4, $5, $6, $7)`,
+          [dayId, pos++, e.exerciseId, Number(e.sets) || null, String(e.reps || "").trim(), String(e.rir || "").trim(), String(e.notes || "").trim()]
+        );
+      }
+    }
   }
 }
 
@@ -1235,16 +1282,16 @@ async function writePlanDays(client, planId, days) {
 app.get("/api/plans", requireUser, async (req, res) => {
   try {
     const { rows } = await query(
-      `select p.*, count(d.id)::int as day_count
-       from plans p left join plan_days d on d.plan_id = p.id
+      `select p.*, count(distinct w.id)::int as week_count
+       from plans p left join plan_weeks w on w.plan_id = p.id
        where p.user_id = $1 group by p.id order by p.is_active desc, p.created_at desc`,
       [req.user.sub]
     );
     res.json({
       ok: true,
       plans: rows.map((p) => ({
-        id: p.id, name: p.name, objective: p.objective || "", weeks: p.weeks,
-        startDate: p.start_date, endDate: p.end_date, isActive: p.is_active, dayCount: p.day_count,
+        id: p.id, name: p.name, objective: p.objective || "",
+        startDate: p.start_date, endDate: p.end_date, isActive: p.is_active, weekCount: p.week_count,
       })),
     });
   } catch (err) {
@@ -1266,7 +1313,7 @@ app.get("/api/plans/active", requireUser, async (req, res) => {
   }
 });
 
-// ── A single plan with its days ──
+// ── A single plan with its full tree ──
 app.get("/api/plans/:id", requireUser, async (req, res) => {
   try {
     const plan = await loadPlan(req.params.id, req.user.sub);
@@ -1280,7 +1327,7 @@ app.get("/api/plans/:id", requireUser, async (req, res) => {
 
 // ── Create a plan (first plan becomes active automatically) ──
 app.post("/api/plans", requireUser, async (req, res) => {
-  const { name, objective, weeks, startDate, endDate, days } = req.body || {};
+  const { name, objective, startDate, endDate, weeks } = req.body || {};
   const client = await pool.connect();
   try {
     await client.query("begin");
@@ -1289,9 +1336,9 @@ app.post("/api/plans", requireUser, async (req, res) => {
     const ins = await client.query(
       `insert into plans (user_id, name, objective, weeks, start_date, end_date, is_active)
        values ($1, $2, $3, $4, $5, $6, $7) returning id`,
-      [req.user.sub, String(name || "My Plan").trim(), String(objective || "").trim(), Number(weeks) || 8, startDate || null, endDate || null, makeActive]
+      [req.user.sub, String(name || "My Plan").trim(), String(objective || "").trim(), Array.isArray(weeks) ? weeks.length : 0, startDate || null, endDate || null, makeActive]
     );
-    await writePlanDays(client, ins.rows[0].id, Array.isArray(days) ? days : []);
+    await writePlanStructure(client, ins.rows[0].id, Array.isArray(weeks) ? weeks : []);
     await client.query("commit");
     res.json({ ok: true, plan: await loadPlan(ins.rows[0].id, req.user.sub) });
   } catch (err) {
@@ -1303,23 +1350,22 @@ app.post("/api/plans", requireUser, async (req, res) => {
   }
 });
 
-// ── Update a plan (fields + days) ──
+// ── Update a plan (fields + full tree) ──
 app.put("/api/plans/:id", requireUser, async (req, res) => {
-  const { name, objective, weeks, startDate, endDate, days } = req.body || {};
+  const { name, objective, startDate, endDate, weeks } = req.body || {};
   const client = await pool.connect();
   try {
     await client.query("begin");
-    const owned = await client.query(`select id, next_index from plans where id = $1 and user_id = $2`, [req.params.id, req.user.sub]);
+    const owned = await client.query(`select id from plans where id = $1 and user_id = $2`, [req.params.id, req.user.sub]);
     if (!owned.rows[0]) {
       await client.query("rollback");
       return res.status(404).json({ ok: false, error: "Plan not found." });
     }
-    const clamp = Array.isArray(days) && days.length > 0 ? owned.rows[0].next_index % days.length : 0;
     await client.query(
-      `update plans set name = $2, objective = $3, weeks = $4, start_date = $5, end_date = $6, next_index = $7 where id = $1`,
-      [req.params.id, String(name || "My Plan").trim(), String(objective || "").trim(), Number(weeks) || 8, startDate || null, endDate || null, clamp]
+      `update plans set name = $2, objective = $3, weeks = $4, start_date = $5, end_date = $6, current_week = 0, next_index = 0 where id = $1`,
+      [req.params.id, String(name || "My Plan").trim(), String(objective || "").trim(), Array.isArray(weeks) ? weeks.length : 0, startDate || null, endDate || null]
     );
-    if (Array.isArray(days)) await writePlanDays(client, req.params.id, days);
+    if (Array.isArray(weeks)) await writePlanStructure(client, req.params.id, weeks);
     await client.query("commit");
     res.json({ ok: true, plan: await loadPlan(req.params.id, req.user.sub) });
   } catch (err) {
@@ -1344,15 +1390,18 @@ app.post("/api/plans/:id/activate", requireUser, async (req, res) => {
   }
 });
 
-// ── Advance the active plan's rotation pointer ──
+// ── Advance the rotation: next day in the current week, then next week ──
 app.post("/api/plans/:id/advance", requireUser, async (req, res) => {
   try {
-    const r = await query(`select p.id, p.next_index, count(d.id)::int as day_count
-                           from plans p left join plan_days d on d.plan_id = p.id
-                           where p.id = $1 and p.user_id = $2 group by p.id`, [req.params.id, req.user.sub]);
-    if (!r.rows[0] || r.rows[0].day_count === 0) return res.json({ ok: true });
-    const { id, next_index, day_count } = r.rows[0];
-    await query(`update plans set next_index = $2 where id = $1`, [id, (next_index + 1) % day_count]);
+    const p = await query(`select current_week, next_index from plans where id = $1 and user_id = $2`, [req.params.id, req.user.sub]);
+    if (!p.rows[0]) return res.json({ ok: true });
+    const weeks = (await query(`select id from plan_weeks where plan_id = $1 order by position`, [req.params.id])).rows;
+    if (!weeks.length) return res.json({ ok: true });
+    let cw = ((p.rows[0].current_week % weeks.length) + weeks.length) % weeks.length;
+    const dayCount = (await query(`select count(*)::int as n from plan_days where week_id = $1`, [weeks[cw].id])).rows[0].n;
+    let ni = (p.rows[0].next_index || 0) + 1;
+    if (dayCount === 0 || ni >= dayCount) { ni = 0; cw = (cw + 1) % weeks.length; }
+    await query(`update plans set current_week = $2, next_index = $3 where id = $1`, [req.params.id, cw, ni]);
     res.json({ ok: true });
   } catch (err) {
     console.error("Advance plan failed:", err);

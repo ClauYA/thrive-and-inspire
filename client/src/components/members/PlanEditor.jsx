@@ -5,7 +5,10 @@ import { userApi, getUserToken } from "../../lib/userApi";
 import MemberHeader from "./MemberHeader";
 import { Button, Input, Textarea, Select, Field } from "../ui";
 
-const DAY_LETTERS = ["A", "B", "C", "D", "E", "F", "G"];
+const RIR_OPTIONS = ["", "fallo", "0-1", "1", "1-2", "2", "2-3"];
+const newExercise = () => ({ exerciseId: "", sets: 3, reps: "", rir: "", notes: "" });
+const newDay = (n) => ({ name: `Día ${n}`, notes: "", exercises: [] });
+const newWeek = (n) => ({ name: `Semana ${n}`, notes: "", days: [newDay(1)] });
 
 export default function PlanEditor() {
   const { t } = useLanguage();
@@ -17,15 +20,12 @@ export default function PlanEditor() {
   const [exercises, setExercises] = useState([]);
   const [name, setName] = useState("");
   const [objective, setObjective] = useState("");
-  const [weeks, setWeeks] = useState(8);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [days, setDays] = useState([]);
+  const [weeks, setWeeks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-
-  const exName = (eid) => exercises.find((e) => e.id === eid)?.name || "—";
 
   useEffect(() => {
     if (!getUserToken()) {
@@ -41,17 +41,28 @@ export default function PlanEditor() {
           const p = d.plan;
           setName(p.name);
           setObjective(p.objective || "");
-          setWeeks(p.weeks || 8);
           setStartDate(p.startDate ? String(p.startDate).slice(0, 10) : "");
           setEndDate(p.endDate ? String(p.endDate).slice(0, 10) : "");
-          setDays(p.days.map((x) => ({ name: x.name, exerciseIds: x.exerciseIds, notes: x.notes || "" })));
+          setWeeks(
+            (p.weeks || []).map((w) => ({
+              name: w.name,
+              notes: w.notes || "",
+              days: (w.days || []).map((dd) => ({
+                name: dd.name,
+                notes: dd.notes || "",
+                exercises: (dd.exercises || []).map((e) => ({
+                  exerciseId: e.exerciseId || "",
+                  sets: e.sets ?? 3,
+                  reps: e.reps || "",
+                  rir: e.rir || "",
+                  notes: e.notes || "",
+                })),
+              })),
+            }))
+          );
         } else {
           setName("");
-          setDays([
-            { name: "Day A", exerciseIds: [], notes: "" },
-            { name: "Day B", exerciseIds: [], notes: "" },
-            { name: "Day C", exerciseIds: [], notes: "" },
-          ]);
+          setWeeks([newWeek(1)]);
         }
         setLoading(false);
       } catch (e) {
@@ -65,22 +76,30 @@ export default function PlanEditor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const addDay = () => setDays((d) => [...d, { name: `Day ${DAY_LETTERS[d.length] || d.length + 1}`, exerciseIds: [], notes: "" }]);
-  const removeDay = (di) => setDays((d) => d.filter((_, i) => i !== di));
-  const setDayField = (di, field) => (e) => setDays((d) => d.map((day, i) => (i === di ? { ...day, [field]: e.target.value } : day)));
-  const addExercise = (di) => (e) => {
-    const eid = e.target.value;
-    if (!eid) return;
-    setDays((d) => d.map((day, i) => (i === di && !day.exerciseIds.includes(eid) ? { ...day, exerciseIds: [...day.exerciseIds, eid] } : day)));
-    e.target.value = "";
-  };
-  const removeExercise = (di, eid) =>
-    setDays((d) => d.map((day, i) => (i === di ? { ...day, exerciseIds: day.exerciseIds.filter((x) => x !== eid) } : day)));
+  // Immutable helpers ------------------------------------------------------
+  const updWeeks = (fn) => setWeeks((ws) => fn(ws.map((w) => ({ ...w, days: w.days.map((d) => ({ ...d, exercises: d.exercises.map((e) => ({ ...e })) })) }))));
+
+  const addWeek = () => updWeeks((ws) => [...ws, newWeek(ws.length + 1)]);
+  const removeWeek = (wi) => updWeeks((ws) => ws.filter((_, i) => i !== wi));
+  const duplicateWeek = (wi) => updWeeks((ws) => {
+    const copy = JSON.parse(JSON.stringify(ws[wi]));
+    copy.name = `${copy.name} (copia)`;
+    return [...ws.slice(0, wi + 1), copy, ...ws.slice(wi + 1)];
+  });
+  const setWeekField = (wi, f) => (e) => updWeeks((ws) => { ws[wi][f] = e.target.value; return ws; });
+
+  const addDay = (wi) => updWeeks((ws) => { ws[wi].days.push(newDay(ws[wi].days.length + 1)); return ws; });
+  const removeDay = (wi, di) => updWeeks((ws) => { ws[wi].days = ws[wi].days.filter((_, i) => i !== di); return ws; });
+  const setDayField = (wi, di, f) => (e) => updWeeks((ws) => { ws[wi].days[di][f] = e.target.value; return ws; });
+
+  const addEx = (wi, di) => updWeeks((ws) => { ws[wi].days[di].exercises.push(newExercise()); return ws; });
+  const removeEx = (wi, di, ei) => updWeeks((ws) => { ws[wi].days[di].exercises = ws[wi].days[di].exercises.filter((_, i) => i !== ei); return ws; });
+  const setExField = (wi, di, ei, f) => (e) => updWeeks((ws) => { ws[wi].days[di].exercises[ei][f] = e.target.value; return ws; });
 
   const save = async () => {
     setSaving(true);
     setError("");
-    const body = { name, objective, weeks: Number(weeks) || 8, startDate: startDate || null, endDate: endDate || null, days };
+    const body = { name, objective, startDate: startDate || null, endDate: endDate || null, weeks };
     try {
       if (isNew) await userApi("/api/plans", "POST", body);
       else await userApi(`/api/plans/${id}`, "PUT", body);
@@ -96,7 +115,7 @@ export default function PlanEditor() {
   return (
     <div className="min-h-screen bg-cream relative z-[1]">
       <MemberHeader />
-      <main className="max-w-[760px] mx-auto px-[5%] py-10">
+      <main className="max-w-[820px] mx-auto px-[5%] py-10">
         <button onClick={() => navigate("/app/plans")} className="text-terracotta text-[0.85rem] font-semibold mb-5 hover:text-terracotta-dark">
           {tr.back}
         </button>
@@ -106,6 +125,7 @@ export default function PlanEditor() {
           <p className="text-warm-gray">{tr.loading}</p>
         ) : (
           <>
+            {/* Mesocycle header */}
             <div className="bg-white rounded-2xl border border-sand p-5 mb-5 grid gap-4">
               <Field label={tr.planName}>
                 <Input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={tr.planNamePh} />
@@ -113,14 +133,7 @@ export default function PlanEditor() {
               <Field label={tr.objective}>
                 <Input type="text" value={objective} onChange={(e) => setObjective(e.target.value)} placeholder={tr.objectivePh} />
               </Field>
-              <div className="grid sm:grid-cols-3 gap-4">
-                <Field label={tr.weeksLabel}>
-                  <Select value={weeks} onChange={(e) => setWeeks(e.target.value)}>
-                    {[4, 6, 8, 10, 12, 16].map((w) => (
-                      <option key={w} value={w}>{w}</option>
-                    ))}
-                  </Select>
-                </Field>
+              <div className="grid sm:grid-cols-2 gap-4">
                 <Field label={tr.startDateLabel}>
                   <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
                 </Field>
@@ -130,40 +143,73 @@ export default function PlanEditor() {
               </div>
             </div>
 
-            {days.map((day, di) => (
-              <div key={di} className="bg-white rounded-2xl border border-sand p-5 mb-4">
+            {/* Weeks */}
+            {weeks.map((week, wi) => (
+              <div key={wi} className="bg-sage-light/15 rounded-2xl border border-sage-light p-4 mb-5">
                 <div className="flex items-center justify-between gap-3 mb-3">
-                  <Input type="text" value={day.name} onChange={setDayField(di, "name")} className="font-semibold" />
-                  <button onClick={() => removeDay(di)} aria-label={tr.removeDay} className="shrink-0 text-warm-gray hover:text-red-500 text-xl leading-none px-1">
-                    ×
-                  </button>
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className="text-[0.7rem] font-bold uppercase tracking-wide text-forest shrink-0">{tr.weekLabel} {wi + 1}</span>
+                    <Input type="text" value={week.name} onChange={setWeekField(wi, "name")} placeholder={tr.weekNamePh} className="font-semibold" />
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button onClick={() => duplicateWeek(wi)} className="text-[0.74rem] font-semibold text-forest border border-sage-light bg-white px-2.5 py-1.5 rounded-full hover:bg-sage-light/40">
+                      ⧉ {tr.duplicateWeek}
+                    </button>
+                    <button onClick={() => removeWeek(wi)} aria-label={tr.removeWeek} className="text-warm-gray hover:text-red-500 text-xl leading-none px-1">×</button>
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {day.exerciseIds.length === 0 && <span className="text-[0.82rem] text-light-gray">{tr.noExercisesYet}</span>}
-                  {day.exerciseIds.map((eid) => (
-                    <span key={eid} className="inline-flex items-center gap-1.5 bg-sage-light/40 text-forest text-[0.8rem] font-medium px-3 py-1 rounded-full">
-                      {exName(eid)}
-                      <button onClick={() => removeExercise(di, eid)} className="text-forest/60 hover:text-red-500">×</button>
-                    </span>
-                  ))}
-                </div>
-                <Select onChange={addExercise(di)} defaultValue="" className="mb-3">
-                  <option value="">+ {tr.addExercise}</option>
-                  {exercises.map((ex) => (
-                    <option key={ex.id} value={ex.id}>
-                      {ex.name}
-                      {ex.muscle_group ? ` · ${ex.muscle_group}` : ""}
-                    </option>
-                  ))}
-                </Select>
-                <Field label={tr.dayNotes}>
-                  <Textarea rows={2} value={day.notes} onChange={setDayField(di, "notes")} placeholder={tr.dayNotesPh} />
-                </Field>
+                <Textarea rows={1} value={week.notes} onChange={setWeekField(wi, "notes")} placeholder={tr.weekNotes} className="mb-3 bg-white" />
+
+                {/* Days */}
+                {week.days.map((day, di) => (
+                  <div key={di} className="bg-white rounded-xl border border-sand p-4 mb-3">
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <Input type="text" value={day.name} onChange={setDayField(wi, di, "name")} placeholder={tr.dayNamePh} className="font-semibold" />
+                      <button onClick={() => removeDay(wi, di)} aria-label={tr.removeDay} className="shrink-0 text-warm-gray hover:text-red-500 text-xl leading-none px-1">×</button>
+                    </div>
+
+                    {/* Exercises with targets */}
+                    {day.exercises.length > 0 && (
+                      <div className="grid grid-cols-[1fr_50px_64px_72px_24px] gap-1.5 items-center text-[0.66rem] font-semibold text-warm-gray mb-1 px-0.5">
+                        <span>{tr.colExercise}</span>
+                        <span className="text-center">{tr.exTargetSets}</span>
+                        <span className="text-center">{tr.exTargetReps}</span>
+                        <span className="text-center">{tr.exTargetRir}</span>
+                        <span />
+                      </div>
+                    )}
+                    {day.exercises.map((ex, ei) => (
+                      <div key={ei} className="grid grid-cols-[1fr_50px_64px_72px_24px] gap-1.5 items-center mb-1.5">
+                        <Select value={ex.exerciseId} onChange={setExField(wi, di, ei, "exerciseId")} className="text-[0.82rem] py-2">
+                          <option value="">{tr.selectExercise}</option>
+                          {exercises.map((x) => (
+                            <option key={x.id} value={x.id}>{x.name}{x.muscle_group ? ` · ${x.muscle_group}` : ""}</option>
+                          ))}
+                        </Select>
+                        <Input type="number" inputMode="numeric" value={ex.sets} onChange={setExField(wi, di, ei, "sets")} className="text-center px-1 py-2" />
+                        <Input type="text" value={ex.reps} onChange={setExField(wi, di, ei, "reps")} placeholder="8-10" className="text-center px-1 py-2" />
+                        <Select value={ex.rir} onChange={setExField(wi, di, ei, "rir")} className="text-center px-1 py-2">
+                          {RIR_OPTIONS.map((o) => (
+                            <option key={o} value={o}>{o === "" ? "–" : o === "fallo" ? tr.failure : o}</option>
+                          ))}
+                        </Select>
+                        <button onClick={() => removeEx(wi, di, ei)} aria-label={tr.removeExercise} className="text-warm-gray hover:text-red-500 text-lg leading-none">−</button>
+                      </div>
+                    ))}
+                    <button onClick={() => addEx(wi, di)} className="text-[0.8rem] font-semibold text-terracotta hover:text-terracotta-dark mt-1">
+                      + {tr.addExerciseRow}
+                    </button>
+                  </div>
+                ))}
+
+                <button onClick={() => addDay(wi)} className="w-full border-2 border-dashed border-sand text-warm-gray font-semibold py-2.5 rounded-xl hover:bg-white/60 transition-colors text-[0.85rem]">
+                  + {tr.addDay}
+                </button>
               </div>
             ))}
 
-            <button onClick={addDay} className="w-full border-2 border-dashed border-sage-light text-forest font-semibold py-3 rounded-2xl hover:bg-sage-light/20 transition-colors mb-6">
-              + {tr.addDay}
+            <button onClick={addWeek} className="w-full border-2 border-dashed border-sage-light text-forest font-semibold py-3 rounded-2xl hover:bg-sage-light/20 transition-colors mb-6">
+              + {tr.addWeek}
             </button>
 
             {error && <p className="text-red-500 text-[0.85rem] mb-3">{error}</p>}
