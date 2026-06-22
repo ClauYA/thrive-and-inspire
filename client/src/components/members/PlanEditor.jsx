@@ -4,8 +4,7 @@ import { useLanguage } from "../../i18n/LanguageContext";
 import { userApi, getUserToken } from "../../lib/userApi";
 import MemberHeader from "./MemberHeader";
 import { Button, Input, Textarea, Select, Field } from "../ui";
-
-const RIR_OPTIONS = ["", "fallo", "0-1", "1", "1-2", "2", "2-3"];
+import { RIR_OPTIONS, rirLabel } from "../../lib/rir";
 const newExercise = () => ({ exerciseId: "", sets: 3, reps: "", rir: "", notes: "" });
 const newDay = (n) => ({ name: `Día ${n}`, notes: "", exercises: [] });
 const newWeek = (n) => ({ name: `Semana ${n}`, notes: "", days: [newDay(1)] });
@@ -189,8 +188,9 @@ export default function PlanEditor() {
                         <Input type="number" inputMode="numeric" value={ex.sets} onChange={setExField(wi, di, ei, "sets")} className="text-center px-1 py-2" />
                         <Input type="text" value={ex.reps} onChange={setExField(wi, di, ei, "reps")} placeholder="8-10" className="text-center px-1 py-2" />
                         <Select value={ex.rir} onChange={setExField(wi, di, ei, "rir")} className="text-center px-1 py-2">
+                          <option value="">–</option>
                           {RIR_OPTIONS.map((o) => (
-                            <option key={o} value={o}>{o === "" ? "–" : o === "fallo" ? tr.failure : o}</option>
+                            <option key={o} value={o}>{rirLabel(o, tr.failure)}</option>
                           ))}
                         </Select>
                         <button onClick={() => removeEx(wi, di, ei)} aria-label={tr.removeExercise} className="text-warm-gray hover:text-red-500 text-lg leading-none">−</button>
