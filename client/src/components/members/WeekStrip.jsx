@@ -10,8 +10,9 @@ function startOfWeek(date) {
   return x;
 }
 
-// "This week" strip: past days show what was trained; today/future days
-// project the upcoming routine rotation with that day's exercises.
+// "This week" strip: past/any day shows what you actually trained; the next
+// routine day to do is flagged on today only — you train it whenever you want
+// (any weekday, rest days wherever), and logging it advances the rotation.
 export default function WeekStrip({ workouts, routine, exMap, onPick }) {
   const { t, lang } = useLanguage();
   const tr = t.tracker;
@@ -28,7 +29,7 @@ export default function WeekStrip({ workouts, routine, exMap, onPick }) {
   }
 
   const days = routine?.days || [];
-  let proj = routine ? routine.nextIndex : 0;
+  const nextDay = days.length ? days[(routine?.nextIndex || 0) % days.length] : null;
 
   const cells = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(start);
@@ -38,11 +39,8 @@ export default function WeekStrip({ workouts, routine, exMap, onPick }) {
     const isPast = key < todayKey;
     const isToday = key === todayKey;
 
-    let plan = null;
-    if (!done && !isPast && days.length) {
-      plan = days[proj % days.length];
-      proj++;
-    }
+    // Only flag the next routine day on today — no fixed weekday schedule.
+    const plan = !done && isToday && nextDay ? nextDay : null;
     return { d, key, done, isPast, isToday, plan };
   });
 
@@ -69,6 +67,7 @@ export default function WeekStrip({ workouts, routine, exMap, onPick }) {
               </button>
             ) : c.plan ? (
               <div className="flex-1">
+                <span className="text-[0.55rem] font-semibold text-terracotta/70 block leading-tight uppercase tracking-wide">{tr.upNext}</span>
                 <span className="text-[0.62rem] font-semibold text-terracotta block leading-tight truncate">{c.plan.name}</span>
                 <span className="text-[0.58rem] text-warm-gray block leading-tight">
                   {c.plan.exerciseIds.slice(0, 3).map((id) => exMap[id] || "").filter(Boolean).join(", ")}
@@ -77,7 +76,7 @@ export default function WeekStrip({ workouts, routine, exMap, onPick }) {
               </div>
             ) : (
               <div className="flex-1 flex items-center justify-center">
-                <span className="text-[0.6rem] text-light-gray">{c.isPast ? "·" : tr.rest}</span>
+                <span className="text-[0.6rem] text-light-gray">·</span>
               </div>
             )}
           </div>
