@@ -85,10 +85,18 @@ export default function Dashboard() {
   };
 
   const weekList = plan && plan.weeks ? plan.weeks : [];
-  const curWeekIdx = weekList.length ? plan.currentWeek % weekList.length : 0;
-  const curWeek = weekList.length ? weekList[curWeekIdx] : null;
-  const curDayIdx = curWeek && curWeek.days.length ? plan.nextIndex % curWeek.days.length : 0;
-  const nextDay = curWeek && curWeek.days.length ? curWeek.days[curDayIdx] : null;
+  // Up next is derived from history (self-correcting), not a stored pointer:
+  // walk the plan in order and pick the day right after the last one logged.
+  const planOrder = [];
+  weekList.forEach((w, wi) => (w.days || []).forEach((d, di) => planOrder.push({ wi, di, key: `${w.name} · ${d.name}` })));
+  const doneTitles = new Set((workouts || []).map((w) => w.title));
+  let lastDone = -1;
+  planOrder.forEach((p, i) => { if (doneTitles.has(p.key)) lastDone = i; });
+  const nextPos = planOrder[lastDone + 1] || planOrder[0] || null;
+  const curWeekIdx = nextPos ? nextPos.wi : 0;
+  const curDayIdx = nextPos ? nextPos.di : 0;
+  const curWeek = nextPos ? weekList[curWeekIdx] : null;
+  const nextDay = curWeek ? curWeek.days[curDayIdx] : null;
   // Shape the current week for the WeekStrip (expects { nextIndex, days:[{name, exerciseIds}] }).
   const weekForStrip = curWeek
     ? { nextIndex: curDayIdx, days: curWeek.days.map((d) => ({ name: d.name, exerciseIds: (d.exercises || []).map((e) => e.exerciseId).filter(Boolean) })) }

@@ -100,7 +100,29 @@ export default function WorkoutLogger() {
   const [error, setError] = useState("");
   const [showRirInfo, setShowRirInfo] = useState(false);
   const [muscle, setMuscle] = useState("");
+  const [routinePlan, setRoutinePlan] = useState(null);
+  const [dayPos, setDayPos] = useState({ wi: 0, di: 0 });
   const uid = useRef(0);
+
+  // Prefill the logger from a plan's week/day: title, day notes, and exercise
+  // blocks with their targets. Used by the initial load and the day picker.
+  const applyDay = (planObj, wi, di, exList) => {
+    const week = planObj?.weeks?.[wi];
+    const day = week?.days?.[di];
+    if (!day) return;
+    setTitle(`${week.name} · ${day.name}`);
+    setDayNotes([week?.notes, day.notes].filter(Boolean).join(" · "));
+    setDayPos({ wi, di });
+    const nb = (day.exercises || [])
+      .map((pe) => {
+        const ex = (exList || exercises).find((x) => x.id === pe.exerciseId);
+        return ex ? makeBlock(ex, pe) : null;
+      })
+      .filter(Boolean);
+    setBlocks(nb.length ? nb : [makeBlock(null)]);
+    setStarted(true);
+    nb.forEach((b) => loadLast(b.uid, b.exerciseId));
+  };
 
   useEffect(() => {
     if (!getUserToken()) {
@@ -120,22 +142,13 @@ export default function WorkoutLogger() {
         if (planParam && weekParam != null && dayParam != null) {
           const r = await userApi(`/api/plans/${planParam}`);
           if (!active) return;
-          const week = r.plan?.weeks?.[Number(weekParam)];
-          const day = week?.days?.[Number(dayParam)];
-          if (day) {
-            setTitle(day.name);
+          const wi = Number(weekParam);
+          const di = Number(dayParam);
+          if (r.plan?.weeks?.[wi]?.days?.[di]) {
+            setRoutinePlan(r.plan);
             setFromRoutine(true);
             setPlanId(planParam);
-            setDayNotes([week?.notes, day.notes].filter(Boolean).join(" · "));
-            const newBlocks = (day.exercises || [])
-              .map((pe) => {
-                const ex = d.exercises.find((x) => x.id === pe.exerciseId);
-                return ex ? makeBlock(ex, pe) : null;
-              })
-              .filter(Boolean);
-            setBlocks(newBlocks);
-            setStarted(true);
-            newBlocks.forEach((b) => loadLast(b.uid, b.exerciseId));
+            applyDay(r.plan, wi, di, d.exercises);
           }
         }
       } catch (e) {
@@ -229,13 +242,6 @@ export default function WorkoutLogger() {
     setError("");
     try {
       await userApi("/api/workouts", "POST", { title, performedAt: date || null, notes, sets: flatSets, planId });
-      if (fromRoutine && planId) {
-        try {
-          await userApi(`/api/plans/${planId}/advance`, "POST");
-        } catch {
-          /* non-blocking */
-        }
-      }
       navigate("/app");
     } catch (e) {
       if (e.unauthorized) return navigate("/login");
@@ -296,6 +302,22 @@ export default function WorkoutLogger() {
         {started && (
           <>
             <div className="bg-white rounded-2xl border border-sand p-5 sm:p-6 mb-5 grid gap-4">
+              {fromRoutine && routinePlan && (
+                <div>
+                  <label className="block text-[0.8rem] font-semibold text-charcoal mb-1.5">{tr.chooseDay}</label>
+                  <select
+                    value={`${dayPos.wi}-${dayPos.di}`}
+                    onChange={(e) => { const [wi, di] = e.target.value.split("-").map(Number); applyDay(routinePlan, wi, di); }}
+                    className={`${inputClass} cursor-pointer`}
+                  >
+                    {routinePlan.weeks.map((w, wi) =>
+                      (w.days || []).map((dd, di) => (
+                        <option key={`${wi}-${di}`} value={`${wi}-${di}`}>{w.name} · {dd.name}</option>
+                      ))
+                    )}
+                  </select>
+                </div>
+              )}
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[0.8rem] font-semibold text-charcoal mb-1.5">{tr.workoutTitle}</label>
