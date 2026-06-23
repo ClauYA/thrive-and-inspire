@@ -82,6 +82,13 @@ export default function MembersAdmin({ onAuthError }) {
     if (!window.confirm(tr.confirmDelete)) return;
     try { await apiAuth(`/api/admin/plans/${id}`, "DELETE"); refreshMember(); } catch (err) { fail(err); }
   };
+  const duplicatePlan = async (id, targetId, targetName) => {
+    if (!targetId) return;
+    try {
+      await apiAuth(`/api/admin/plans/${id}/duplicate`, "POST", { targetMemberId: targetId });
+      window.alert(`${t.admin.duplicatedTo} ${targetName}`);
+    } catch (err) { fail(err); }
+  };
 
   const A = t.admin;
 
@@ -116,6 +123,23 @@ export default function MembersAdmin({ onAuthError }) {
               <div className="flex items-center gap-2 shrink-0">
                 <Link to={`/admin/members/${sel.member.id}/plans/${p.id}`} className="text-[0.8rem] font-semibold text-forest border border-sage-light px-3 py-1.5 rounded-full hover:bg-sage-light/40">{A.edit}</Link>
                 {!p.is_active && <button onClick={() => activatePlan(p.id)} className="text-[0.8rem] font-semibold text-warm-gray border border-sand px-3 py-1.5 rounded-full hover:bg-sand">{A.activate}</button>}
+                {members.filter((m) => m.id !== sel.member.id).length > 0 && (
+                  <select
+                    defaultValue=""
+                    onChange={(e) => {
+                      const m = members.find((x) => x.id === e.target.value);
+                      if (m) duplicatePlan(p.id, m.id, m.name);
+                      e.target.value = "";
+                    }}
+                    className="text-[0.8rem] font-semibold text-forest border border-sage-light px-2 py-1.5 rounded-full bg-white cursor-pointer max-w-[150px]"
+                    title={A.duplicateTo}
+                  >
+                    <option value="">⧉ {A.duplicateTo}</option>
+                    {members.filter((m) => m.id !== sel.member.id).map((m) => (
+                      <option key={m.id} value={m.id}>{m.name}</option>
+                    ))}
+                  </select>
+                )}
                 <button onClick={() => deletePlan(p.id)} className="text-[0.8rem] font-semibold text-red-500 border border-red-200 px-3 py-1.5 rounded-full hover:bg-red-50">{A.delete}</button>
               </div>
             </div>

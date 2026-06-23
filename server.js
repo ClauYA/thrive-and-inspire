@@ -1692,6 +1692,87 @@ app.post("/api/admin/plans/:id/activate", requireAdmin, async (req, res) => {
   }
 });
 
+// Duplicate a plan to another member (copies the full tree; ensures the
+// referenced exercises exist in the target's catalog by name).
+app.post("/api/admin/plans/:id/duplicate", requireAdmin, async (req, res) => {
+  const targetId = (req.body || {}).targetMemberId;
+  if (!targetId) return res.status(400).json({ ok: false, error: "Pick a member to copy to." });
+  const client = await pool.connect();
+  try {
+    const src = await client.query(`select * from plans where id = $1`, [req.params.id]);
+    if (!src.rows[0]) return res.status(404).json({ ok: false, error: "Plan not found." });
+    const tgt = await client.query(`select id from users where id = $1`, [targetId]);
+    if (!tgt.rows[0]) return res.status(404).json({ ok: false, error: "Member not found." });
+
+    const rows = (await client.query(
+      `select wk.position as wpos, wk.name as wname, wk.notes as wnotes,
+              d.position as dpos, d.name as dname, d.notes as dnotes,
+              pe.position as epos, e.name as ename, e.muscle_group as egrp,
+              pe.sets, pe.reps, pe.rir, pe.notes as enotes
+       from plan_weeks wk
+       join plan_days d on d.week_id = wk.id
+       left join plan_exercises pe on pe.day_id = d.id
+       left join exercises e on e.id = pe.exercise_id
+       where wk.plan_id = $1
+       order by wk.position, d.position, pe.position`,
+      [req.params.id]
+    )).rows;
+
+    await client.query("begin");
+    // Ensure each exercise exists for the target (visible = owned by target or shared).
+    const names = [...new Set(rows.filter((r) => r.ename).map((r) => r.ename))];
+    const nameToId = {};
+    if (names.length) {
+      const ex = await client.query(
+        `select id, name from exercises where (owner_id is null or owner_id = $1) and name = any($2)`,
+        [targetId, names]
+      );
+      ex.rows.forEach((e) => (nameToId[e.name.toLowerCase()] = e.id));
+      for (const r of rows) {
+        if (r.ename && !nameToId[r.ename.toLowerCase()]) {
+          const ins = await client.query(
+            `insert into exercises (owner_id, name, muscle_group) values ($1, $2, $3) returning id`,
+            [targetId, r.ename, r.egrp || ""]
+          );
+          nameToId[r.ename.toLowerCase()] = ins.rows[0].id;
+        }
+      }
+    }
+    // Rebuild the nested weeks structure with target exercise ids.
+    const wMap = new Map();
+    for (const r of rows) {
+      if (!wMap.has(r.wpos)) wMap.set(r.wpos, { name: r.wname, notes: r.wnotes || "", days: new Map() });
+      const wk = wMap.get(r.wpos);
+      if (!wk.days.has(r.dpos)) wk.days.set(r.dpos, { name: r.dname, notes: r.dnotes || "", exercises: [] });
+      if (r.ename) {
+        wk.days.get(r.dpos).exercises.push({
+          exerciseId: nameToId[r.ename.toLowerCase()], sets: r.sets, reps: r.reps || "", rir: r.rir || "", notes: r.enotes || "",
+        });
+      }
+    }
+    const weeks = [...wMap.entries()].sort((a, b) => a[0] - b[0]).map(([, w]) => ({
+      name: w.name, notes: w.notes,
+      days: [...w.days.entries()].sort((a, b) => a[0] - b[0]).map(([, d]) => d),
+    }));
+
+    const cnt = await client.query(`select count(*)::int as n from plans where user_id = $1`, [targetId]);
+    const insP = await client.query(
+      `insert into plans (user_id, name, objective, weeks, start_date, end_date, is_active)
+       values ($1, $2, $3, $4, $5, $6, $7) returning id`,
+      [targetId, src.rows[0].name, src.rows[0].objective || "", weeks.length, src.rows[0].start_date || null, src.rows[0].end_date || null, cnt.rows[0].n === 0]
+    );
+    await writePlanStructure(client, insP.rows[0].id, weeks);
+    await client.query("commit");
+    res.json({ ok: true });
+  } catch (err) {
+    await client.query("rollback");
+    console.error("Admin duplicate plan failed:", err);
+    res.status(500).json({ ok: false, error: "Could not duplicate the plan." });
+  } finally {
+    client.release();
+  }
+});
+
 // Delete a member's plan
 app.delete("/api/admin/plans/:id", requireAdmin, async (req, res) => {
   try {
