@@ -84,17 +84,6 @@ export default function Dashboard() {
     openDetail(id);
   };
 
-  const remove = async (id) => {
-    if (!window.confirm(tr.confirmDelete)) return;
-    try {
-      await userApi(`/api/workouts/${id}`, "DELETE");
-      setExpanded(null);
-      load();
-    } catch (e) {
-      if (e.unauthorized) navigate("/login");
-    }
-  };
-
   const weekList = plan && plan.weeks ? plan.weeks : [];
   const curWeekIdx = weekList.length ? plan.currentWeek % weekList.length : 0;
   const curWeek = weekList.length ? weekList[curWeekIdx] : null;
@@ -205,9 +194,6 @@ export default function Dashboard() {
                         </div>
                       ))}
                     </div>
-                    <button onClick={() => remove(w.id)} className="text-[0.8rem] font-semibold text-red-500 hover:text-red-600 transition-colors mt-4">
-                      {tr.delete}
-                    </button>
                   </div>
                 )}
               </div>
