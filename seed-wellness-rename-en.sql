@@ -1,13 +1,15 @@
--- ─────────────────────────────────────────────────────────────
--- Rename all exercise names from Spanish to English (catalog + history).
--- Plan days link by id, so they pick up the new names automatically.
+-- ===============================================================
+-- Make WELLNESS fully English: exercise names + muscle groups (catalog &
+-- history), day names (Día N -> Day N), workout titles, and plan objective.
+-- Plan days link exercises by id, so they pick up the new names automatically.
 -- Run once; safe to re-run.
--- ─────────────────────────────────────────────────────────────
+-- ===============================================================
 do $$
-declare uid uuid;
+declare uid uuid; pid uuid;
 begin
   select id into uid from users where lower(email) = lower('yaczoe@gmail.com');
   if uid is null then raise exception 'Registra yaczoe@gmail.com primero.'; end if;
+  select id into pid from plans where user_id = uid and name = 'WELLNESS' limit 1;
   update exercises set name = 'V-Ups' where (owner_id is null or owner_id = uid) and name = 'Abdominales en V';
   update workout_sets ws set exercise_name = 'V-Ups' from workouts w where ws.workout_id = w.id and w.user_id = uid and ws.exercise_name = 'Abdominales en V';
   update exercises set name = 'Cable Hip Abduction (Mid-Pulley)' where (owner_id is null or owner_id = uid) and name = 'Abducción de cadera en polea a media altura';
@@ -88,5 +90,32 @@ begin
   update workout_sets ws set exercise_name = 'Bird Dog' from workouts w where ws.workout_id = w.id and w.user_id = uid and ws.exercise_name = 'bird dog';
   update exercises set name = 'Pendulum Squat' where (owner_id is null or owner_id = uid) and name = 'sentadilla pendular';
   update workout_sets ws set exercise_name = 'Pendulum Squat' from workouts w where ws.workout_id = w.id and w.user_id = uid and ws.exercise_name = 'sentadilla pendular';
-  raise notice 'Nombres de ejercicios traducidos a inglés.';
+  update exercises set muscle_group = 'Abs' where (owner_id is null or owner_id = uid) and muscle_group = 'Abdomen';
+  update exercises set muscle_group = 'Adductors' where (owner_id is null or owner_id = uid) and muscle_group = 'Aductores de cadera';
+  update exercises set muscle_group = 'Biceps' where (owner_id is null or owner_id = uid) and muscle_group = 'Biceps';
+  update exercises set muscle_group = 'Core' where (owner_id is null or owner_id = uid) and muscle_group = 'Core';
+  update exercises set muscle_group = 'Quads' where (owner_id is null or owner_id = uid) and muscle_group = 'Cuadriceps';
+  update exercises set muscle_group = 'Quads' where (owner_id is null or owner_id = uid) and muscle_group = 'Cuádriceps';
+  update exercises set muscle_group = 'Lats' where (owner_id is null or owner_id = uid) and muscle_group = 'Dorsales';
+  update exercises set muscle_group = 'Back' where (owner_id is null or owner_id = uid) and muscle_group = 'Espalda';
+  update exercises set muscle_group = 'Upper Back' where (owner_id is null or owner_id = uid) and muscle_group = 'Espalda Alta';
+  update exercises set muscle_group = 'Upper Back' where (owner_id is null or owner_id = uid) and muscle_group = 'Espalda alta';
+  update exercises set muscle_group = 'Glutes' where (owner_id is null or owner_id = uid) and muscle_group = 'Gluteos';
+  update exercises set muscle_group = 'Glutes' where (owner_id is null or owner_id = uid) and muscle_group = 'Glúteos';
+  update exercises set muscle_group = 'Front Delts' where (owner_id is null or owner_id = uid) and muscle_group = 'Hombro anterior';
+  update exercises set muscle_group = 'Side Delts' where (owner_id is null or owner_id = uid) and muscle_group = 'Hombro lateral';
+  update exercises set muscle_group = 'Side Delts' where (owner_id is null or owner_id = uid) and muscle_group = 'Hombro medio';
+  update exercises set muscle_group = 'Rear Delts' where (owner_id is null or owner_id = uid) and muscle_group = 'Hombro posterior';
+  update exercises set muscle_group = 'Hamstrings' where (owner_id is null or owner_id = uid) and muscle_group = 'Isquios';
+  update exercises set muscle_group = 'Hamstrings' where (owner_id is null or owner_id = uid) and muscle_group = 'Isquiosurales';
+  update exercises set muscle_group = 'Calves' where (owner_id is null or owner_id = uid) and muscle_group = 'Pantorrilla';
+  update exercises set muscle_group = 'Triceps' where (owner_id is null or owner_id = uid) and muscle_group = 'Triceps';
+  update exercises set muscle_group = 'Triceps' where (owner_id is null or owner_id = uid) and muscle_group = 'Tríceps';
+  if pid is not null then
+    update plan_days d set name = replace(d.name, 'Día ', 'Day ')
+      from plan_weeks w where d.week_id = w.id and w.plan_id = pid and d.name like 'Día %';
+    update plans set objective = 'Wellness accumulation & deload' where id = pid;
+  end if;
+  update workouts set title = replace(title, 'Día ', 'Day ') where user_id = uid and title like '%Día %';
+  raise notice 'WELLNESS traducido a inglés (ejercicios, grupos, días, títulos).';
 end $$;
