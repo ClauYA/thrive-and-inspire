@@ -90,6 +90,7 @@ export default function WorkoutLogger() {
   const [exercises, setExercises] = useState([]);
   const [title, setTitle] = useState(tr.defaultTitle);
   const [date, setDate] = useState(todayStr());
+  const [unit, setUnit] = useState("kg");
   const [notes, setNotes] = useState("");
   const [blocks, setBlocks] = useState([]);
   const [started, setStarted] = useState(false);
@@ -238,10 +239,14 @@ export default function WorkoutLogger() {
       setError(tr.needSet);
       return;
     }
+    if (flatSets.some((s) => Number(s.weight) < 0)) {
+      setError(tr.weightPositive);
+      return;
+    }
     setSaving(true);
     setError("");
     try {
-      await userApi("/api/workouts", "POST", { title, performedAt: date || null, notes, sets: flatSets, planId });
+      await userApi("/api/workouts", "POST", { title, performedAt: date || null, notes, sets: flatSets, planId, weightUnit: unit });
       navigate("/app");
     } catch (e) {
       if (e.unauthorized) return navigate("/login");
@@ -329,6 +334,23 @@ export default function WorkoutLogger() {
                 </div>
               </div>
               <div>
+                <label className="block text-[0.8rem] font-semibold text-charcoal mb-1.5">{tr.weightUnit}</label>
+                <div className="flex gap-2">
+                  {["kg", "lb"].map((u) => (
+                    <button
+                      key={u}
+                      type="button"
+                      onClick={() => setUnit(u)}
+                      className={`px-4 py-2 rounded-full text-[0.85rem] font-semibold border transition-colors ${
+                        unit === u ? "bg-terracotta text-white border-terracotta" : "bg-white text-warm-gray border-sand hover:border-terracotta"
+                      }`}
+                    >
+                      {u === "kg" ? tr.kg : tr.lb}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
                 <label className="block text-[0.8rem] font-semibold text-charcoal mb-1.5">{tr.notes}</label>
                 <textarea rows="2" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={tr.notesPh} className={`${inputClass} resize-none`} />
               </div>
@@ -413,7 +435,7 @@ export default function WorkoutLogger() {
                   <div className="mt-4">
                     <div className="grid grid-cols-[28px_1fr_1fr_1fr_28px] gap-2 items-center text-[0.72rem] font-semibold text-warm-gray mb-1.5 px-1">
                       <span>{tr.set}</span>
-                      <span>{tr.weight}</span>
+                      <span>{tr.weight} ({unit})</span>
                       <span>{tr.reps}</span>
                       <span>{tr.rir}</span>
                       <span />
@@ -421,8 +443,13 @@ export default function WorkoutLogger() {
                     {blk.sets.map((s, si) => (
                       <div key={si} className="grid grid-cols-[28px_1fr_1fr_1fr_28px] gap-2 items-center mb-2">
                         <span className="text-[0.85rem] text-warm-gray text-center">{si + 1}</span>
-                        <input type="number" inputMode="decimal" value={s.weight} onChange={updateSet(blk.uid, si, "weight")} className={inputClass} />
-                        <input type="number" inputMode="numeric" value={s.reps} onChange={updateSet(blk.uid, si, "reps")} className={inputClass} />
+                        <input type="number" inputMode="decimal" min="0" step="0.5" value={s.weight} onChange={updateSet(blk.uid, si, "weight")} className={inputClass} />
+                        <select value={s.reps} onChange={updateSet(blk.uid, si, "reps")} className={`${inputClass} cursor-pointer`}>
+                          <option value="">–</option>
+                          {Array.from({ length: 51 }, (_, n) => (
+                            <option key={n} value={n}>{n}</option>
+                          ))}
+                        </select>
                         <select value={s.rir} onChange={updateSet(blk.uid, si, "rir")} className={`${inputClass} cursor-pointer`}>
                           <option value="">–</option>
                           {RIR_OPTIONS.map((o) => (

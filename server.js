@@ -1035,17 +1035,18 @@ app.get("/api/last-performance/:exerciseId", requireUser, async (req, res) => {
 
 // ── Create a workout (with its sets) ──
 app.post("/api/workouts", requireUser, async (req, res) => {
-  const { title, performedAt, notes, sets, planId } = req.body || {};
+  const { title, performedAt, notes, sets, planId, weightUnit } = req.body || {};
   if (!Array.isArray(sets) || sets.length === 0) {
     return res.status(400).json({ ok: false, error: "Add at least one set before saving." });
   }
+  const unit = weightUnit === "lb" ? "lb" : "kg";
   const client = await pool.connect();
   try {
     await client.query("begin");
     const w = await client.query(
-      `insert into workouts (user_id, title, performed_at, notes, plan_id)
-       values ($1, $2, coalesce($3, now()), $4, $5) returning *`,
-      [req.user.sub, String(title || "Workout").trim(), performedAt || null, String(notes || "").trim(), planId || null]
+      `insert into workouts (user_id, title, performed_at, notes, plan_id, weight_unit)
+       values ($1, $2, coalesce($3, now()), $4, $5, $6) returning *`,
+      [req.user.sub, String(title || "Workout").trim(), performedAt || null, String(notes || "").trim(), planId || null, unit]
     );
     const workout = w.rows[0];
     for (const s of sets) {
@@ -1079,7 +1080,7 @@ app.post("/api/workouts", requireUser, async (req, res) => {
 app.get("/api/workouts", requireUser, async (req, res) => {
   try {
     const { rows } = await query(
-      `select w.id, w.title, w.performed_at, w.notes,
+      `select w.id, w.title, w.performed_at, w.notes, w.weight_unit,
               count(s.id)::int as set_count,
               count(distinct s.exercise_name)::int as exercise_count
        from workouts w
