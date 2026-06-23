@@ -1478,6 +1478,231 @@ app.get("/api/export", requireUser, async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────
+// Coach / admin oversight of members (full control)
+// ─────────────────────────────────────────────────────────────
+function requireAdmin(req, res, next) {
+  requireAuth(req, res, () => {
+    if (!req.admin || req.admin.role !== "admin") {
+      return res.status(403).json({ ok: false, error: "Admin only." });
+    }
+    next();
+  });
+}
+
+// List members with quick stats
+app.get("/api/admin/members", requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await query(
+      `select u.id, u.name, u.email, u.created_at,
+              count(distinct w.id)::int as workout_count,
+              max(w.performed_at) as last_workout
+       from users u left join workouts w on w.user_id = u.id
+       group by u.id order by u.created_at desc`
+    );
+    res.json({ ok: true, members: rows });
+  } catch (err) {
+    console.error("Admin members failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load members." });
+  }
+});
+
+// One member: profile + workouts + plans
+app.get("/api/admin/members/:id", requireAdmin, async (req, res) => {
+  try {
+    const u = await query(`select id, name, email, created_at from users where id = $1`, [req.params.id]);
+    if (!u.rows[0]) return res.status(404).json({ ok: false, error: "Member not found." });
+    const workouts = await query(
+      `select w.id, w.title, w.performed_at, w.notes, w.weight_unit,
+              count(s.id)::int as set_count, count(distinct s.exercise_name)::int as exercise_count
+       from workouts w left join workout_sets s on s.workout_id = w.id
+       where w.user_id = $1 group by w.id order by w.performed_at desc`,
+      [req.params.id]
+    );
+    const plans = await query(
+      `select p.id, p.name, p.objective, p.is_active, count(distinct wk.id)::int as week_count
+       from plans p left join plan_weeks wk on wk.plan_id = p.id
+       where p.user_id = $1 group by p.id order by p.is_active desc, p.created_at desc`,
+      [req.params.id]
+    );
+    res.json({ ok: true, member: u.rows[0], workouts: workouts.rows, plans: plans.rows });
+  } catch (err) {
+    console.error("Admin member failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load the member." });
+  }
+});
+
+// A member's workout with its sets
+app.get("/api/admin/workouts/:id", requireAdmin, async (req, res) => {
+  try {
+    const w = await query(`select * from workouts where id = $1`, [req.params.id]);
+    if (!w.rows[0]) return res.status(404).json({ ok: false, error: "Workout not found." });
+    const s = await query(`select * from workout_sets where workout_id = $1 order by set_number`, [req.params.id]);
+    res.json({ ok: true, workout: w.rows[0], sets: s.rows });
+  } catch (err) {
+    console.error("Admin workout failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load the workout." });
+  }
+});
+
+// Edit a member's workout (title / date / notes / unit)
+app.put("/api/admin/workouts/:id", requireAdmin, async (req, res) => {
+  const { title, performedAt, notes, weightUnit } = req.body || {};
+  try {
+    const r = await query(
+      `update workouts set title = $2, performed_at = coalesce($3, performed_at), notes = $4, weight_unit = $5 where id = $1 returning id`,
+      [req.params.id, String(title || "Workout").trim(), performedAt || null, String(notes || "").trim(), weightUnit === "lb" ? "lb" : "kg"]
+    );
+    if (!r.rows[0]) return res.status(404).json({ ok: false, error: "Workout not found." });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Admin update workout failed:", err);
+    res.status(500).json({ ok: false, error: "Could not update the workout." });
+  }
+});
+
+// Delete a member's workout
+app.delete("/api/admin/workouts/:id", requireAdmin, async (req, res) => {
+  try {
+    await query(`delete from workouts where id = $1`, [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Admin delete workout failed:", err);
+    res.status(500).json({ ok: false, error: "Could not delete the workout." });
+  }
+});
+
+// Edit a single set
+app.put("/api/admin/sets/:id", requireAdmin, async (req, res) => {
+  const { weight, reps, rir } = req.body || {};
+  try {
+    const r = await query(
+      `update workout_sets set weight = $2, reps = $3, rir = $4 where id = $1 returning id`,
+      [
+        req.params.id,
+        weight === "" || weight == null ? 0 : Number(weight),
+        reps === "" || reps == null ? 0 : Number(reps),
+        rir === "" || rir == null ? null : String(rir).trim(),
+      ]
+    );
+    if (!r.rows[0]) return res.status(404).json({ ok: false, error: "Set not found." });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Admin update set failed:", err);
+    res.status(500).json({ ok: false, error: "Could not update the set." });
+  }
+});
+
+// Delete a single set
+app.delete("/api/admin/sets/:id", requireAdmin, async (req, res) => {
+  try {
+    await query(`delete from workout_sets where id = $1`, [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Admin delete set failed:", err);
+    res.status(500).json({ ok: false, error: "Could not delete the set." });
+  }
+});
+
+// Exercises available to a member (shared defaults + their own) — for the plan editor
+app.get("/api/admin/members/:id/exercises", requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await query(
+      `select id, name, muscle_group, equipment, media_url, instructions
+       from exercises where owner_id is null or owner_id = $1 order by name`,
+      [req.params.id]
+    );
+    res.json({ ok: true, exercises: rows });
+  } catch (err) {
+    console.error("Admin member exercises failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load exercises." });
+  }
+});
+
+// Load a member's plan (full tree)
+app.get("/api/admin/plans/:id", requireAdmin, async (req, res) => {
+  try {
+    const o = await query(`select user_id from plans where id = $1`, [req.params.id]);
+    if (!o.rows[0]) return res.status(404).json({ ok: false, error: "Plan not found." });
+    res.json({ ok: true, plan: await loadPlan(req.params.id, o.rows[0].user_id) });
+  } catch (err) {
+    console.error("Admin load plan failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load the plan." });
+  }
+});
+
+// Create a plan for a member
+app.post("/api/admin/members/:id/plans", requireAdmin, async (req, res) => {
+  const { name, objective, startDate, endDate, weeks } = req.body || {};
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    const cnt = await client.query(`select count(*)::int as n from plans where user_id = $1`, [req.params.id]);
+    const ins = await client.query(
+      `insert into plans (user_id, name, objective, weeks, start_date, end_date, is_active)
+       values ($1, $2, $3, $4, $5, $6, $7) returning id`,
+      [req.params.id, String(name || "Plan").trim(), String(objective || "").trim(), Array.isArray(weeks) ? weeks.length : 0, startDate || null, endDate || null, cnt.rows[0].n === 0]
+    );
+    await writePlanStructure(client, ins.rows[0].id, Array.isArray(weeks) ? weeks : []);
+    await client.query("commit");
+    res.json({ ok: true, plan: await loadPlan(ins.rows[0].id, req.params.id) });
+  } catch (err) {
+    await client.query("rollback");
+    console.error("Admin create plan failed:", err);
+    res.status(500).json({ ok: false, error: "Could not create the plan." });
+  } finally {
+    client.release();
+  }
+});
+
+// Update a member's plan
+app.put("/api/admin/plans/:id", requireAdmin, async (req, res) => {
+  const { name, objective, startDate, endDate, weeks } = req.body || {};
+  const o = await query(`select user_id from plans where id = $1`, [req.params.id]);
+  if (!o.rows[0]) return res.status(404).json({ ok: false, error: "Plan not found." });
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    await client.query(
+      `update plans set name = $2, objective = $3, weeks = $4, start_date = $5, end_date = $6 where id = $1`,
+      [req.params.id, String(name || "Plan").trim(), String(objective || "").trim(), Array.isArray(weeks) ? weeks.length : 0, startDate || null, endDate || null]
+    );
+    if (Array.isArray(weeks)) await writePlanStructure(client, req.params.id, weeks);
+    await client.query("commit");
+    res.json({ ok: true, plan: await loadPlan(req.params.id, o.rows[0].user_id) });
+  } catch (err) {
+    await client.query("rollback");
+    console.error("Admin update plan failed:", err);
+    res.status(500).json({ ok: false, error: "Could not update the plan." });
+  } finally {
+    client.release();
+  }
+});
+
+// Make a member's plan the active one
+app.post("/api/admin/plans/:id/activate", requireAdmin, async (req, res) => {
+  try {
+    const o = await query(`select user_id from plans where id = $1`, [req.params.id]);
+    if (!o.rows[0]) return res.status(404).json({ ok: false, error: "Plan not found." });
+    await query(`update plans set is_active = (id = $1) where user_id = $2`, [req.params.id, o.rows[0].user_id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Admin activate plan failed:", err);
+    res.status(500).json({ ok: false, error: "Could not activate the plan." });
+  }
+});
+
+// Delete a member's plan
+app.delete("/api/admin/plans/:id", requireAdmin, async (req, res) => {
+  try {
+    await query(`delete from plans where id = $1`, [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Admin delete plan failed:", err);
+    res.status(500).json({ ok: false, error: "Could not delete the plan." });
+  }
+});
+
 // ── Serve the built React client ──
 const CLIENT_DIST = path.join(__dirname, "client", "dist");
 if (fs.existsSync(CLIENT_DIST)) {

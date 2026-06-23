@@ -6,6 +6,7 @@ import { formatDate } from "../../lib/format";
 import PostEditor from "./PostEditor";
 import TestimonialsAdmin from "./TestimonialsAdmin";
 import EmailLog from "./EmailLog";
+import MembersAdmin from "./MembersAdmin";
 
 export default function AdminDashboard() {
   const { t, lang } = useLanguage();
@@ -101,9 +102,17 @@ export default function AdminDashboard() {
               >
                 {a.tabEmails}
               </button>
+              <button
+                onClick={() => setTab("members")}
+                className={`text-[0.85rem] font-semibold px-5 py-2 rounded-full transition-colors ${tab === "members" ? "bg-terracotta text-white" : "text-warm-gray"}`}
+              >
+                {a.tabMembers}
+              </button>
             </div>
 
-            {tab === "testimonials" ? (
+            {tab === "members" ? (
+              <MembersAdmin onAuthError={goLogin} />
+            ) : tab === "testimonials" ? (
               <TestimonialsAdmin onAuthError={goLogin} />
             ) : tab === "emails" ? (
               <EmailLog onAuthError={goLogin} />

@@ -2,19 +2,32 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { userApi, getUserToken } from "../../lib/userApi";
+import { apiAuth, getToken } from "../../lib/api";
 import MemberHeader from "./MemberHeader";
 import { Button, Input, Textarea, Select, Field } from "../ui";
 import { RIR_OPTIONS, rirLabel } from "../../lib/rir";
 const newExercise = () => ({ exerciseId: "", sets: 3, reps: "", rir: "", notes: "" });
-const newDay = (n) => ({ name: `Día ${n}`, notes: "", exercises: [] });
-const newWeek = (n) => ({ name: `Semana ${n}`, notes: "", days: [newDay(1)] });
+const newDay = (n) => ({ name: `Day ${n}`, notes: "", exercises: [] });
+const newWeek = (n) => ({ name: `Week ${n}`, notes: "", days: [newDay(1)] });
 
-export default function PlanEditor() {
+export default function PlanEditor({ admin = false }) {
   const { t } = useLanguage();
   const tr = t.tracker;
   const navigate = useNavigate();
-  const { id } = useParams();
+  const params = useParams();
+  const id = admin ? params.pid : params.id;
+  const memberId = params.mid;
   const isNew = !id || id === "new";
+
+  // Member mode uses the member API; admin (coach) mode uses the admin API.
+  const api = admin ? apiAuth : userApi;
+  const loginPath = admin ? "/admin/login" : "/login";
+  const backPath = admin ? "/admin" : "/app/plans";
+  const hasToken = admin ? getToken() : getUserToken();
+  const exercisesUrl = admin ? `/api/admin/members/${memberId}/exercises` : "/api/exercises";
+  const loadUrl = admin ? `/api/admin/plans/${id}` : `/api/plans/${id}`;
+  const createUrl = admin ? `/api/admin/members/${memberId}/plans` : "/api/plans";
+  const updateUrl = admin ? `/api/admin/plans/${id}` : `/api/plans/${id}`;
 
   const [exercises, setExercises] = useState([]);
   const [name, setName] = useState("");
@@ -27,16 +40,16 @@ export default function PlanEditor() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!getUserToken()) {
-      navigate("/login");
+    if (!hasToken) {
+      navigate(loginPath);
       return;
     }
     (async () => {
       try {
-        const ex = await userApi("/api/exercises");
+        const ex = await api(exercisesUrl);
         setExercises(ex.exercises);
         if (!isNew) {
-          const d = await userApi(`/api/plans/${id}`);
+          const d = await api(loadUrl);
           const p = d.plan;
           setName(p.name);
           setObjective(p.objective || "");
@@ -65,7 +78,7 @@ export default function PlanEditor() {
         }
         setLoading(false);
       } catch (e) {
-        if (e.unauthorized) navigate("/login");
+        if (e.unauthorized) navigate(loginPath);
         else {
           setError(e.message);
           setLoading(false);
@@ -100,11 +113,11 @@ export default function PlanEditor() {
     setError("");
     const body = { name, objective, startDate: startDate || null, endDate: endDate || null, weeks };
     try {
-      if (isNew) await userApi("/api/plans", "POST", body);
-      else await userApi(`/api/plans/${id}`, "PUT", body);
-      navigate("/app/plans");
+      if (isNew) await api(createUrl, "POST", body);
+      else await api(updateUrl, "PUT", body);
+      navigate(backPath);
     } catch (e) {
-      if (e.unauthorized) return navigate("/login");
+      if (e.unauthorized) return navigate(loginPath);
       setError(e.message);
     } finally {
       setSaving(false);
@@ -113,9 +126,9 @@ export default function PlanEditor() {
 
   return (
     <div className="min-h-screen bg-cream relative z-[1]">
-      <MemberHeader />
+      {!admin && <MemberHeader />}
       <main className="max-w-[820px] mx-auto px-[5%] py-10">
-        <button onClick={() => navigate("/app/plans")} className="text-terracotta text-[0.85rem] font-semibold mb-5 hover:text-terracotta-dark">
+        <button onClick={() => navigate(backPath)} className="text-terracotta text-[0.85rem] font-semibold mb-5 hover:text-terracotta-dark">
           {tr.back}
         </button>
         <h1 className="font-display text-[1.8rem] font-semibold text-charcoal mb-6">{isNew ? tr.newPlanTitle : tr.editPlanTitle}</h1>
@@ -218,7 +231,7 @@ export default function PlanEditor() {
               <Button onClick={save} disabled={saving}>
                 {saving ? tr.saving : tr.savePlan}
               </Button>
-              <button onClick={() => navigate("/app/plans")} className="text-[0.95rem] font-semibold px-6 py-3.5 rounded-full border border-sand text-warm-gray hover:bg-sand transition-colors">
+              <button onClick={() => navigate(backPath)} className="text-[0.95rem] font-semibold px-6 py-3.5 rounded-full border border-sand text-warm-gray hover:bg-sand transition-colors">
                 {tr.cancel}
               </button>
             </div>
