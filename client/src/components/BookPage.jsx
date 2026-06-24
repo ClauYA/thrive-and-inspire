@@ -6,18 +6,21 @@ import { Button } from "./ui";
 
 /* ──────────────────────────────────────────────────────────────
    ⬇️  PEGA AQUÍ TUS DATOS PARA SESIONES SUELTAS PRESENCIALES  ⬇️
-   1. CALENDLY_URL: el enlace del tipo de evento "sesión presencial"
-      en tu panel de Calendly ("Share" → copia la URL).
+   1. CALENDLY_URL: crea un evento NUEVO en Calendly solo para la
+      "sesión presencial suelta" y pega aquí su enlace ("Share" → URL).
+      (Es independiente del de la videollamada de asesoría.)
    2. STRIPE_PAYMENT_LINK: un "Payment Link" de Stripe para el pago
       de la sesión suelta (Productos → Payment Links).
    3. VENMO_USERNAME: tu usuario de Venmo, SIN la @.
    4. PAYMENT_AMOUNT: opcional, el monto para prellenar Venmo (ej. "60").
+   5. ZELLE_HANDLE: el correo o teléfono asociado a tu Zelle.
    El pago en EFECTIVO no necesita configuración: se paga en persona.
    ────────────────────────────────────────────────────────────── */
-const CALENDLY_URL = "https://calendly.com/cyabittner/30min";
+const CALENDLY_URL = "https://calendly.com/cyabittner/30min"; // ← reemplázalo por el evento presencial
 const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_7sY9AV6Wu3WY4VM6f15EY00";
 const VENMO_USERNAME = "ClauYA";
 const PAYMENT_AMOUNT = "";
+const ZELLE_HANDLE = "yaczoe@gmail.com"; // ← confirma tu correo/teléfono de Zelle
 
 function buildVenmoLink(note) {
   const params = new URLSearchParams({ txn: "pay", recipients: VENMO_USERNAME, note });
@@ -99,6 +102,17 @@ export default function BookPage() {
                 >
                   Venmo
                 </a>
+              </div>
+
+              {/* Zelle — show the handle to send to (no universal deep link) */}
+              <div className="flex items-center gap-4 text-left bg-[#6D1ED4]/5 border border-[#6D1ED4]/20 rounded-2xl px-5 py-4 mb-3">
+                <span className="text-xl font-bold text-[#6D1ED4] shrink-0">Z</span>
+                <div className="min-w-0">
+                  <div className="text-[0.95rem] font-semibold text-[#6D1ED4]">{b.zelleTitle}</div>
+                  <div className="text-[0.82rem] text-warm-gray break-words">
+                    {b.zelleDesc} <span className="font-semibold text-charcoal">{ZELLE_HANDLE}</span>
+                  </div>
+                </div>
               </div>
 
               {/* Cash — paid in person, no link needed */}
