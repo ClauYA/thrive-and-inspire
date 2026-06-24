@@ -537,10 +537,13 @@ app.post("/api/admin/login", (req, res) => {
     return res.status(503).json({ ok: false, error: "Admin is not configured on the server." });
   }
   const { email, password } = req.body || {};
-  if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
+  // Be forgiving about whitespace and email casing (common copy/paste gotchas).
+  const emailOk = String(email || "").trim().toLowerCase() === String(ADMIN_EMAIL).trim().toLowerCase();
+  const passOk = String(password || "").trim() === String(ADMIN_PASSWORD).trim();
+  if (!emailOk || !passOk) {
     return res.status(401).json({ ok: false, error: "Incorrect email or password." });
   }
-  const token = jwt.sign({ sub: email, role: "admin" }, JWT_SECRET, { expiresIn: "7d" });
+  const token = jwt.sign({ sub: ADMIN_EMAIL, role: "admin" }, JWT_SECRET, { expiresIn: "7d" });
   res.json({ ok: true, token });
 });
 
