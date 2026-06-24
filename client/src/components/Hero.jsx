@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext";
 import { Button } from "./ui";
 
@@ -56,6 +57,9 @@ export default function Hero() {
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="group-hover:translate-x-1 transition-transform">
               <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
+          </Button>
+          <Button as={Link} to="/book" size="lg" variant="secondary">
+            📅 {h.ctaBook}
           </Button>
         </div>
 
