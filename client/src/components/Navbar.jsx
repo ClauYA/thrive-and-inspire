@@ -60,9 +60,6 @@ export default function Navbar() {
           </Link>
         </li>
         <li>
-          <Button as={Link} to="/book" size="sm" variant="secondary">{t.nav.book}</Button>
-        </li>
-        <li>
           <Button as="a" href="#apply" size="sm">{t.nav.apply}</Button>
         </li>
       </ul>
@@ -111,9 +108,6 @@ export default function Navbar() {
           >
             {t.nav.train}
           </Link>
-          <Button as={Link} to="/book" size="sm" variant="secondary" onClick={() => setMenuOpen(false)} className="w-full">
-            {t.nav.book}
-          </Button>
           <Button as="a" href="#apply" size="sm" onClick={() => setMenuOpen(false)} className="w-full">
             {t.nav.apply}
           </Button>
