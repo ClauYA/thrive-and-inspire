@@ -19,7 +19,8 @@ import { Button } from "./ui";
 const CALENDLY_URL = "https://calendly.com/cyabittner/30min"; // ← reemplázalo por el evento presencial
 const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_7sY9AV6Wu3WY4VM6f15EY00";
 const VENMO_USERNAME = "ClauYA";
-const PAYMENT_AMOUNT = "";
+const PAYMENT_AMOUNT = "60"; // sesión presencial suelta — USD
+const SESSION_PRICE = "$60"; // ← cómo se muestra el precio en la página
 const ZELLE_HANDLE = "yaczoe@gmail.com"; // ← confirma tu correo/teléfono de Zelle
 
 function buildVenmoLink(note) {
@@ -70,7 +71,11 @@ export default function BookPage() {
               {b.title1}
               <em className="italic text-terracotta">{b.titleEm}</em>
             </h1>
-            <p className="text-[0.95rem] text-warm-gray leading-[1.7] mb-10">{b.intro}</p>
+            <p className="text-[0.95rem] text-warm-gray leading-[1.7] mb-6">{b.intro}</p>
+            <div className="inline-flex items-baseline gap-2 bg-terracotta/10 border border-terracotta/20 rounded-full px-5 py-2.5 mb-10">
+              <span className="text-[0.78rem] font-semibold tracking-[0.06em] uppercase text-terracotta">{b.priceLabel}</span>
+              <span className="font-display text-[1.3rem] font-semibold text-charcoal">{SESSION_PRICE}</span>
+            </div>
           </Reveal>
 
           {/* Step 1 — schedule */}
