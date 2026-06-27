@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { setSession } from "../../lib/userApi";
-import { Button, Input, Field } from "../ui";
+import { Button, Input, Field, PasswordInput } from "../ui";
 
 export default function Login() {
   const { t } = useLanguage();
@@ -51,7 +51,7 @@ export default function Login() {
         </div>
         <div className="mb-5">
           <Field label={a.password}>
-            <Input type="password" value={form.password} onChange={update("password")} placeholder={a.passwordPh} autoComplete="current-password" />
+            <PasswordInput value={form.password} onChange={update("password")} placeholder={a.passwordPh} autoComplete="current-password" showLabel={a.showPassword} hideLabel={a.hidePassword} />
           </Field>
         </div>
 

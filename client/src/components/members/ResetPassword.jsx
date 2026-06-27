@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { setSession } from "../../lib/userApi";
-import { Button, Input, Field } from "../ui";
+import { Button, Field, PasswordInput } from "../ui";
 
 export default function ResetPassword() {
   const { t } = useLanguage();
@@ -56,7 +56,7 @@ export default function ResetPassword() {
           <form onSubmit={submit}>
             <div className="mb-5">
               <Field label={a.newPassword}>
-                <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={a.passwordPh} autoComplete="new-password" />
+                <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} placeholder={a.passwordPh} autoComplete="new-password" showLabel={a.showPassword} hideLabel={a.hidePassword} />
               </Field>
             </div>
             <Button type="submit" disabled={busy || !token} size="lg" className="w-full">
