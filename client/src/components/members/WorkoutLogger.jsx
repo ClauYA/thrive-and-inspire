@@ -90,7 +90,7 @@ export default function WorkoutLogger() {
   const [exercises, setExercises] = useState([]);
   const [title, setTitle] = useState(tr.defaultTitle);
   const [date, setDate] = useState(todayStr());
-  const [unit, setUnit] = useState("kg");
+  const [unit] = useState("kg"); // default unit for newly added sets (each set can override)
   const [notes, setNotes] = useState("");
   const [blocks, setBlocks] = useState([]);
   const [started, setStarted] = useState(false);
@@ -221,11 +221,6 @@ export default function WorkoutLogger() {
     if (ex) loadLast(u, ex.id);
   };
   const addSet = (u) => setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, sets: [...b.sets, emptySet(unit)] } : b)));
-  // Workout-level toggle: set the default unit AND apply it to every set.
-  const changeUnit = (u) => {
-    setUnit(u);
-    setBlocks((bs) => bs.map((b) => ({ ...b, sets: b.sets.map((s) => ({ ...s, unit: u })) })));
-  };
   const removeSet = (u, si) => setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, sets: b.sets.filter((_, j) => j !== si) } : b)));
   const updateSet = (u, si, field) => (e) => {
     const val = e.target.value;
@@ -336,23 +331,6 @@ export default function WorkoutLogger() {
                 <div>
                   <label className="block text-[0.8rem] font-semibold text-charcoal mb-1.5">{tr.date}</label>
                   <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputClass} />
-                </div>
-              </div>
-              <div>
-                <label className="block text-[0.8rem] font-semibold text-charcoal mb-1.5">{tr.weightUnitDefault}</label>
-                <div className="flex gap-2">
-                  {["kg", "lb"].map((u) => (
-                    <button
-                      key={u}
-                      type="button"
-                      onClick={() => changeUnit(u)}
-                      className={`px-4 py-2 rounded-full text-[0.85rem] font-semibold border transition-colors ${
-                        unit === u ? "bg-terracotta text-white border-terracotta" : "bg-white text-warm-gray border-sand hover:border-terracotta"
-                      }`}
-                    >
-                      {u === "kg" ? tr.kg : tr.lb}
-                    </button>
-                  ))}
                 </div>
               </div>
             </div>
