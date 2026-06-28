@@ -11,7 +11,7 @@ import { Button } from "../ui";
 const todayStr = () => new Date().toISOString().slice(0, 10);
 const inputClass =
   "w-full px-3 py-2 border-[1.5px] border-sand rounded-xl text-[0.88rem] text-charcoal bg-cream outline-none transition-all focus:border-terracotta-light focus:bg-white";
-const emptySet = () => ({ weight: "", reps: "", rir: "" });
+const emptySet = (unit = "kg") => ({ weight: "", reps: "", rir: "", unit });
 
 // Muscle groups (lowercase) used to generate each workout type.
 const GEN_GROUPS = {
@@ -170,7 +170,7 @@ export default function WorkoutLogger() {
       exerciseId: ex?.id || "",
       exerciseName: ex?.name || "",
       mediaUrl: ex?.media_url || "",
-      sets: Array.from({ length: count }, () => ({ weight: "", reps: "", rir })),
+      sets: Array.from({ length: count }, () => ({ weight: "", reps: "", rir, unit })),
       target: target ? { reps: target.reps || "", rir: target.rir || "", notes: target.notes || "" } : null,
       last: ex ? undefined : null,
     };
@@ -220,7 +220,12 @@ export default function WorkoutLogger() {
     setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, exerciseId: ex?.id || "", exerciseName: ex?.name || "", mediaUrl: ex?.media_url || "", last: ex ? undefined : null } : b)));
     if (ex) loadLast(u, ex.id);
   };
-  const addSet = (u) => setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, sets: [...b.sets, emptySet()] } : b)));
+  const addSet = (u) => setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, sets: [...b.sets, emptySet(unit)] } : b)));
+  // Workout-level toggle: set the default unit AND apply it to every set.
+  const changeUnit = (u) => {
+    setUnit(u);
+    setBlocks((bs) => bs.map((b) => ({ ...b, sets: b.sets.map((s) => ({ ...s, unit: u })) })));
+  };
   const removeSet = (u, si) => setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, sets: b.sets.filter((_, j) => j !== si) } : b)));
   const updateSet = (u, si, field) => (e) => {
     const val = e.target.value;
@@ -232,7 +237,7 @@ export default function WorkoutLogger() {
     for (const blk of blocks) {
       if (!blk.exerciseName) continue;
       blk.sets.forEach((s, idx) => {
-        flatSets.push({ exerciseId: blk.exerciseId || null, exerciseName: blk.exerciseName, setNumber: idx + 1, weight: s.weight, reps: s.reps, rir: s.rir, rpe: "" });
+        flatSets.push({ exerciseId: blk.exerciseId || null, exerciseName: blk.exerciseName, setNumber: idx + 1, weight: s.weight, reps: s.reps, rir: s.rir, rpe: "", unit: s.unit || unit });
       });
     }
     if (flatSets.length === 0) {
@@ -334,13 +339,13 @@ export default function WorkoutLogger() {
                 </div>
               </div>
               <div>
-                <label className="block text-[0.8rem] font-semibold text-charcoal mb-1.5">{tr.weightUnit}</label>
+                <label className="block text-[0.8rem] font-semibold text-charcoal mb-1.5">{tr.weightUnitDefault}</label>
                 <div className="flex gap-2">
                   {["kg", "lb"].map((u) => (
                     <button
                       key={u}
                       type="button"
-                      onClick={() => setUnit(u)}
+                      onClick={() => changeUnit(u)}
                       className={`px-4 py-2 rounded-full text-[0.85rem] font-semibold border transition-colors ${
                         unit === u ? "bg-terracotta text-white border-terracotta" : "bg-white text-warm-gray border-sand hover:border-terracotta"
                       }`}
@@ -349,10 +354,6 @@ export default function WorkoutLogger() {
                     </button>
                   ))}
                 </div>
-              </div>
-              <div>
-                <label className="block text-[0.8rem] font-semibold text-charcoal mb-1.5">{tr.notes}</label>
-                <textarea rows="2" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={tr.notesPh} className={`${inputClass} resize-none`} />
               </div>
             </div>
 
@@ -433,17 +434,23 @@ export default function WorkoutLogger() {
                   )}
 
                   <div className="mt-4">
-                    <div className="grid grid-cols-[28px_1fr_1fr_1fr_28px] gap-2 items-center text-[0.72rem] font-semibold text-warm-gray mb-1.5 px-1">
+                    <div className="grid grid-cols-[24px_1.7fr_1fr_1fr_24px] gap-2 items-center text-[0.72rem] font-semibold text-warm-gray mb-1.5 px-1">
                       <span>{tr.set}</span>
-                      <span>{tr.weight} ({unit})</span>
+                      <span>{tr.weight}</span>
                       <span>{tr.reps}</span>
                       <span>{tr.rir}</span>
                       <span />
                     </div>
                     {blk.sets.map((s, si) => (
-                      <div key={si} className="grid grid-cols-[28px_1fr_1fr_1fr_28px] gap-2 items-center mb-2">
+                      <div key={si} className="grid grid-cols-[24px_1.7fr_1fr_1fr_24px] gap-2 items-center mb-2">
                         <span className="text-[0.85rem] text-warm-gray text-center">{si + 1}</span>
-                        <input type="number" inputMode="decimal" min="0" step="0.5" value={s.weight} onChange={updateSet(blk.uid, si, "weight")} className={inputClass} />
+                        <div className="flex gap-1 min-w-0">
+                          <input type="number" inputMode="decimal" min="0" step="0.5" value={s.weight} onChange={updateSet(blk.uid, si, "weight")} className={`${inputClass} min-w-0`} />
+                          <select value={s.unit || "kg"} onChange={updateSet(blk.uid, si, "unit")} aria-label={tr.weightUnit} className={`${inputClass} cursor-pointer w-[58px] px-1.5`}>
+                            <option value="kg">kg</option>
+                            <option value="lb">lb</option>
+                          </select>
+                        </div>
                         <select value={s.reps} onChange={updateSet(blk.uid, si, "reps")} className={`${inputClass} cursor-pointer`}>
                           <option value="">–</option>
                           {Array.from({ length: 51 }, (_, n) => (
@@ -475,6 +482,12 @@ export default function WorkoutLogger() {
 
             {/* Cool-down */}
             <GuideCard title={`🧘 ${tr.cooldownTitle}`} steps={tr.cooldownSteps} />
+
+            {/* Notes — at the end, right before saving */}
+            <div className="bg-white rounded-2xl border border-sand p-5 sm:p-6 mb-4">
+              <label className="block text-[0.8rem] font-semibold text-charcoal mb-1.5">{tr.notes}</label>
+              <textarea rows="3" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={tr.notesPh} className={`${inputClass} resize-none`} />
+            </div>
 
             {error && <p className="text-red-500 text-[0.85rem] mb-3">{error}</p>}
 
