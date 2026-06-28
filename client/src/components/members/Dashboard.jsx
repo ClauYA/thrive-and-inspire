@@ -197,7 +197,7 @@ export default function Dashboard() {
                         <div key={gi} className="flex items-baseline justify-between gap-3 py-2">
                           <span className="text-[0.88rem] font-medium text-charcoal">{g.name}</span>
                           <span className="text-[0.78rem] text-warm-gray text-right shrink-0">
-                            {g.sets.map((s) => `${s.weight || 0}${detail[w.id].workout.weight_unit || "kg"}×${s.reps || 0}${s.rir ? ` (${s.rir})` : ""}`).join(" · ")}
+                            {g.sets.map((s) => `${s.weight || 0}${s.weight_unit || detail[w.id].workout.weight_unit || "kg"}×${s.reps || 0}${s.rir ? ` (${s.rir})` : ""}`).join(" · ")}
                           </span>
                         </div>
                       ))}
