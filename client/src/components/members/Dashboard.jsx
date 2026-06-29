@@ -143,7 +143,7 @@ export default function Dashboard() {
 
         {/* This week strip */}
         {workouts !== null && weekForStrip && weekForStrip.days.length > 0 && (
-          <WeekStrip workouts={workouts} routine={weekForStrip} exMap={exMap} onPick={pickFromCalendar} />
+          <WeekStrip workouts={workouts} routine={weekForStrip} planName={plan?.name} weekName={curWeek?.name} onPick={pickFromCalendar} />
         )}
 
         {/* Toolbar: new workout + view toggle */}
