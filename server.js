@@ -179,7 +179,7 @@ app.get("/api/health", async (req, res) => {
   try {
     await query("select 1");
     health.db = "connected";
-    const want = ["posts", "users", "applications", "intakes", "guide_leads", "password_resets", "testimonials", "email_log", "nutrition_logs"];
+    const want = ["posts", "users", "applications", "intakes", "guide_leads", "password_resets", "testimonials", "email_log", "nutrition_logs", "saved_meals"];
     const { rows } = await query(
       `select table_name from information_schema.tables where table_schema = 'public' and table_name = any($1)`,
       [want]
@@ -1924,7 +1924,7 @@ app.get("/api/nutrition/log", requireUser, async (req, res) => {
   const day = /^\d{4}-\d{2}-\d{2}$/.test(String(req.query.date || "")) ? req.query.date : null;
   try {
     const { rows } = await query(
-      `select id, logged_on, food_name, serving, quantity, calories, protein, carbs, fat
+      `select id, logged_on, meal, food_name, serving, quantity, calories, protein, carbs, fat
        from nutrition_logs
        where user_id = $1 and ($2::date is null or logged_on = $2::date)
        order by created_at`,
@@ -1948,17 +1948,18 @@ app.get("/api/nutrition/log", requireUser, async (req, res) => {
 
 // Add a food entry (calories/macros are the totals for the chosen quantity).
 app.post("/api/nutrition/log", requireUser, async (req, res) => {
-  const { date, foodName, serving, quantity, calories, protein, carbs, fat, foodId } = req.body || {};
+  const { date, meal, foodName, serving, quantity, calories, protein, carbs, fat, foodId } = req.body || {};
   if (!foodName || !String(foodName).trim()) return res.status(400).json({ ok: false, error: "Missing food." });
   const qty = Number(quantity) > 0 ? Number(quantity) : 1;
   const day = /^\d{4}-\d{2}-\d{2}$/.test(String(date || "")) ? date : null;
+  const mealName = String(meal || "breakfast").trim().slice(0, 60) || "breakfast";
   try {
     const { rows } = await query(
-      `insert into nutrition_logs (user_id, logged_on, food_name, serving, quantity, calories, protein, carbs, fat, fs_food_id)
-       values ($1, coalesce($2::date, current_date), $3, $4, $5, $6, $7, $8, $9, $10)
-       returning id, logged_on, food_name, serving, quantity, calories, protein, carbs, fat`,
+      `insert into nutrition_logs (user_id, logged_on, meal, food_name, serving, quantity, calories, protein, carbs, fat, fs_food_id)
+       values ($1, coalesce($2::date, current_date), $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       returning id, logged_on, meal, food_name, serving, quantity, calories, protein, carbs, fat`,
       [
-        req.user.sub, day, String(foodName).trim(), String(serving || ""), qty,
+        req.user.sub, day, mealName, String(foodName).trim(), String(serving || ""), qty,
         Math.max(0, Number(calories) || 0), Math.max(0, Number(protein) || 0),
         Math.max(0, Number(carbs) || 0), Math.max(0, Number(fat) || 0), String(foodId || ""),
       ]
@@ -1978,6 +1979,75 @@ app.delete("/api/nutrition/log/:id", requireUser, async (req, res) => {
   } catch (err) {
     console.error("Nutrition log delete failed:", err);
     res.status(500).json({ ok: false, error: "Could not delete the entry." });
+  }
+});
+
+// ── Saved meals (reusable templates) ──
+// List the member's saved meals with their items.
+app.get("/api/nutrition/meals", requireUser, async (req, res) => {
+  try {
+    const { rows: meals } = await query(
+      `select id, name, created_at from saved_meals where user_id = $1 order by created_at desc`,
+      [req.user.sub]
+    );
+    if (meals.length === 0) return res.json({ ok: true, meals: [] });
+    const { rows: items } = await query(
+      `select saved_meal_id, food_name, serving, quantity, calories, protein, carbs, fat, fs_food_id
+       from saved_meal_items where saved_meal_id = any($1)`,
+      [meals.map((m) => m.id)]
+    );
+    const byMeal = {};
+    items.forEach((it) => (byMeal[it.saved_meal_id] = byMeal[it.saved_meal_id] || []).push(it));
+    res.json({ ok: true, meals: meals.map((m) => ({ ...m, items: byMeal[m.id] || [] })) });
+  } catch (err) {
+    console.error("Saved meals fetch failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load saved meals." });
+  }
+});
+
+// Save a meal template from a set of food items.
+app.post("/api/nutrition/meals", requireUser, async (req, res) => {
+  const { name, items } = req.body || {};
+  if (!name || !String(name).trim()) return res.status(400).json({ ok: false, error: "Please name the meal." });
+  if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ ok: false, error: "The meal has no foods." });
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    const { rows } = await client.query(
+      `insert into saved_meals (user_id, name) values ($1, $2) returning id, name, created_at`,
+      [req.user.sub, String(name).trim().slice(0, 80)]
+    );
+    const meal = rows[0];
+    for (const it of items) {
+      await client.query(
+        `insert into saved_meal_items (saved_meal_id, food_name, serving, quantity, calories, protein, carbs, fat, fs_food_id)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [
+          meal.id, String(it.foodName || it.food_name || "Food"), String(it.serving || ""),
+          Number(it.quantity) || 1, Math.max(0, Number(it.calories) || 0), Math.max(0, Number(it.protein) || 0),
+          Math.max(0, Number(it.carbs) || 0), Math.max(0, Number(it.fat) || 0), String(it.foodId || it.fs_food_id || ""),
+        ]
+      );
+    }
+    await client.query("commit");
+    res.json({ ok: true, meal });
+  } catch (err) {
+    await client.query("rollback");
+    console.error("Save meal failed:", err);
+    res.status(500).json({ ok: false, error: "Could not save the meal." });
+  } finally {
+    client.release();
+  }
+});
+
+// Delete a saved meal template.
+app.delete("/api/nutrition/meals/:id", requireUser, async (req, res) => {
+  try {
+    await query(`delete from saved_meals where id = $1 and user_id = $2`, [req.params.id, req.user.sub]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Delete saved meal failed:", err);
+    res.status(500).json({ ok: false, error: "Could not delete the saved meal." });
   }
 });
 
