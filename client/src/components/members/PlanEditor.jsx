@@ -6,7 +6,7 @@ import { apiAuth, getToken } from "../../lib/api";
 import MemberHeader from "./MemberHeader";
 import { Button, Input, Textarea, Select, Field } from "../ui";
 import { RIR_OPTIONS, rirLabel } from "../../lib/rir";
-const newExercise = () => ({ exerciseId: "", sets: 3, reps: "", rir: "", notes: "" });
+const newExercise = () => ({ muscleGroup: "", exerciseId: "", sets: 3, reps: "", rir: "", notes: "" });
 const newDay = (n) => ({ name: `Day ${n}`, notes: "", exercises: [] });
 const newWeek = (n) => ({ name: `Week ${n}`, notes: "", days: [newDay(1)] });
 
@@ -48,6 +48,8 @@ export default function PlanEditor({ admin = false }) {
       try {
         const ex = await api(exercisesUrl);
         setExercises(ex.exercises);
+        const exById = {};
+        ex.exercises.forEach((x) => (exById[x.id] = x));
         if (!isNew) {
           const d = await api(loadUrl);
           const p = d.plan;
@@ -63,6 +65,7 @@ export default function PlanEditor({ admin = false }) {
                 name: dd.name,
                 notes: dd.notes || "",
                 exercises: (dd.exercises || []).map((e) => ({
+                  muscleGroup: exById[e.exerciseId]?.muscle_group || "",
                   exerciseId: e.exerciseId || "",
                   sets: e.sets ?? 3,
                   reps: e.reps || "",
@@ -107,6 +110,16 @@ export default function PlanEditor({ admin = false }) {
   const addEx = (wi, di) => updWeeks((ws) => { ws[wi].days[di].exercises.push(newExercise()); return ws; });
   const removeEx = (wi, di, ei) => updWeeks((ws) => { ws[wi].days[di].exercises = ws[wi].days[di].exercises.filter((_, i) => i !== ei); return ws; });
   const setExField = (wi, di, ei, f) => (e) => updWeeks((ws) => { ws[wi].days[di].exercises[ei][f] = e.target.value; return ws; });
+  // Changing the muscle group clears the chosen exercise (it may not belong to the new group).
+  const setExGroup = (wi, di, ei) => (e) => updWeeks((ws) => {
+    const x = ws[wi].days[di].exercises[ei];
+    x.muscleGroup = e.target.value;
+    x.exerciseId = "";
+    return ws;
+  });
+
+  // Muscle groups present in the catalog, for the per-row group selector.
+  const groups = [...new Set(exercises.map((x) => x.muscle_group).filter(Boolean))].sort();
 
   const save = async () => {
     setSaving(true);
@@ -180,33 +193,45 @@ export default function PlanEditor({ admin = false }) {
                       <button onClick={() => removeDay(wi, di)} aria-label={tr.removeDay} className="shrink-0 text-warm-gray hover:text-red-500 text-xl leading-none px-1">×</button>
                     </div>
 
-                    {/* Exercises with targets */}
-                    {day.exercises.length > 0 && (
-                      <div className="grid grid-cols-[1fr_50px_64px_72px_24px] gap-1.5 items-center text-[0.66rem] font-semibold text-warm-gray mb-1 px-0.5">
-                        <span>{tr.colExercise}</span>
-                        <span className="text-center">{tr.exTargetSets}</span>
-                        <span className="text-center">{tr.exTargetReps}</span>
-                        <span className="text-center">{tr.exTargetRir}</span>
-                        <span />
-                      </div>
-                    )}
+                    {/* Exercises: pick the muscle group first, then the exercise (filtered) */}
                     {day.exercises.map((ex, ei) => (
-                      <div key={ei} className="grid grid-cols-[1fr_50px_64px_72px_24px] gap-1.5 items-center mb-1.5">
-                        <Select value={ex.exerciseId} onChange={setExField(wi, di, ei, "exerciseId")} className="text-[0.82rem] py-2">
-                          <option value="">{tr.selectExercise}</option>
-                          {exercises.map((x) => (
-                            <option key={x.id} value={x.id}>{x.name}{x.muscle_group ? ` · ${x.muscle_group}` : ""}</option>
-                          ))}
-                        </Select>
-                        <Input type="number" inputMode="numeric" value={ex.sets} onChange={setExField(wi, di, ei, "sets")} className="text-center px-1 py-2" />
-                        <Input type="text" value={ex.reps} onChange={setExField(wi, di, ei, "reps")} placeholder="8-10" className="text-center px-1 py-2" />
-                        <Select value={ex.rir} onChange={setExField(wi, di, ei, "rir")} className="text-center px-1 py-2">
-                          <option value="">–</option>
-                          {RIR_OPTIONS.map((o) => (
-                            <option key={o} value={o}>{rirLabel(o, tr.failure)}</option>
-                          ))}
-                        </Select>
-                        <button onClick={() => removeEx(wi, di, ei)} aria-label={tr.removeExercise} className="text-warm-gray hover:text-red-500 text-lg leading-none">−</button>
+                      <div key={ei} className="border border-sand rounded-xl p-2.5 mb-2 bg-cream/40">
+                        <div className="grid sm:grid-cols-2 gap-1.5 mb-1.5">
+                          <Select value={ex.muscleGroup} onChange={setExGroup(wi, di, ei)} className="text-[0.82rem] py-2">
+                            <option value="">{tr.selectMuscle}</option>
+                            {groups.map((g) => (
+                              <option key={g} value={g}>{g}</option>
+                            ))}
+                          </Select>
+                          <Select value={ex.exerciseId} onChange={setExField(wi, di, ei, "exerciseId")} disabled={!ex.muscleGroup} className="text-[0.82rem] py-2">
+                            <option value="">{ex.muscleGroup ? tr.selectExercise : tr.selectMuscleFirst}</option>
+                            {exercises
+                              .filter((x) => (x.muscle_group || "") === ex.muscleGroup)
+                              .map((x) => (
+                                <option key={x.id} value={x.id}>{x.name}</option>
+                              ))}
+                          </Select>
+                        </div>
+                        <div className="grid grid-cols-[1fr_1fr_1fr_28px] gap-1.5 items-end">
+                          <div>
+                            <span className="block text-[0.62rem] font-semibold text-warm-gray mb-0.5">{tr.exTargetSets}</span>
+                            <Input type="number" inputMode="numeric" value={ex.sets} onChange={setExField(wi, di, ei, "sets")} className="text-center px-1 py-2" />
+                          </div>
+                          <div>
+                            <span className="block text-[0.62rem] font-semibold text-warm-gray mb-0.5">{tr.exTargetReps}</span>
+                            <Input type="text" value={ex.reps} onChange={setExField(wi, di, ei, "reps")} placeholder="8-10" className="text-center px-1 py-2" />
+                          </div>
+                          <div>
+                            <span className="block text-[0.62rem] font-semibold text-warm-gray mb-0.5">{tr.exTargetRir}</span>
+                            <Select value={ex.rir} onChange={setExField(wi, di, ei, "rir")} className="text-center px-1 py-2">
+                              <option value="">–</option>
+                              {RIR_OPTIONS.map((o) => (
+                                <option key={o} value={o}>{rirLabel(o, tr.failure)}</option>
+                              ))}
+                            </Select>
+                          </div>
+                          <button onClick={() => removeEx(wi, di, ei)} aria-label={tr.removeExercise} className="text-warm-gray hover:text-red-500 text-lg leading-none pb-2">−</button>
+                        </div>
                       </div>
                     ))}
                     <button onClick={() => addEx(wi, di)} className="text-[0.8rem] font-semibold text-terracotta hover:text-terracotta-dark mt-1">
