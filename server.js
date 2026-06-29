@@ -1808,7 +1808,10 @@ async function fatsecretToken() {
     headers: { "Content-Type": "application/x-www-form-urlencoded", Authorization: `Basic ${auth}` },
     body: "grant_type=client_credentials&scope=basic",
   });
-  if (!res.ok) throw new Error(`FatSecret token failed (${res.status})`);
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`token ${res.status}: ${t.slice(0, 200)}`);
+  }
   const data = await res.json();
   fsToken = { access_token: data.access_token, expiresAt: Date.now() + (Number(data.expires_in) || 86400) * 1000 };
   return fsToken.access_token;
@@ -1819,9 +1822,46 @@ async function fatsecretCall(params) {
   const url = new URL("https://platform.fatsecret.com/rest/server.api");
   Object.entries({ ...params, format: "json" }).forEach(([k, v]) => url.searchParams.set(k, v));
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-  if (!res.ok) throw new Error(`FatSecret API failed (${res.status})`);
-  return res.json();
+  const text = await res.text();
+  let data = null;
+  try { data = JSON.parse(text); } catch { /* non-JSON error body */ }
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${text.slice(0, 200)}`);
+  // FatSecret often returns 200 with an { error: { code, message } } payload.
+  if (data?.error) throw new Error(`FatSecret ${data.error.code}: ${data.error.message}`);
+  return data;
 }
+
+// Diagnostic (no secrets exposed): reports the server's outbound IP — which is
+// what you whitelist in FatSecret's "IP Restrictions" — and whether the token
+// and a sample search succeed. Open /api/nutrition/health in a browser.
+app.get("/api/nutrition/health", async (req, res) => {
+  const out = { configured: fatsecretEnabled };
+  try {
+    const ip = await fetch("https://api.ipify.org?format=json").then((r) => r.json());
+    out.outboundIp = ip.ip;
+  } catch {
+    out.outboundIp = "unknown";
+  }
+  if (!fatsecretEnabled) return res.json(out);
+  try {
+    await fatsecretToken();
+    out.token = "ok";
+  } catch (e) {
+    out.token = "failed";
+    out.tokenError = e.message;
+    return res.json(out);
+  }
+  try {
+    const data = await fatsecretCall({ method: "foods.search", search_expression: "apple", max_results: 1 });
+    out.search = "ok";
+    const f = data?.foods?.food;
+    out.sample = Array.isArray(f) ? f[0]?.food_name : f?.food_name || null;
+  } catch (e) {
+    out.search = "failed";
+    out.searchError = e.message;
+  }
+  res.json(out);
+});
 
 // Search the FatSecret food database.
 app.get("/api/nutrition/search", requireUser, async (req, res) => {
