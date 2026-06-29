@@ -13,7 +13,7 @@ function startOfWeek(date) {
 // "This week" strip: past/any day shows what you actually trained; the next
 // routine day to do is flagged on today only — you train it whenever you want
 // (any weekday, rest days wherever), and logging it advances the rotation.
-export default function WeekStrip({ workouts, routine, exMap, onPick }) {
+export default function WeekStrip({ workouts, routine, planName, weekName, onPick }) {
   const { t, lang } = useLanguage();
   const tr = t.tracker;
 
@@ -63,16 +63,15 @@ export default function WeekStrip({ workouts, routine, exMap, onPick }) {
             </div>
             {c.done ? (
               <button onClick={() => onPick(c.done[0].id)} className="flex-1 text-left">
-                <span className="text-[0.62rem] text-forest font-semibold block leading-tight">✓ {c.done[0].title}</span>
+                {planName && <span className="text-[0.58rem] text-warm-gray block leading-tight truncate">{planName}</span>}
+                <span className="text-[0.62rem] text-forest font-semibold block leading-tight truncate">✓ {c.done[0].title}</span>
               </button>
             ) : c.plan ? (
               <div className="flex-1">
                 <span className="text-[0.55rem] font-semibold text-terracotta/70 block leading-tight uppercase tracking-wide">{tr.upNext}</span>
+                {planName && <span className="text-[0.58rem] text-warm-gray block leading-tight truncate">{planName}</span>}
+                {weekName && <span className="text-[0.58rem] text-warm-gray block leading-tight truncate">{weekName}</span>}
                 <span className="text-[0.62rem] font-semibold text-terracotta block leading-tight truncate">{c.plan.name}</span>
-                <span className="text-[0.58rem] text-warm-gray block leading-tight">
-                  {c.plan.exerciseIds.slice(0, 3).map((id) => exMap[id] || "").filter(Boolean).join(", ")}
-                  {c.plan.exerciseIds.length > 3 ? ` +${c.plan.exerciseIds.length - 3}` : ""}
-                </span>
               </div>
             ) : (
               <div className="flex-1 flex items-center justify-center">
