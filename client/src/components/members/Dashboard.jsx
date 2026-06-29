@@ -166,7 +166,15 @@ export default function Dashboard() {
         {workouts === null ? (
           <p className="text-warm-gray">{tr.loading}</p>
         ) : view === "calendar" ? (
-          <Calendar workouts={workouts} onPick={pickFromCalendar} />
+          <Calendar
+            workouts={workouts}
+            onPick={pickFromCalendar}
+            plan={plan}
+            onStartPlanned={(wi, di, dateKey) =>
+              navigate(`/app/new?plan=${plan.id}&week=${wi}&day=${di}&date=${dateKey}`)
+            }
+            onStartBlank={(dateKey) => navigate(`/app/new?date=${dateKey}`)}
+          />
         ) : workouts.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-5xl mb-4">🏋️</div>
