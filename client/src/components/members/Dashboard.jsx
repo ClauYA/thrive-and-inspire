@@ -6,7 +6,13 @@ import { formatDate } from "../../lib/format";
 import MemberHeader from "./MemberHeader";
 import Calendar from "./Calendar";
 import WeekStrip from "./WeekStrip";
+import DayPicker from "./DayPicker";
 import { Button } from "../ui";
+
+const localKey = (iso) => {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
 
 function groupByExercise(sets) {
   const groups = [];
@@ -32,6 +38,7 @@ export default function Dashboard() {
   const [expanded, setExpanded] = useState(null);
   const [detail, setDetail] = useState({});
   const [view, setView] = useState("list");
+  const [pickerDate, setPickerDate] = useState(null); // "YYYY-MM-DD" tapped in calendar/strip
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
@@ -102,6 +109,16 @@ export default function Dashboard() {
     ? { nextIndex: curDayIdx, days: curWeek.days.map((d) => ({ name: d.name, exerciseIds: (d.exercises || []).map((e) => e.exerciseId).filter(Boolean) })) }
     : null;
 
+  // Shared day-picker (calendar + This Week strip): flat list of plan days and
+  // the workouts logged on the tapped day.
+  const planDays = [];
+  weekList.forEach((w, wi) => (w.days || []).forEach((d, di) =>
+    planDays.push({ wi, di, week: w.name, day: d.name, count: (d.exercises || []).length })
+  ));
+  const pickerWorkouts = pickerDate ? (workouts || []).filter((w) => localKey(w.performed_at) === pickerDate) : [];
+  const startPlanned = (wi, di, dateKey) => navigate(`/app/new?plan=${plan.id}&week=${wi}&day=${di}&date=${dateKey}`);
+  const startBlank = (dateKey) => navigate(`/app/new?date=${dateKey}`);
+
   return (
     <div className="min-h-screen bg-cream relative z-[1]">
       <MemberHeader />
@@ -143,7 +160,7 @@ export default function Dashboard() {
 
         {/* This week strip */}
         {workouts !== null && weekForStrip && weekForStrip.days.length > 0 && (
-          <WeekStrip workouts={workouts} routine={weekForStrip} planName={plan?.name} weekName={curWeek?.name} onPick={pickFromCalendar} />
+          <WeekStrip workouts={workouts} routine={weekForStrip} planName={plan?.name} weekName={curWeek?.name} onOpenDay={setPickerDate} />
         )}
 
         {/* Toolbar: new workout + view toggle */}
@@ -166,15 +183,7 @@ export default function Dashboard() {
         {workouts === null ? (
           <p className="text-warm-gray">{tr.loading}</p>
         ) : view === "calendar" ? (
-          <Calendar
-            workouts={workouts}
-            onPick={pickFromCalendar}
-            plan={plan}
-            onStartPlanned={(wi, di, dateKey) =>
-              navigate(`/app/new?plan=${plan.id}&week=${wi}&day=${di}&date=${dateKey}`)
-            }
-            onStartBlank={(dateKey) => navigate(`/app/new?date=${dateKey}`)}
-          />
+          <Calendar workouts={workouts} onOpenDay={setPickerDate} />
         ) : workouts.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-5xl mb-4">🏋️</div>
@@ -215,6 +224,18 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
+        )}
+
+        {pickerDate && (
+          <DayPicker
+            dateKey={pickerDate}
+            dayWorkouts={pickerWorkouts}
+            planDays={planDays}
+            onPick={pickFromCalendar}
+            onStartPlanned={startPlanned}
+            onStartBlank={startBlank}
+            onClose={() => setPickerDate(null)}
+          />
         )}
       </main>
     </div>

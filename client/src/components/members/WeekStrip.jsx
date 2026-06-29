@@ -13,7 +13,7 @@ function startOfWeek(date) {
 // "This week" strip: past/any day shows what you actually trained; the next
 // routine day to do is flagged on today only — you train it whenever you want
 // (any weekday, rest days wherever), and logging it advances the rotation.
-export default function WeekStrip({ workouts, routine, planName, weekName, onPick }) {
+export default function WeekStrip({ workouts, routine, planName, weekName, onOpenDay }) {
   const { t, lang } = useLanguage();
   const tr = t.tracker;
 
@@ -51,9 +51,10 @@ export default function WeekStrip({ workouts, routine, planName, weekName, onPic
       <h2 className="text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-warm-gray mb-3">{tr.thisWeek}</h2>
       <div className="grid grid-cols-7 gap-2">
         {cells.map((c) => (
-          <div
+          <button
             key={c.key}
-            className={`rounded-xl border p-2 min-h-[92px] flex flex-col ${
+            onClick={() => onOpenDay(c.key)}
+            className={`rounded-xl border p-2 min-h-[92px] flex flex-col text-left transition-colors hover:border-terracotta ${
               c.isToday ? "border-terracotta bg-terracotta/5" : "border-sand bg-white"
             }`}
           >
@@ -62,10 +63,10 @@ export default function WeekStrip({ workouts, routine, planName, weekName, onPic
               {c.d.getDate()}
             </div>
             {c.done ? (
-              <button onClick={() => onPick(c.done[0].id)} className="flex-1 text-left">
+              <div className="flex-1">
                 {planName && <span className="text-[0.58rem] text-warm-gray block leading-tight truncate">{planName}</span>}
                 <span className="text-[0.62rem] text-forest font-semibold block leading-tight truncate">✓ {c.done[0].title}</span>
-              </button>
+              </div>
             ) : c.plan ? (
               <div className="flex-1">
                 <span className="text-[0.55rem] font-semibold text-terracotta/70 block leading-tight uppercase tracking-wide">{tr.upNext}</span>
@@ -78,7 +79,7 @@ export default function WeekStrip({ workouts, routine, planName, weekName, onPic
                 <span className="text-[0.6rem] text-light-gray">·</span>
               </div>
             )}
-          </div>
+          </button>
         ))}
       </div>
     </div>
