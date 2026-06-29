@@ -171,7 +171,7 @@ function isValidEmail(email) {
 // Open /api/health in a browser to see whether the database connects, which
 // tables exist, and how many blog posts are stored. Never exposes secrets.
 app.get("/api/health", async (req, res) => {
-  const health = { ok: true, dbConfigured: dbEnabled, email: Boolean(transporter) };
+  const health = { ok: true, dbConfigured: dbEnabled, email: Boolean(transporter), nutrition: fatsecretEnabled };
   if (!dbEnabled) {
     health.db = "not_configured"; // DATABASE_URL is not set
     return res.json(health);
@@ -179,7 +179,7 @@ app.get("/api/health", async (req, res) => {
   try {
     await query("select 1");
     health.db = "connected";
-    const want = ["posts", "users", "applications", "intakes", "guide_leads", "password_resets", "testimonials", "email_log"];
+    const want = ["posts", "users", "applications", "intakes", "guide_leads", "password_resets", "testimonials", "email_log", "nutrition_logs"];
     const { rows } = await query(
       `select table_name from information_schema.tables where table_schema = 'public' and table_name = any($1)`,
       [want]
@@ -1785,6 +1785,155 @@ app.delete("/api/admin/plans/:id", requireAdmin, async (req, res) => {
   } catch (err) {
     console.error("Admin delete plan failed:", err);
     res.status(500).json({ ok: false, error: "Could not delete the plan." });
+  }
+});
+
+// ── Nutrition integration (FatSecret Platform API) ──
+// Food search + nutrition lookups via FatSecret, plus a per-user food log.
+// Configure with FATSECRET_CLIENT_ID + FATSECRET_CLIENT_SECRET (free account at
+// platform.fatsecret.com). The server calls FatSecret with a cached OAuth2
+// client-credentials token so the secret never reaches the browser.
+// Note: FatSecret may require whitelisting this server's outbound IP in their
+// dashboard (or turning IP restriction off) for the calls to succeed.
+const FS_CLIENT_ID = process.env.FATSECRET_CLIENT_ID;
+const FS_CLIENT_SECRET = process.env.FATSECRET_CLIENT_SECRET;
+const fatsecretEnabled = Boolean(FS_CLIENT_ID && FS_CLIENT_SECRET);
+
+let fsToken = null; // { access_token, expiresAt }
+async function fatsecretToken() {
+  if (fsToken && fsToken.expiresAt > Date.now() + 60_000) return fsToken.access_token;
+  const auth = Buffer.from(`${FS_CLIENT_ID}:${FS_CLIENT_SECRET}`).toString("base64");
+  const res = await fetch("https://oauth.fatsecret.com/connect/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded", Authorization: `Basic ${auth}` },
+    body: "grant_type=client_credentials&scope=basic",
+  });
+  if (!res.ok) throw new Error(`FatSecret token failed (${res.status})`);
+  const data = await res.json();
+  fsToken = { access_token: data.access_token, expiresAt: Date.now() + (Number(data.expires_in) || 86400) * 1000 };
+  return fsToken.access_token;
+}
+
+async function fatsecretCall(params) {
+  const token = await fatsecretToken();
+  const url = new URL("https://platform.fatsecret.com/rest/server.api");
+  Object.entries({ ...params, format: "json" }).forEach(([k, v]) => url.searchParams.set(k, v));
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) throw new Error(`FatSecret API failed (${res.status})`);
+  return res.json();
+}
+
+// Search the FatSecret food database.
+app.get("/api/nutrition/search", requireUser, async (req, res) => {
+  if (!fatsecretEnabled) return res.status(503).json({ ok: false, error: "Nutrition search is not configured on the server." });
+  const q = String(req.query.q || "").trim();
+  if (!q) return res.json({ ok: true, foods: [] });
+  try {
+    const data = await fatsecretCall({ method: "foods.search", search_expression: q, max_results: 20 });
+    const raw = data?.foods?.food || [];
+    const foods = (Array.isArray(raw) ? raw : [raw]).map((f) => ({
+      id: f.food_id,
+      name: f.food_name,
+      brand: f.brand_name || "",
+      description: f.food_description || "",
+    }));
+    res.json({ ok: true, foods });
+  } catch (err) {
+    console.error("Nutrition search failed:", err);
+    res.status(502).json({ ok: false, error: "Could not search foods right now." });
+  }
+});
+
+// Get one food's servings (with calories + macros).
+app.get("/api/nutrition/food/:id", requireUser, async (req, res) => {
+  if (!fatsecretEnabled) return res.status(503).json({ ok: false, error: "Nutrition is not configured on the server." });
+  try {
+    const data = await fatsecretCall({ method: "food.get.v2", food_id: req.params.id });
+    const food = data?.food;
+    if (!food) return res.status(404).json({ ok: false, error: "Food not found." });
+    let servings = food?.servings?.serving || [];
+    servings = Array.isArray(servings) ? servings : [servings];
+    res.json({
+      ok: true,
+      food: {
+        id: food.food_id,
+        name: food.food_name,
+        brand: food.brand_name || "",
+        servings: servings.map((s) => ({
+          id: s.serving_id,
+          description: s.serving_description,
+          calories: Number(s.calories) || 0,
+          protein: Number(s.protein) || 0,
+          carbs: Number(s.carbohydrate) || 0,
+          fat: Number(s.fat) || 0,
+        })),
+      },
+    });
+  } catch (err) {
+    console.error("Nutrition food details failed:", err);
+    res.status(502).json({ ok: false, error: "Could not load this food right now." });
+  }
+});
+
+// List the member's food log for a day (+ daily totals).
+app.get("/api/nutrition/log", requireUser, async (req, res) => {
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(String(req.query.date || "")) ? req.query.date : null;
+  try {
+    const { rows } = await query(
+      `select id, logged_on, food_name, serving, quantity, calories, protein, carbs, fat
+       from nutrition_logs
+       where user_id = $1 and ($2::date is null or logged_on = $2::date)
+       order by created_at`,
+      [req.user.sub, day]
+    );
+    const totals = rows.reduce(
+      (t, r) => ({
+        calories: t.calories + Number(r.calories),
+        protein: t.protein + Number(r.protein),
+        carbs: t.carbs + Number(r.carbs),
+        fat: t.fat + Number(r.fat),
+      }),
+      { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    );
+    res.json({ ok: true, entries: rows, totals });
+  } catch (err) {
+    console.error("Nutrition log fetch failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load your food log." });
+  }
+});
+
+// Add a food entry (calories/macros are the totals for the chosen quantity).
+app.post("/api/nutrition/log", requireUser, async (req, res) => {
+  const { date, foodName, serving, quantity, calories, protein, carbs, fat, foodId } = req.body || {};
+  if (!foodName || !String(foodName).trim()) return res.status(400).json({ ok: false, error: "Missing food." });
+  const qty = Number(quantity) > 0 ? Number(quantity) : 1;
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(String(date || "")) ? date : null;
+  try {
+    const { rows } = await query(
+      `insert into nutrition_logs (user_id, logged_on, food_name, serving, quantity, calories, protein, carbs, fat, fs_food_id)
+       values ($1, coalesce($2::date, current_date), $3, $4, $5, $6, $7, $8, $9, $10)
+       returning id, logged_on, food_name, serving, quantity, calories, protein, carbs, fat`,
+      [
+        req.user.sub, day, String(foodName).trim(), String(serving || ""), qty,
+        Math.max(0, Number(calories) || 0), Math.max(0, Number(protein) || 0),
+        Math.max(0, Number(carbs) || 0), Math.max(0, Number(fat) || 0), String(foodId || ""),
+      ]
+    );
+    res.json({ ok: true, entry: rows[0] });
+  } catch (err) {
+    console.error("Nutrition log add failed:", err);
+    res.status(500).json({ ok: false, error: "Could not save the food entry." });
+  }
+});
+
+// Delete one of the member's food entries.
+app.delete("/api/nutrition/log/:id", requireUser, async (req, res) => {
+  try {
+    await query(`delete from nutrition_logs where id = $1 and user_id = $2`, [req.params.id, req.user.sub]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Nutrition log delete failed:", err);
+    res.status(500).json({ ok: false, error: "Could not delete the entry." });
   }
 });
 

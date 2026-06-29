@@ -39,6 +39,7 @@ export default function Dashboard() {
   const [detail, setDetail] = useState({});
   const [view, setView] = useState("list");
   const [pickerDate, setPickerDate] = useState(null); // "YYYY-MM-DD" tapped in calendar/strip
+  const [nutToday, setNutToday] = useState(null); // today's calories/macros (best-effort)
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
@@ -49,6 +50,10 @@ export default function Dashboard() {
       const map = {};
       ex.exercises.forEach((e) => (map[e.id] = e.name));
       setExMap(map);
+      // Today's nutrition summary — best-effort (skips quietly if not set up).
+      userApi(`/api/nutrition/log?date=${localKey(new Date().toISOString())}`)
+        .then((d) => setNutToday(d.totals))
+        .catch(() => {});
     } catch (e) {
       if (e.unauthorized) return navigate("/login");
       setError(e.message);
@@ -161,6 +166,34 @@ export default function Dashboard() {
         {/* This week strip */}
         {workouts !== null && weekForStrip && weekForStrip.days.length > 0 && (
           <WeekStrip workouts={workouts} routine={weekForStrip} planName={plan?.name} weekName={curWeek?.name} onOpenDay={setPickerDate} />
+        )}
+
+        {/* Today's nutrition summary */}
+        {nutToday && (
+          <Link to="/app/nutrition" className="block bg-white border border-sand rounded-2xl p-4 sm:p-5 mb-6 hover:border-terracotta transition-colors">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-warm-gray">{tr.nutSummaryTitle}</span>
+              <span className="text-[0.8rem] font-semibold text-terracotta">{tr.nutLogFood} →</span>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              <div className="text-center">
+                <div className="font-display text-[1.4rem] font-semibold text-charcoal">{Math.round(nutToday.calories)}</div>
+                <div className="text-[0.66rem] uppercase tracking-[0.08em] text-warm-gray">{tr.nutCalories}</div>
+              </div>
+              <div className="text-center">
+                <div className="font-display text-[1.4rem] font-semibold text-charcoal">{Math.round(nutToday.protein)}g</div>
+                <div className="text-[0.66rem] uppercase tracking-[0.08em] text-warm-gray">{tr.nutProtein}</div>
+              </div>
+              <div className="text-center">
+                <div className="font-display text-[1.4rem] font-semibold text-charcoal">{Math.round(nutToday.carbs)}g</div>
+                <div className="text-[0.66rem] uppercase tracking-[0.08em] text-warm-gray">{tr.nutCarbs}</div>
+              </div>
+              <div className="text-center">
+                <div className="font-display text-[1.4rem] font-semibold text-charcoal">{Math.round(nutToday.fat)}g</div>
+                <div className="text-[0.66rem] uppercase tracking-[0.08em] text-warm-gray">{tr.nutFat}</div>
+              </div>
+            </div>
+          </Link>
         )}
 
         {/* Toolbar: new workout + view toggle */}

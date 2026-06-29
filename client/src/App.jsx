@@ -29,6 +29,7 @@ import PlansList from "./components/members/PlansList";
 import PlanEditor from "./components/members/PlanEditor";
 import ExerciseCatalog from "./components/members/ExerciseCatalog";
 import Progress from "./components/members/Progress";
+import Nutrition from "./components/members/Nutrition";
 import DesignSystem from "./components/DesignSystem";
 
 function Landing() {
@@ -77,6 +78,7 @@ export default function App() {
         <Route path="/app/plans/:id" element={<PlanEditor />} />
         <Route path="/app/exercises" element={<ExerciseCatalog />} />
         <Route path="/app/progress" element={<Progress />} />
+        <Route path="/app/nutrition" element={<Nutrition />} />
         <Route path="/design" element={<DesignSystem />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
