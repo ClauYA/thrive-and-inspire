@@ -109,12 +109,12 @@ export default function Dashboard() {
     ? { nextIndex: curDayIdx, days: curWeek.days.map((d) => ({ name: d.name, exerciseIds: (d.exercises || []).map((e) => e.exerciseId).filter(Boolean) })) }
     : null;
 
-  // Shared day-picker (calendar + This Week strip): flat list of plan days and
-  // the workouts logged on the tapped day.
+  // Shared day-picker (calendar + This Week strip): only the days of the week
+  // you're currently on (not the whole plan), plus the workouts logged that day.
   const planDays = [];
-  weekList.forEach((w, wi) => (w.days || []).forEach((d, di) =>
-    planDays.push({ wi, di, week: w.name, day: d.name, count: (d.exercises || []).length })
-  ));
+  (curWeek?.days || []).forEach((d, di) =>
+    planDays.push({ wi: curWeekIdx, di, week: curWeek.name, day: d.name, count: (d.exercises || []).length })
+  );
   const pickerWorkouts = pickerDate ? (workouts || []).filter((w) => localKey(w.performed_at) === pickerDate) : [];
   const startPlanned = (wi, di, dateKey) => navigate(`/app/new?plan=${plan.id}&week=${wi}&day=${di}&date=${dateKey}`);
   const startBlank = (dateKey) => navigate(`/app/new?date=${dateKey}`);
