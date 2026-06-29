@@ -67,7 +67,7 @@ export default function Nutrition() {
     try {
       const d = await userApi(`/api/nutrition/food/${food.id}`);
       const servings = d.food.servings || [];
-      setSelected({ id: d.food.id, name: d.food.name, brand: d.food.brand, servings, servingIdx: 0, qty: 1 });
+      setSelected({ id: d.food.id, name: d.food.name, brand: d.food.brand, servings, servingIdx: 0, amount: servings[0]?.numberOfUnits || 1 });
     } catch (err) {
       if (err.unauthorized) return navigate("/login");
       setError(err.message);
@@ -75,12 +75,16 @@ export default function Nutrition() {
   };
 
   const serving = selected ? selected.servings[selected.servingIdx] : null;
+  // FatSecret macros are per "numberOfUnits" of the serving's unit; scale to the
+  // amount the member typed (e.g. serving = 100 g, amount = 150 → 1.5×).
+  const baseUnits = serving ? serving.numberOfUnits || 1 : 1;
+  const multiplier = serving ? (Number(selected.amount) || 0) / baseUnits : 0;
   const scaled = serving
     ? {
-        calories: serving.calories * selected.qty,
-        protein: serving.protein * selected.qty,
-        carbs: serving.carbs * selected.qty,
-        fat: serving.fat * selected.qty,
+        calories: serving.calories * multiplier,
+        protein: serving.protein * multiplier,
+        carbs: serving.carbs * multiplier,
+        fat: serving.fat * multiplier,
       }
     : null;
 
@@ -89,11 +93,12 @@ export default function Nutrition() {
     setBusy(true);
     setError("");
     try {
+      const servingText = serving.unit ? `${selected.amount} ${serving.unit}` : `${selected.amount} × ${serving.description}`;
       await userApi("/api/nutrition/log", "POST", {
         date,
         foodName: selected.name,
-        serving: `${selected.qty} × ${serving.description}`,
-        quantity: selected.qty,
+        serving: servingText,
+        quantity: Number(selected.amount) || 0,
         calories: scaled.calories,
         protein: scaled.protein,
         carbs: scaled.carbs,
@@ -198,12 +203,15 @@ export default function Nutrition() {
               <h3 className="font-semibold text-charcoal">{selected.name}{selected.brand ? ` · ${selected.brand}` : ""}</h3>
               <button onClick={() => setSelected(null)} className="text-warm-gray hover:text-charcoal text-xl leading-none">×</button>
             </div>
-            <div className="grid sm:grid-cols-[1fr_90px] gap-3 mb-4">
+            <div className="grid sm:grid-cols-[1fr_130px] gap-3 mb-4">
               <div>
                 <label className="block text-[0.78rem] font-semibold text-charcoal mb-1.5">{tr.nutServing}</label>
                 <select
                   value={selected.servingIdx}
-                  onChange={(e) => setSelected((s) => ({ ...s, servingIdx: Number(e.target.value) }))}
+                  onChange={(e) => {
+                    const idx = Number(e.target.value);
+                    setSelected((s) => ({ ...s, servingIdx: idx, amount: s.servings[idx]?.numberOfUnits || 1 }));
+                  }}
                   className={`${inputClass} cursor-pointer`}
                 >
                   {selected.servings.map((s, i) => (
@@ -212,10 +220,12 @@ export default function Nutrition() {
                 </select>
               </div>
               <div>
-                <label className="block text-[0.78rem] font-semibold text-charcoal mb-1.5">{tr.nutQuantity}</label>
+                <label className="block text-[0.78rem] font-semibold text-charcoal mb-1.5">
+                  {tr.nutAmount}{serving?.unit ? ` (${serving.unit})` : ""}
+                </label>
                 <input
-                  type="number" min="0.25" step="0.25" value={selected.qty}
-                  onChange={(e) => setSelected((s) => ({ ...s, qty: Number(e.target.value) || 0 }))}
+                  type="number" min="0" step="any" value={selected.amount}
+                  onChange={(e) => setSelected((s) => ({ ...s, amount: e.target.value }))}
                   className={inputClass}
                 />
               </div>
