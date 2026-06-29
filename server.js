@@ -1902,6 +1902,10 @@ app.get("/api/nutrition/food/:id", requireUser, async (req, res) => {
         servings: servings.map((s) => ({
           id: s.serving_id,
           description: s.serving_description,
+          // Base size of this serving + its unit, so the client can let the
+          // member type a custom amount (e.g. 150 g, 2 cups) and scale macros.
+          numberOfUnits: Number(s.number_of_units) || 1,
+          unit: s.measurement_description || "",
           calories: Number(s.calories) || 0,
           protein: Number(s.protein) || 0,
           carbs: Number(s.carbohydrate) || 0,
