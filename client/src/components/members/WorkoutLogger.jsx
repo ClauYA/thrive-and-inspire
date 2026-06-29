@@ -89,7 +89,9 @@ export default function WorkoutLogger() {
 
   const [exercises, setExercises] = useState([]);
   const [title, setTitle] = useState(tr.defaultTitle);
-  const [date, setDate] = useState(todayStr());
+  // Honor a ?date=YYYY-MM-DD param (e.g. picked from the calendar); else today.
+  const dateParam = searchParams.get("date");
+  const [date, setDate] = useState(dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : todayStr());
   const [unit] = useState("kg"); // default unit for newly added sets (each set can override)
   const [notes, setNotes] = useState("");
   const [blocks, setBlocks] = useState([]);
