@@ -33,7 +33,12 @@ export default function MembersAdmin({ onAuthError }) {
   const [progMetric, setProgMetric] = useState("top_weight");
   const [progPoints, setProgPoints] = useState(null);
   const [nutDays, setNutDays] = useState(null); // member's daily nutrition summary
+  const [nutExpanded, setNutExpanded] = useState(null); // expanded date
+  const [nutDetail, setNutDetail] = useState({}); // date -> entries
   const [error, setError] = useState("");
+
+  const mealLabel = (k) =>
+    ({ breakfast: tr.mealBreakfast, lunch: tr.mealLunch, dinner: tr.mealDinner, snack: tr.mealSnack }[k] || k);
 
   const fail = useCallback((err) => {
     if (err.unauthorized) return onAuthError();
@@ -49,12 +54,25 @@ export default function MembersAdmin({ onAuthError }) {
     setProgExId("");
     setProgPoints(null);
     setNutDays(null);
+    setNutExpanded(null);
+    setNutDetail({});
     try {
       const d = await apiAuth(`/api/admin/members/${id}`);
       setSel(d);
       apiAuth(`/api/admin/members/${id}/exercises`).then((r) => setExercises(r.exercises)).catch(() => {});
       apiAuth(`/api/admin/members/${id}/nutrition`).then((r) => setNutDays(r.days)).catch(() => setNutDays([]));
     } catch (err) { fail(err); }
+  };
+
+  const toggleNutDay = async (date) => {
+    if (nutExpanded === date) return setNutExpanded(null);
+    setNutExpanded(date);
+    if (!nutDetail[date]) {
+      try {
+        const d = await apiAuth(`/api/admin/members/${sel.member.id}/nutrition/${date}`);
+        setNutDetail((m) => ({ ...m, [date]: d.entries }));
+      } catch (err) { fail(err); }
+    }
   };
 
   // Load the chosen exercise's progress for the selected member.
@@ -234,29 +252,37 @@ export default function MembersAdmin({ onAuthError }) {
           ) : nutDays.length === 0 ? (
             <p className="text-warm-gray text-center py-8">{tr.nutNoEntries}</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-[0.84rem]">
-                <thead>
-                  <tr className="text-warm-gray text-left border-b border-sand">
-                    <th className="font-semibold py-2 pr-3">{tr.date}</th>
-                    <th className="font-semibold py-2 pr-3 text-right">{tr.nutCalories}</th>
-                    <th className="font-semibold py-2 pr-3 text-right">{tr.nutProtein}</th>
-                    <th className="font-semibold py-2 pr-3 text-right">{tr.nutCarbs}</th>
-                    <th className="font-semibold py-2 text-right">{tr.nutFat}</th>
-                  </tr>
-                </thead>
-                <tbody className="text-charcoal">
-                  {nutDays.map((d, i) => (
-                    <tr key={i} className="border-b border-sand/60">
-                      <td className="py-2 pr-3 font-medium">{formatDate(d.date, lang)}</td>
-                      <td className="py-2 pr-3 text-right font-semibold">{Math.round(d.calories)}</td>
-                      <td className="py-2 pr-3 text-right">{Math.round(d.protein)}g</td>
-                      <td className="py-2 pr-3 text-right">{Math.round(d.carbs)}g</td>
-                      <td className="py-2 text-right">{Math.round(d.fat)}g</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="grid gap-2">
+              {nutDays.map((d) => (
+                <div key={d.date} className="border border-sand rounded-xl overflow-hidden">
+                  <button onClick={() => toggleNutDay(d.date)} className="w-full flex items-center justify-between gap-3 px-3 py-2.5 text-left hover:bg-cream/50">
+                    <span className="text-[0.86rem] font-medium text-charcoal">{formatDate(d.date, lang)}</span>
+                    <span className="text-[0.78rem] text-warm-gray text-right shrink-0">
+                      <span className="font-semibold text-charcoal">{Math.round(d.calories)}</span> kcal · P{Math.round(d.protein)} C{Math.round(d.carbs)} G{Math.round(d.fat)}
+                      <span className="text-terracotta ml-2 text-xs">{nutExpanded === d.date ? "▲" : "▼"}</span>
+                    </span>
+                  </button>
+                  {nutExpanded === d.date && nutDetail[d.date] && (
+                    <div className="px-3 pb-3 border-t border-sand pt-2">
+                      {nutDetail[d.date].length === 0 ? (
+                        <p className="text-[0.8rem] text-warm-gray py-2">{tr.nutNoEntries}</p>
+                      ) : (
+                        [...new Set(nutDetail[d.date].map((e) => e.meal))].map((meal) => (
+                          <div key={meal} className="py-1.5">
+                            <div className="text-[0.72rem] font-semibold uppercase tracking-[0.06em] text-warm-gray mb-1 capitalize">{mealLabel(meal)}</div>
+                            {nutDetail[d.date].filter((e) => e.meal === meal).map((e) => (
+                              <div key={e.id} className="flex items-baseline justify-between gap-3 text-[0.82rem] py-0.5">
+                                <span className="text-charcoal min-w-0 truncate">{e.food_name}{e.serving ? <span className="text-warm-gray"> · {e.serving}</span> : null}</span>
+                                <span className="text-warm-gray shrink-0">{Math.round(e.calories)} kcal · P{Math.round(e.protein)} C{Math.round(e.carbs)} G{Math.round(e.fat)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>
