@@ -40,6 +40,7 @@ export default function Dashboard() {
   const [view, setView] = useState("list");
   const [pickerDate, setPickerDate] = useState(null); // "YYYY-MM-DD" tapped in calendar/strip
   const [nutToday, setNutToday] = useState(null); // today's calories/macros (best-effort)
+  const [nutGoals, setNutGoals] = useState(null); // coach-set macro goals (best-effort)
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
@@ -54,6 +55,7 @@ export default function Dashboard() {
       userApi(`/api/nutrition/log?date=${localKey(new Date().toISOString())}`)
         .then((d) => setNutToday(d.totals))
         .catch(() => {});
+      userApi("/api/nutrition/goals").then((d) => setNutGoals(d.goals)).catch(() => {});
     } catch (e) {
       if (e.unauthorized) return navigate("/login");
       setError(e.message);
@@ -181,15 +183,15 @@ export default function Dashboard() {
                 <div className="text-[0.66rem] uppercase tracking-[0.08em] text-warm-gray">{tr.nutCalories}</div>
               </div>
               <div className="text-center">
-                <div className="font-display text-[1.4rem] font-semibold text-charcoal">{Math.round(nutToday.protein)}g</div>
+                <div className="font-display text-[1.4rem] font-semibold text-charcoal">{Math.round(nutToday.protein)}{nutGoals?.protein ? <span className="text-[0.8rem] text-warm-gray">/{Math.round(nutGoals.protein)}</span> : null}g</div>
                 <div className="text-[0.66rem] uppercase tracking-[0.08em] text-warm-gray">{tr.nutProtein}</div>
               </div>
               <div className="text-center">
-                <div className="font-display text-[1.4rem] font-semibold text-charcoal">{Math.round(nutToday.carbs)}g</div>
+                <div className="font-display text-[1.4rem] font-semibold text-charcoal">{Math.round(nutToday.carbs)}{nutGoals?.carbs ? <span className="text-[0.8rem] text-warm-gray">/{Math.round(nutGoals.carbs)}</span> : null}g</div>
                 <div className="text-[0.66rem] uppercase tracking-[0.08em] text-warm-gray">{tr.nutCarbs}</div>
               </div>
               <div className="text-center">
-                <div className="font-display text-[1.4rem] font-semibold text-charcoal">{Math.round(nutToday.fat)}g</div>
+                <div className="font-display text-[1.4rem] font-semibold text-charcoal">{Math.round(nutToday.fat)}{nutGoals?.fat ? <span className="text-[0.8rem] text-warm-gray">/{Math.round(nutGoals.fat)}</span> : null}g</div>
                 <div className="text-[0.66rem] uppercase tracking-[0.08em] text-warm-gray">{tr.nutFat}</div>
               </div>
             </div>
