@@ -9,6 +9,7 @@ import MemberHeader from "./MemberHeader";
 import { Button } from "../ui";
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
+const DRAFT_KEY = "li-workout-draft"; // in-progress workout, survives a page refresh
 const inputClass =
   "w-full px-3 py-2 border-[1.5px] border-sand rounded-xl text-[0.88rem] text-charcoal bg-cream outline-none transition-all focus:border-terracotta-light focus:bg-white";
 const emptySet = (unit = "kg") => ({ weight: "", reps: "", rir: "", unit });
@@ -105,7 +106,22 @@ export default function WorkoutLogger() {
   const [muscle, setMuscle] = useState("");
   const [routinePlan, setRoutinePlan] = useState(null);
   const [dayPos, setDayPos] = useState({ wi: 0, di: 0 });
+  const [draftRestored, setDraftRestored] = useState(false);
+  const [flashUid, setFlashUid] = useState(null);
   const uid = useRef(0);
+
+  const clearDraft = () => {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+  };
+
+  const persistDraft = () => {
+    try {
+      localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({ savedAt: Date.now(), title, date, notes, planId, fromRoutine, dayNotes, dayPos, routinePlan, blocks })
+      );
+    } catch { /* ignore */ }
+  };
 
   // Prefill the logger from a plan's week/day: title, day notes, and exercise
   // blocks with their targets. Used by the initial load and the day picker.
@@ -142,6 +158,33 @@ export default function WorkoutLogger() {
         const planParam = searchParams.get("plan");
         const weekParam = searchParams.get("week");
         const dayParam = searchParams.get("day");
+
+        // Restore an autosaved draft (e.g. after an accidental refresh).
+        try {
+          const raw = localStorage.getItem(DRAFT_KEY);
+          if (raw) {
+            const dr = JSON.parse(raw);
+            const fresh = dr.savedAt && Date.now() - dr.savedAt < 24 * 60 * 60 * 1000;
+            const matches = planParam ? String(dr.planId) === String(planParam) : true;
+            if (fresh && matches && Array.isArray(dr.blocks) && dr.blocks.length) {
+              setTitle(dr.title || tr.defaultTitle);
+              setDate(dr.date || todayStr());
+              setNotes(dr.notes || "");
+              setPlanId(dr.planId || null);
+              setFromRoutine(!!dr.fromRoutine);
+              setDayNotes(dr.dayNotes || "");
+              setDayPos(dr.dayPos || { wi: 0, di: 0 });
+              setRoutinePlan(dr.routinePlan || null);
+              setBlocks(dr.blocks);
+              uid.current = Math.max(0, ...dr.blocks.map((b) => b.uid || 0)) + 1;
+              setStarted(true);
+              setDraftRestored(true);
+              dr.blocks.forEach((b) => b.exerciseId && loadLast(b.uid, b.exerciseId));
+              return; // don't re-apply the plan over the restored draft
+            }
+          }
+        } catch { /* ignore bad draft */ }
+
         if (planParam && weekParam != null && dayParam != null) {
           const r = await userApi(`/api/plans/${planParam}`);
           if (!active) return;
@@ -163,6 +206,17 @@ export default function WorkoutLogger() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, searchParams]);
+
+  // Autosave the in-progress workout so a page refresh never loses logged sets.
+  useEffect(() => {
+    if (!started) return;
+    try {
+      localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({ savedAt: Date.now(), title, date, notes, planId, fromRoutine, dayNotes, dayPos, routinePlan, blocks })
+      );
+    } catch { /* storage full / disabled — ignore */ }
+  }, [started, title, date, notes, planId, fromRoutine, dayNotes, dayPos, routinePlan, blocks]);
 
   const makeBlock = (ex, target) => {
     const count = target && Number(target.sets) > 0 ? Number(target.sets) : 3;
@@ -249,6 +303,7 @@ export default function WorkoutLogger() {
     setError("");
     try {
       await userApi("/api/workouts", "POST", { title, performedAt: date || null, notes, sets: flatSets, planId, weightUnit: unit });
+      clearDraft();
       navigate("/app");
     } catch (e) {
       if (e.unauthorized) return navigate("/login");
@@ -308,6 +363,17 @@ export default function WorkoutLogger() {
 
         {started && (
           <>
+            {draftRestored && (
+              <div className="flex items-center justify-between gap-3 bg-gold/15 border border-gold/40 rounded-2xl px-4 py-3 mb-4">
+                <span className="text-[0.84rem] text-charcoal">↩️ {tr.draftRestored}</span>
+                <button
+                  onClick={() => { clearDraft(); setDraftRestored(false); setBlocks([]); setStarted(false); }}
+                  className="text-[0.8rem] font-semibold text-terracotta hover:text-terracotta-dark shrink-0"
+                >
+                  {tr.discardDraft}
+                </button>
+              </div>
+            )}
             <div className="bg-white rounded-2xl border border-sand p-5 sm:p-6 mb-5 grid gap-4">
               {fromRoutine && routinePlan && (
                 <div>
@@ -448,9 +514,17 @@ export default function WorkoutLogger() {
                         </button>
                       </div>
                     ))}
-                    <button onClick={() => addSet(blk.uid)} className="text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark mt-1">
-                      {tr.addSet}
-                    </button>
+                    <div className="flex items-center justify-between gap-3 mt-1">
+                      <button onClick={() => addSet(blk.uid)} className="text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark">
+                        {tr.addSet}
+                      </button>
+                      <button
+                        onClick={() => { persistDraft(); setFlashUid(blk.uid); setTimeout(() => setFlashUid((c) => (c === blk.uid ? null : c)), 1800); }}
+                        className="text-[0.8rem] font-semibold text-forest border border-sage-light px-3 py-1.5 rounded-full hover:bg-sage-light/40"
+                      >
+                        {flashUid === blk.uid ? `✓ ${tr.saved}` : `💾 ${tr.saveExercise}`}
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -473,9 +547,9 @@ export default function WorkoutLogger() {
 
             <div className="flex gap-3 mt-2">
               <Button onClick={save} disabled={saving}>
-                {saving ? tr.saving : tr.save}
+                {saving ? tr.saving : tr.saveAll}
               </Button>
-              <button onClick={() => navigate("/app")} className="text-[0.95rem] font-semibold px-6 py-3.5 rounded-full border border-sand text-warm-gray hover:bg-sand transition-colors">
+              <button onClick={() => { clearDraft(); navigate("/app"); }} className="text-[0.95rem] font-semibold px-6 py-3.5 rounded-full border border-sand text-warm-gray hover:bg-sand transition-colors">
                 {tr.cancel}
               </button>
             </div>
