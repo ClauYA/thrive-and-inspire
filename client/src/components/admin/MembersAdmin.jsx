@@ -32,6 +32,7 @@ export default function MembersAdmin({ onAuthError }) {
   const [progExId, setProgExId] = useState("");
   const [progMetric, setProgMetric] = useState("top_weight");
   const [progPoints, setProgPoints] = useState(null);
+  const [nutDays, setNutDays] = useState(null); // member's daily nutrition summary
   const [error, setError] = useState("");
 
   const fail = useCallback((err) => {
@@ -47,10 +48,12 @@ export default function MembersAdmin({ onAuthError }) {
     setExpanded(null);
     setProgExId("");
     setProgPoints(null);
+    setNutDays(null);
     try {
       const d = await apiAuth(`/api/admin/members/${id}`);
       setSel(d);
       apiAuth(`/api/admin/members/${id}/exercises`).then((r) => setExercises(r.exercises)).catch(() => {});
+      apiAuth(`/api/admin/members/${id}/nutrition`).then((r) => setNutDays(r.days)).catch(() => setNutDays([]));
     } catch (err) { fail(err); }
   };
 
@@ -220,6 +223,41 @@ export default function MembersAdmin({ onAuthError }) {
             <p className="text-warm-gray text-center py-10">{tr.noProgressData}</p>
           ) : (
             <LineChart points={chartPts} />
+          )}
+        </div>
+
+        {/* Nutrition summary (daily totals) */}
+        <h2 className="text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-warm-gray mt-8 mb-3">{tr.nutLink}</h2>
+        <div className="bg-white rounded-2xl border border-sand p-5">
+          {nutDays === null ? (
+            <p className="text-warm-gray text-center py-8">{tr.loading}</p>
+          ) : nutDays.length === 0 ? (
+            <p className="text-warm-gray text-center py-8">{tr.nutNoEntries}</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-[0.84rem]">
+                <thead>
+                  <tr className="text-warm-gray text-left border-b border-sand">
+                    <th className="font-semibold py-2 pr-3">{tr.date}</th>
+                    <th className="font-semibold py-2 pr-3 text-right">{tr.nutCalories}</th>
+                    <th className="font-semibold py-2 pr-3 text-right">{tr.nutProtein}</th>
+                    <th className="font-semibold py-2 pr-3 text-right">{tr.nutCarbs}</th>
+                    <th className="font-semibold py-2 text-right">{tr.nutFat}</th>
+                  </tr>
+                </thead>
+                <tbody className="text-charcoal">
+                  {nutDays.map((d, i) => (
+                    <tr key={i} className="border-b border-sand/60">
+                      <td className="py-2 pr-3 font-medium">{formatDate(d.date, lang)}</td>
+                      <td className="py-2 pr-3 text-right font-semibold">{Math.round(d.calories)}</td>
+                      <td className="py-2 pr-3 text-right">{Math.round(d.protein)}g</td>
+                      <td className="py-2 pr-3 text-right">{Math.round(d.carbs)}g</td>
+                      <td className="py-2 text-right">{Math.round(d.fat)}g</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

@@ -1661,6 +1661,24 @@ app.get("/api/admin/members/:id/progress-baseline", requireAdmin, async (req, re
   }
 });
 
+// A member's daily nutrition summary (coach view): totals per day.
+app.get("/api/admin/members/:id/nutrition", requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await query(
+      `select to_char(logged_on, 'YYYY-MM-DD') as date,
+              sum(calories)::float as calories, sum(protein)::float as protein,
+              sum(carbs)::float as carbs, sum(fat)::float as fat, count(*)::int as items
+       from nutrition_logs where user_id = $1
+       group by logged_on order by logged_on desc limit 30`,
+      [req.params.id]
+    );
+    res.json({ ok: true, days: rows });
+  } catch (err) {
+    console.error("Admin member nutrition failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load nutrition." });
+  }
+});
+
 // Load a member's plan (full tree)
 app.get("/api/admin/plans/:id", requireAdmin, async (req, res) => {
   try {
