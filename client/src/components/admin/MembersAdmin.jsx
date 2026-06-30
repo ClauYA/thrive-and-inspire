@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { apiAuth } from "../../lib/api";
 import { formatDate } from "../../lib/format";
 import { useLanguage } from "../../i18n/LanguageContext";
+import LineChart from "../members/LineChart";
 
 // Group a flat list of sets by exercise, preserving first-seen order.
 function groupByExercise(sets) {
@@ -27,6 +28,11 @@ export default function MembersAdmin({ onAuthError }) {
   const [sel, setSel] = useState(null); // selected member detail { member, workouts, plans }
   const [expanded, setExpanded] = useState(null); // workout id
   const [detail, setDetail] = useState({}); // workoutId -> {workout, sets}
+  const [exercises, setExercises] = useState([]); // selected member's exercises
+  const [progExId, setProgExId] = useState("");
+  const [progMetric, setProgMetric] = useState("top_weight");
+  const [progPoints, setProgPoints] = useState(null);
+  const [nutDays, setNutDays] = useState(null); // member's daily nutrition summary
   const [error, setError] = useState("");
 
   const fail = useCallback((err) => {
@@ -40,11 +46,24 @@ export default function MembersAdmin({ onAuthError }) {
 
   const openMember = async (id) => {
     setExpanded(null);
+    setProgExId("");
+    setProgPoints(null);
+    setNutDays(null);
     try {
       const d = await apiAuth(`/api/admin/members/${id}`);
       setSel(d);
+      apiAuth(`/api/admin/members/${id}/exercises`).then((r) => setExercises(r.exercises)).catch(() => {});
+      apiAuth(`/api/admin/members/${id}/nutrition`).then((r) => setNutDays(r.days)).catch(() => setNutDays([]));
     } catch (err) { fail(err); }
   };
+
+  // Load the chosen exercise's progress for the selected member.
+  useEffect(() => {
+    if (!sel || !progExId) { setProgPoints(null); return; }
+    apiAuth(`/api/admin/members/${sel.member.id}/progress/${progExId}`)
+      .then((r) => setProgPoints(r.points))
+      .catch(fail);
+  }, [sel, progExId, fail]);
 
   const refreshMember = () => sel && openMember(sel.member.id);
 
@@ -90,6 +109,8 @@ export default function MembersAdmin({ onAuthError }) {
   // ── Member detail view ──
   if (sel) {
     const unitOf = (wid) => detail[wid]?.workout?.weight_unit || "kg";
+    const inputCls = "px-3 py-2 border-[1.5px] border-sand rounded-xl text-[0.88rem] text-charcoal bg-cream outline-none cursor-pointer focus:border-terracotta-light focus:bg-white";
+    const chartPts = (progPoints || []).map((p) => ({ label: formatDate(p.date, lang), value: Math.round(Number(p[progMetric]) || 0) }));
     return (
       <div>
         <button onClick={() => setSel(null)} className="text-terracotta text-[0.85rem] font-semibold mb-4 hover:text-terracotta-dark">
@@ -175,6 +196,70 @@ export default function MembersAdmin({ onAuthError }) {
             ))}
           </div>
         )}
+
+        {/* Progress */}
+        <h2 className="text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-warm-gray mt-8 mb-3">{tr.progress}</h2>
+        <div className="bg-white rounded-2xl border border-sand p-5">
+          <div className="flex flex-wrap gap-3 mb-5">
+            <select value={progExId} onChange={(e) => setProgExId(e.target.value)} className={inputCls}>
+              <option value="">{tr.selectExercise}</option>
+              {exercises.map((ex) => (
+                <option key={ex.id} value={ex.id}>{ex.name}</option>
+              ))}
+            </select>
+            {progExId && (
+              <select value={progMetric} onChange={(e) => setProgMetric(e.target.value)} className={inputCls}>
+                <option value="top_weight">{tr.mTopWeight}</option>
+                <option value="est_1rm">{tr.m1rm}</option>
+                <option value="volume">{tr.mVolume}</option>
+              </select>
+            )}
+          </div>
+          {!progExId ? (
+            <p className="text-warm-gray text-center py-10">{tr.pickToSeeProgress}</p>
+          ) : progPoints === null ? (
+            <p className="text-warm-gray text-center py-10">{tr.loading}</p>
+          ) : chartPts.length === 0 ? (
+            <p className="text-warm-gray text-center py-10">{tr.noProgressData}</p>
+          ) : (
+            <LineChart points={chartPts} />
+          )}
+        </div>
+
+        {/* Nutrition summary (daily totals) */}
+        <h2 className="text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-warm-gray mt-8 mb-3">{tr.nutLink}</h2>
+        <div className="bg-white rounded-2xl border border-sand p-5">
+          {nutDays === null ? (
+            <p className="text-warm-gray text-center py-8">{tr.loading}</p>
+          ) : nutDays.length === 0 ? (
+            <p className="text-warm-gray text-center py-8">{tr.nutNoEntries}</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-[0.84rem]">
+                <thead>
+                  <tr className="text-warm-gray text-left border-b border-sand">
+                    <th className="font-semibold py-2 pr-3">{tr.date}</th>
+                    <th className="font-semibold py-2 pr-3 text-right">{tr.nutCalories}</th>
+                    <th className="font-semibold py-2 pr-3 text-right">{tr.nutProtein}</th>
+                    <th className="font-semibold py-2 pr-3 text-right">{tr.nutCarbs}</th>
+                    <th className="font-semibold py-2 text-right">{tr.nutFat}</th>
+                  </tr>
+                </thead>
+                <tbody className="text-charcoal">
+                  {nutDays.map((d, i) => (
+                    <tr key={i} className="border-b border-sand/60">
+                      <td className="py-2 pr-3 font-medium">{formatDate(d.date, lang)}</td>
+                      <td className="py-2 pr-3 text-right font-semibold">{Math.round(d.calories)}</td>
+                      <td className="py-2 pr-3 text-right">{Math.round(d.protein)}g</td>
+                      <td className="py-2 pr-3 text-right">{Math.round(d.carbs)}g</td>
+                      <td className="py-2 text-right">{Math.round(d.fat)}g</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
