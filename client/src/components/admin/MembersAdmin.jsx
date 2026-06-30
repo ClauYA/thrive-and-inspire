@@ -3,9 +3,23 @@ import { Link } from "react-router-dom";
 import { apiAuth } from "../../lib/api";
 import { formatDate } from "../../lib/format";
 import { useLanguage } from "../../i18n/LanguageContext";
-import { RIR_OPTIONS, rirLabel } from "../../lib/rir";
 
-// Coach view: list members, inspect & edit their workouts/sets, manage plans.
+// Group a flat list of sets by exercise, preserving first-seen order.
+function groupByExercise(sets) {
+  const groups = [];
+  const map = new Map();
+  for (const s of sets) {
+    if (!map.has(s.exercise_name)) {
+      const g = { name: s.exercise_name, sets: [] };
+      map.set(s.exercise_name, g);
+      groups.push(g);
+    }
+    map.get(s.exercise_name).sets.push(s);
+  }
+  return groups;
+}
+
+// Coach view: list members, inspect their workouts, manage plans.
 export default function MembersAdmin({ onAuthError }) {
   const { t, lang } = useLanguage();
   const tr = t.tracker;
@@ -43,27 +57,6 @@ export default function MembersAdmin({ onAuthError }) {
         setDetail((m) => ({ ...m, [id]: d }));
       } catch (err) { fail(err); }
     }
-  };
-
-  const editSet = (wid, setId, field, value) => {
-    setDetail((m) => ({
-      ...m,
-      [wid]: { ...m[wid], sets: m[wid].sets.map((s) => (s.id === setId ? { ...s, [field]: value } : s)) },
-    }));
-  };
-
-  const saveSet = async (wid, s) => {
-    try {
-      await apiAuth(`/api/admin/sets/${s.id}`, "PUT", { weight: s.weight, reps: s.reps, rir: s.rir });
-    } catch (err) { fail(err); }
-  };
-
-  const deleteSet = async (wid, setId) => {
-    if (!window.confirm(tr.confirmDelete)) return;
-    try {
-      await apiAuth(`/api/admin/sets/${setId}`, "DELETE");
-      setDetail((m) => ({ ...m, [wid]: { ...m[wid], sets: m[wid].sets.filter((s) => s.id !== setId) } }));
-    } catch (err) { fail(err); }
   };
 
   const deleteWorkout = async (id) => {
@@ -164,24 +157,17 @@ export default function MembersAdmin({ onAuthError }) {
                 </button>
                 {expanded === w.id && detail[w.id] && (
                   <div className="px-4 pb-5 border-t border-sand pt-4">
-                    <div className="grid grid-cols-[1fr_64px_56px_84px_60px] gap-2 items-center text-[0.68rem] font-semibold text-warm-gray mb-1 px-1">
-                      <span>{tr.colExercise || "Exercise"}</span><span>{tr.weight} ({unitOf(w.id)})</span><span>{tr.reps}</span><span>{tr.rir}</span><span />
-                    </div>
-                    {detail[w.id].sets.map((s) => (
-                      <div key={s.id} className="grid grid-cols-[1fr_64px_56px_84px_60px] gap-2 items-center mb-1.5">
-                        <span className="text-[0.82rem] text-charcoal truncate">{s.exercise_name}</span>
-                        <input type="number" min="0" step="0.5" value={s.weight ?? ""} onChange={(e) => editSet(w.id, s.id, "weight", e.target.value)} className="border border-sand rounded-lg px-2 py-1.5 text-[0.82rem] w-full" />
-                        <input type="number" min="0" value={s.reps ?? ""} onChange={(e) => editSet(w.id, s.id, "reps", e.target.value)} className="border border-sand rounded-lg px-2 py-1.5 text-[0.82rem] w-full" />
-                        <select value={s.rir ?? ""} onChange={(e) => editSet(w.id, s.id, "rir", e.target.value)} className="border border-sand rounded-lg px-1 py-1.5 text-[0.82rem] w-full cursor-pointer">
-                          <option value="">–</option>
-                          {RIR_OPTIONS.map((o) => <option key={o} value={o}>{rirLabel(o, tr.failure)}</option>)}
-                        </select>
-                        <div className="flex items-center gap-1">
-                          <button onClick={() => saveSet(w.id, s)} className="text-[0.72rem] font-semibold text-forest hover:text-forest/70" title={A.save}>✓</button>
-                          <button onClick={() => deleteSet(w.id, s.id)} className="text-warm-gray hover:text-red-500 text-lg leading-none" title={A.delete}>−</button>
+                    {detail[w.id].workout.notes && <p className="text-[0.82rem] text-warm-gray italic mb-3">"{detail[w.id].workout.notes}"</p>}
+                    <div className="divide-y divide-sand/60">
+                      {groupByExercise(detail[w.id].sets).map((g, gi) => (
+                        <div key={gi} className="flex items-baseline justify-between gap-3 py-2">
+                          <span className="text-[0.88rem] font-medium text-charcoal">{g.name}</span>
+                          <span className="text-[0.78rem] text-warm-gray text-right shrink-0">
+                            {g.sets.map((s) => `${s.weight || 0}${s.weight_unit || unitOf(w.id)}×${s.reps || 0}${s.rir ? ` (${s.rir})` : ""}`).join(" · ")}
+                          </span>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                     <button onClick={() => deleteWorkout(w.id)} className="text-[0.8rem] font-semibold text-red-500 hover:text-red-600 mt-3">{A.deleteWorkout}</button>
                   </div>
                 )}
