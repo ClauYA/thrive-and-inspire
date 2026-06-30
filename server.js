@@ -1623,6 +1623,44 @@ app.get("/api/admin/members/:id/exercises", requireAdmin, async (req, res) => {
   }
 });
 
+// A member's progress for one exercise (coach view)
+app.get("/api/admin/members/:id/progress/:exerciseId", requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await query(
+      `select to_char(w.performed_at, 'YYYY-MM-DD') as date,
+              max(s.weight)::float as top_weight,
+              max(s.weight * (1 + s.reps / 30.0))::float as est_1rm,
+              sum(s.weight * s.reps)::float as volume
+       from workouts w
+       join workout_sets s on s.workout_id = w.id
+       where w.user_id = $1 and s.exercise_id = $2
+       group by w.performed_at::date, to_char(w.performed_at, 'YYYY-MM-DD')
+       order by w.performed_at::date`,
+      [req.params.id, req.params.exerciseId]
+    );
+    res.json({ ok: true, points: rows });
+  } catch (err) {
+    console.error("Admin member progress failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load progress." });
+  }
+});
+
+// A member's imported progress baseline (coach view)
+app.get("/api/admin/members/:id/progress-baseline", requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await query(
+      `select exercise_name, muscle_group, evolution_pct::float as evolution_pct,
+              vol_max::float as vol_max, vol_current::float as vol_current, source
+       from progress_baseline where user_id = $1 order by exercise_name`,
+      [req.params.id]
+    );
+    res.json({ ok: true, baseline: rows });
+  } catch (err) {
+    console.error("Admin member baseline failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load progress baseline." });
+  }
+});
+
 // Load a member's plan (full tree)
 app.get("/api/admin/plans/:id", requireAdmin, async (req, res) => {
   try {
