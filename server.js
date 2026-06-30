@@ -179,7 +179,7 @@ app.get("/api/health", async (req, res) => {
   try {
     await query("select 1");
     health.db = "connected";
-    const want = ["posts", "users", "applications", "intakes", "guide_leads", "password_resets", "testimonials", "email_log", "nutrition_logs", "saved_meals"];
+    const want = ["posts", "users", "applications", "intakes", "guide_leads", "password_resets", "testimonials", "email_log", "nutrition_logs", "saved_meals", "nutrition_goals"];
     const { rows } = await query(
       `select table_name from information_schema.tables where table_schema = 'public' and table_name = any($1)`,
       [want]
@@ -1696,6 +1696,38 @@ app.get("/api/admin/members/:id/nutrition/:date", requireAdmin, async (req, res)
   }
 });
 
+// Read a member's daily nutrition goals (coach view).
+app.get("/api/admin/members/:id/nutrition-goals", requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await query(
+      `select calories::float, protein::float, carbs::float, fat::float from nutrition_goals where user_id = $1`,
+      [req.params.id]
+    );
+    res.json({ ok: true, goals: rows[0] || null });
+  } catch (err) {
+    console.error("Admin nutrition goals fetch failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load goals." });
+  }
+});
+
+// Set a member's daily nutrition goals (coach).
+app.put("/api/admin/members/:id/nutrition-goals", requireAdmin, async (req, res) => {
+  const { calories, protein, carbs, fat } = req.body || {};
+  const n = (v) => Math.max(0, Number(v) || 0);
+  try {
+    await query(
+      `insert into nutrition_goals (user_id, calories, protein, carbs, fat, updated_at)
+       values ($1, $2, $3, $4, $5, now())
+       on conflict (user_id) do update set calories = $2, protein = $3, carbs = $4, fat = $5, updated_at = now()`,
+      [req.params.id, n(calories), n(protein), n(carbs), n(fat)]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Admin nutrition goals save failed:", err);
+    res.status(500).json({ ok: false, error: "Could not save goals." });
+  }
+});
+
 // A member's full nutrition log (for Excel export).
 app.get("/api/admin/members/:id/nutrition-all", requireAdmin, async (req, res) => {
   try {
@@ -2068,6 +2100,20 @@ app.delete("/api/nutrition/log/:id", requireUser, async (req, res) => {
   } catch (err) {
     console.error("Nutrition log delete failed:", err);
     res.status(500).json({ ok: false, error: "Could not delete the entry." });
+  }
+});
+
+// The member's daily nutrition goals (read-only; the coach sets them).
+app.get("/api/nutrition/goals", requireUser, async (req, res) => {
+  try {
+    const { rows } = await query(
+      `select calories::float, protein::float, carbs::float, fat::float from nutrition_goals where user_id = $1`,
+      [req.user.sub]
+    );
+    res.json({ ok: true, goals: rows[0] || null });
+  } catch (err) {
+    console.error("Nutrition goals fetch failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load your goals." });
   }
 });
 

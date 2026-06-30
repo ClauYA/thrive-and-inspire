@@ -28,6 +28,7 @@ export default function Nutrition() {
   const [selected, setSelected] = useState(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [goals, setGoals] = useState(null); // coach-set daily targets
 
   const mealLabel = (key) =>
     ({ breakfast: tr.mealBreakfast, lunch: tr.mealLunch, dinner: tr.mealDinner, snack: tr.mealSnack }[key] || key);
@@ -59,6 +60,7 @@ export default function Nutrition() {
     }
     loadLog();
     loadSaved();
+    userApi("/api/nutrition/goals").then((d) => setGoals(d.goals)).catch(() => {});
   }, [loadLog, loadSaved, navigate]);
 
   // ── Food search ──
@@ -210,10 +212,10 @@ export default function Nutrition() {
         <div className="bg-forest text-white rounded-2xl p-5 sm:p-6 mb-6">
           <div className="text-[0.72rem] uppercase tracking-[0.12em] text-sage-light mb-3">{tr.nutToday}</div>
           <div className="grid grid-cols-4 gap-2">
-            <div className="text-center"><div className="font-display text-[1.6rem] font-semibold">{round(totals.calories)}</div><div className="text-[0.68rem] uppercase tracking-[0.08em] text-white/60">{tr.nutCalories}</div></div>
-            <div className="text-center"><div className="font-display text-[1.6rem] font-semibold">{round(totals.protein)}g</div><div className="text-[0.68rem] uppercase tracking-[0.08em] text-white/60">{tr.nutProtein}</div></div>
-            <div className="text-center"><div className="font-display text-[1.6rem] font-semibold">{round(totals.carbs)}g</div><div className="text-[0.68rem] uppercase tracking-[0.08em] text-white/60">{tr.nutCarbs}</div></div>
-            <div className="text-center"><div className="font-display text-[1.6rem] font-semibold">{round(totals.fat)}g</div><div className="text-[0.68rem] uppercase tracking-[0.08em] text-white/60">{tr.nutFat}</div></div>
+            <div className="text-center"><div className="font-display text-[1.6rem] font-semibold">{round(totals.calories)}{goals?.calories ? <span className="text-[0.85rem] text-sage-light"> / {round(goals.calories)}</span> : null}</div><div className="text-[0.68rem] uppercase tracking-[0.08em] text-white/60">{tr.nutCalories}</div></div>
+            <div className="text-center"><div className="font-display text-[1.6rem] font-semibold">{round(totals.protein)}{goals?.protein ? <span className="text-[0.85rem] text-sage-light">/{round(goals.protein)}</span> : null}g</div><div className="text-[0.68rem] uppercase tracking-[0.08em] text-white/60">{tr.nutProtein}</div></div>
+            <div className="text-center"><div className="font-display text-[1.6rem] font-semibold">{round(totals.carbs)}{goals?.carbs ? <span className="text-[0.85rem] text-sage-light">/{round(goals.carbs)}</span> : null}g</div><div className="text-[0.68rem] uppercase tracking-[0.08em] text-white/60">{tr.nutCarbs}</div></div>
+            <div className="text-center"><div className="font-display text-[1.6rem] font-semibold">{round(totals.fat)}{goals?.fat ? <span className="text-[0.85rem] text-sage-light">/{round(goals.fat)}</span> : null}g</div><div className="text-[0.68rem] uppercase tracking-[0.08em] text-white/60">{tr.nutFat}</div></div>
           </div>
         </div>
 

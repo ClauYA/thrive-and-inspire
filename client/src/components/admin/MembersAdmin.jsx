@@ -36,6 +36,8 @@ export default function MembersAdmin({ onAuthError }) {
   const [nutExpanded, setNutExpanded] = useState(null); // expanded date
   const [nutDetail, setNutDetail] = useState({}); // date -> entries
   const [nutExporting, setNutExporting] = useState(false);
+  const [goals, setGoals] = useState({ calories: "", protein: "", carbs: "", fat: "" });
+  const [savingGoals, setSavingGoals] = useState(false);
   const [error, setError] = useState("");
 
   const mealLabel = (k) =>
@@ -62,7 +64,18 @@ export default function MembersAdmin({ onAuthError }) {
       setSel(d);
       apiAuth(`/api/admin/members/${id}/exercises`).then((r) => setExercises(r.exercises)).catch(() => {});
       apiAuth(`/api/admin/members/${id}/nutrition`).then((r) => setNutDays(r.days)).catch(() => setNutDays([]));
+      apiAuth(`/api/admin/members/${id}/nutrition-goals`)
+        .then((r) => setGoals(r.goals ? { calories: r.goals.calories, protein: r.goals.protein, carbs: r.goals.carbs, fat: r.goals.fat } : { calories: "", protein: "", carbs: "", fat: "" }))
+        .catch(() => {});
     } catch (err) { fail(err); }
+  };
+
+  const saveGoals = async () => {
+    setSavingGoals(true);
+    try {
+      await apiAuth(`/api/admin/members/${sel.member.id}/nutrition-goals`, "PUT", goals);
+    } catch (err) { fail(err); }
+    finally { setSavingGoals(false); }
   };
 
   const toggleNutDay = async (date) => {
@@ -280,6 +293,23 @@ export default function MembersAdmin({ onAuthError }) {
             </button>
           )}
         </div>
+
+        {/* Daily goals editor (coach sets them) */}
+        <div className="bg-white rounded-2xl border border-sand p-5 mb-3">
+          <div className="text-[0.78rem] font-semibold text-charcoal mb-2">🎯 {tr.nutGoalsTitle}</div>
+          <div className="flex flex-wrap items-end gap-3">
+            {[["calories", tr.nutCalories], ["protein", tr.nutProtein], ["carbs", tr.nutCarbs], ["fat", tr.nutFat]].map(([k, label]) => (
+              <div key={k}>
+                <label className="block text-[0.7rem] uppercase tracking-[0.06em] text-warm-gray mb-1">{label}</label>
+                <input type="number" min="0" value={goals[k]} onChange={(e) => setGoals((g) => ({ ...g, [k]: e.target.value }))} className="w-[90px] px-3 py-2 border-[1.5px] border-sand rounded-xl text-[0.88rem] bg-cream outline-none focus:border-terracotta-light focus:bg-white" />
+              </div>
+            ))}
+            <button onClick={saveGoals} disabled={savingGoals} className="text-[0.82rem] font-semibold text-white bg-terracotta px-4 py-2 rounded-full hover:bg-terracotta-dark disabled:opacity-60">
+              {savingGoals ? tr.saving : tr.nutSaveGoals}
+            </button>
+          </div>
+        </div>
+
         <div className="bg-white rounded-2xl border border-sand p-5">
           {nutDays === null ? (
             <p className="text-warm-gray text-center py-8">{tr.loading}</p>
