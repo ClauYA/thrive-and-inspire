@@ -1696,6 +1696,22 @@ app.get("/api/admin/members/:id/nutrition/:date", requireAdmin, async (req, res)
   }
 });
 
+// A member's full nutrition log (for Excel export).
+app.get("/api/admin/members/:id/nutrition-all", requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await query(
+      `select to_char(logged_on, 'YYYY-MM-DD') as date, meal, food_name, serving,
+              quantity, calories, protein, carbs, fat
+       from nutrition_logs where user_id = $1 order by logged_on desc, created_at`,
+      [req.params.id]
+    );
+    res.json({ ok: true, rows });
+  } catch (err) {
+    console.error("Admin member nutrition export failed:", err);
+    res.status(500).json({ ok: false, error: "Could not export nutrition." });
+  }
+});
+
 // Load a member's plan (full tree)
 app.get("/api/admin/plans/:id", requireAdmin, async (req, res) => {
   try {

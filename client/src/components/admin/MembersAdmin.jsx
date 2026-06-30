@@ -35,6 +35,7 @@ export default function MembersAdmin({ onAuthError }) {
   const [nutDays, setNutDays] = useState(null); // member's daily nutrition summary
   const [nutExpanded, setNutExpanded] = useState(null); // expanded date
   const [nutDetail, setNutDetail] = useState({}); // date -> entries
+  const [nutExporting, setNutExporting] = useState(false);
   const [error, setError] = useState("");
 
   const mealLabel = (k) =>
@@ -73,6 +74,23 @@ export default function MembersAdmin({ onAuthError }) {
         setNutDetail((m) => ({ ...m, [date]: d.entries }));
       } catch (err) { fail(err); }
     }
+  };
+
+  const exportNutrition = async () => {
+    setNutExporting(true);
+    try {
+      const XLSX = await import("xlsx");
+      const d = await apiAuth(`/api/admin/members/${sel.member.id}/nutrition-all`);
+      const rows = d.rows.map((r) => ({
+        Date: r.date, Meal: mealLabel(r.meal), Food: r.food_name, Serving: r.serving,
+        Calories: Math.round(r.calories), Protein: Math.round(r.protein), Carbs: Math.round(r.carbs), Fat: Math.round(r.fat),
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Nutrition");
+      XLSX.writeFile(wb, `nutricion-${sel.member.name}.xlsx`);
+    } catch (err) { fail(err); }
+    finally { setNutExporting(false); }
   };
 
   // Load the chosen exercise's progress for the selected member.
@@ -129,6 +147,15 @@ export default function MembersAdmin({ onAuthError }) {
     const unitOf = (wid) => detail[wid]?.workout?.weight_unit || "kg";
     const inputCls = "px-3 py-2 border-[1.5px] border-sand rounded-xl text-[0.88rem] text-charcoal bg-cream outline-none cursor-pointer focus:border-terracotta-light focus:bg-white";
     const chartPts = (progPoints || []).map((p) => ({ label: formatDate(p.date, lang), value: Math.round(Number(p[progMetric]) || 0) }));
+    const recentNut = (nutDays || []).slice(0, 7);
+    const nutAvg = recentNut.length
+      ? {
+          calories: recentNut.reduce((s, d) => s + Number(d.calories), 0) / recentNut.length,
+          protein: recentNut.reduce((s, d) => s + Number(d.protein), 0) / recentNut.length,
+          carbs: recentNut.reduce((s, d) => s + Number(d.carbs), 0) / recentNut.length,
+          fat: recentNut.reduce((s, d) => s + Number(d.fat), 0) / recentNut.length,
+        }
+      : null;
     return (
       <div>
         <button onClick={() => setSel(null)} className="text-terracotta text-[0.85rem] font-semibold mb-4 hover:text-terracotta-dark">
@@ -245,15 +272,34 @@ export default function MembersAdmin({ onAuthError }) {
         </div>
 
         {/* Nutrition summary (daily totals) */}
-        <h2 className="text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-warm-gray mt-8 mb-3">{tr.nutLink}</h2>
+        <div className="flex items-center justify-between gap-3 mt-8 mb-3">
+          <h2 className="text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-warm-gray">{tr.nutLink}</h2>
+          {nutDays && nutDays.length > 0 && (
+            <button onClick={exportNutrition} disabled={nutExporting} className="text-[0.8rem] font-semibold text-forest border border-sage-light px-3 py-1.5 rounded-full hover:bg-sage-light/40 disabled:opacity-60">
+              {nutExporting ? tr.exporting : `📥 ${tr.exportExcel}`}
+            </button>
+          )}
+        </div>
         <div className="bg-white rounded-2xl border border-sand p-5">
           {nutDays === null ? (
             <p className="text-warm-gray text-center py-8">{tr.loading}</p>
           ) : nutDays.length === 0 ? (
             <p className="text-warm-gray text-center py-8">{tr.nutNoEntries}</p>
           ) : (
-            <div className="grid gap-2">
-              {nutDays.map((d) => (
+            <>
+              {nutAvg && (
+                <div className="mb-4">
+                  <div className="text-[0.72rem] font-semibold uppercase tracking-[0.06em] text-warm-gray mb-2">{tr.nutAvg7}</div>
+                  <div className="grid grid-cols-4 gap-2 bg-cream rounded-xl p-3 text-center">
+                    <div><div className="font-display text-[1.3rem] font-semibold text-charcoal">{Math.round(nutAvg.calories)}</div><div className="text-[0.62rem] uppercase text-warm-gray">{tr.nutCalories}</div></div>
+                    <div><div className="font-display text-[1.3rem] font-semibold text-charcoal">{Math.round(nutAvg.protein)}g</div><div className="text-[0.62rem] uppercase text-warm-gray">{tr.nutProtein}</div></div>
+                    <div><div className="font-display text-[1.3rem] font-semibold text-charcoal">{Math.round(nutAvg.carbs)}g</div><div className="text-[0.62rem] uppercase text-warm-gray">{tr.nutCarbs}</div></div>
+                    <div><div className="font-display text-[1.3rem] font-semibold text-charcoal">{Math.round(nutAvg.fat)}g</div><div className="text-[0.62rem] uppercase text-warm-gray">{tr.nutFat}</div></div>
+                  </div>
+                </div>
+              )}
+              <div className="grid gap-2">
+                {nutDays.map((d) => (
                 <div key={d.date} className="border border-sand rounded-xl overflow-hidden">
                   <button onClick={() => toggleNutDay(d.date)} className="w-full flex items-center justify-between gap-3 px-3 py-2.5 text-left hover:bg-cream/50">
                     <span className="text-[0.86rem] font-medium text-charcoal">{formatDate(d.date, lang)}</span>
@@ -283,7 +329,8 @@ export default function MembersAdmin({ onAuthError }) {
                   )}
                 </div>
               ))}
-            </div>
+              </div>
+            </>
           )}
         </div>
       </div>
