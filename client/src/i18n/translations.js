@@ -690,6 +690,7 @@ export const translations = {
       needSet: "Add at least one exercise with a set before saving.",
       confirmDelete: "Delete this workout? This can't be undone.",
       delete: "Delete workout",
+      edit: "Edit",
     },
   },
 
@@ -1382,6 +1383,7 @@ export const translations = {
       needSet: "Agrega al menos un ejercicio con una serie antes de guardar.",
       confirmDelete: "¿Borrar este entrenamiento? No se puede deshacer.",
       delete: "Borrar entrenamiento",
+      edit: "Editar",
     },
   },
 };

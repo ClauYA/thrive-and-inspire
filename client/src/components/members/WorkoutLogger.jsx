@@ -92,6 +92,7 @@ export default function WorkoutLogger() {
   const [title, setTitle] = useState(tr.defaultTitle);
   // Honor a ?date=YYYY-MM-DD param (e.g. picked from the calendar); else today.
   const dateParam = searchParams.get("date");
+  const editId = searchParams.get("edit"); // editing an existing workout
   const [date, setDate] = useState(dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : todayStr());
   const [unit] = useState("kg"); // default unit for newly added sets (each set can override)
   const [notes, setNotes] = useState("");
@@ -155,6 +156,41 @@ export default function WorkoutLogger() {
         if (!active) return;
         setExercises(d.exercises);
 
+        // Edit an existing workout: load it into the logger.
+        if (editId) {
+          try {
+            const r = await userApi(`/api/workouts/${editId}`);
+            if (!active) return;
+            const map = new Map();
+            const groups = [];
+            for (const s of r.sets || []) {
+              const k = s.exercise_id || s.exercise_name;
+              if (!map.has(k)) { const g = { exId: s.exercise_id, exName: s.exercise_name, sets: [] }; map.set(k, g); groups.push(g); }
+              map.get(k).sets.push(s);
+            }
+            const nb = groups.map((g) => ({
+              uid: ++uid.current,
+              exerciseId: g.exId || "",
+              exerciseName: g.exName,
+              mediaUrl: (d.exercises.find((x) => x.id === g.exId) || {}).media_url || "",
+              sets: g.sets.map((s) => ({ weight: s.weight ?? "", reps: s.reps ?? "", rir: s.rir || "", unit: s.weight_unit || "kg" })),
+              target: null,
+              last: undefined,
+            }));
+            setTitle(r.workout.title || tr.defaultTitle);
+            setDate(String(r.workout.performed_at).slice(0, 10));
+            setNotes(r.workout.notes || "");
+            setPlanId(r.workout.plan_id || null);
+            setBlocks(nb.length ? nb : [makeBlock(null)]);
+            setStarted(true);
+            nb.forEach((b) => b.exerciseId && loadLast(b.uid, b.exerciseId));
+          } catch (e) {
+            if (e.unauthorized) navigate("/login");
+            else setError(e.message);
+          }
+          return;
+        }
+
         const planParam = searchParams.get("plan");
         const weekParam = searchParams.get("week");
         const dayParam = searchParams.get("day");
@@ -209,7 +245,7 @@ export default function WorkoutLogger() {
 
   // Autosave the in-progress workout so a page refresh never loses logged sets.
   useEffect(() => {
-    if (!started) return;
+    if (!started || editId) return; // editing uses the saved row, not a draft
     try {
       localStorage.setItem(
         DRAFT_KEY,
@@ -302,8 +338,12 @@ export default function WorkoutLogger() {
     setSaving(true);
     setError("");
     try {
-      await userApi("/api/workouts", "POST", { title, performedAt: date || null, notes, sets: flatSets, planId, weightUnit: unit });
-      clearDraft();
+      if (editId) {
+        await userApi(`/api/workouts/${editId}`, "PUT", { title, performedAt: date || null, notes, sets: flatSets, weightUnit: unit });
+      } else {
+        await userApi("/api/workouts", "POST", { title, performedAt: date || null, notes, sets: flatSets, planId, weightUnit: unit });
+        clearDraft();
+      }
       navigate("/app");
     } catch (e) {
       if (e.unauthorized) return navigate("/login");
