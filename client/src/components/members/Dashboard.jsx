@@ -92,6 +92,18 @@ export default function Dashboard() {
     openDetail(id);
   };
 
+  const deleteWorkout = async (id) => {
+    if (!window.confirm(tr.confirmDelete)) return;
+    try {
+      await userApi(`/api/workouts/${id}`, "DELETE");
+      setExpanded(null);
+      load();
+    } catch (e) {
+      if (e.unauthorized) return navigate("/login");
+      setError(e.message);
+    }
+  };
+
   const pickFromCalendar = async (id) => {
     setView("list");
     setExpanded(id);
@@ -253,6 +265,14 @@ export default function Dashboard() {
                           </span>
                         </div>
                       ))}
+                    </div>
+                    <div className="flex gap-3 mt-4">
+                      <button onClick={() => navigate(`/app/new?edit=${w.id}`)} className="text-[0.82rem] font-semibold text-forest border border-sage-light px-3 py-1.5 rounded-full hover:bg-sage-light/40">
+                        ✏️ {tr.edit}
+                      </button>
+                      <button onClick={() => deleteWorkout(w.id)} className="text-[0.82rem] font-semibold text-red-500 hover:text-red-600">
+                        {tr.delete}
+                      </button>
                     </div>
                   </div>
                 )}

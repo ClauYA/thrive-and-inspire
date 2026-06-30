@@ -1114,6 +1114,48 @@ app.get("/api/workouts/:id", requireUser, async (req, res) => {
   }
 });
 
+// ── Update a workout (replace its sets) ──
+app.put("/api/workouts/:id", requireUser, async (req, res) => {
+  const { title, performedAt, notes, sets, weightUnit } = req.body || {};
+  if (!Array.isArray(sets) || sets.length === 0) {
+    return res.status(400).json({ ok: false, error: "Add at least one set before saving." });
+  }
+  const unit = weightUnit === "lb" ? "lb" : "kg";
+  const own = await query(`select id from workouts where id = $1 and user_id = $2`, [req.params.id, req.user.sub]);
+  if (!own.rows[0]) return res.status(404).json({ ok: false, error: "Workout not found." });
+  const client = await pool.connect();
+  try {
+    await client.query("begin");
+    await client.query(
+      `update workouts set title = $1, performed_at = coalesce($2, performed_at), notes = $3, weight_unit = $4 where id = $5`,
+      [String(title || "Workout").trim(), performedAt || null, String(notes || "").trim(), unit, req.params.id]
+    );
+    await client.query(`delete from workout_sets where workout_id = $1`, [req.params.id]);
+    for (const s of sets) {
+      await client.query(
+        `insert into workout_sets (workout_id, exercise_id, exercise_name, set_number, weight, reps, rir, rpe, weight_unit)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [
+          req.params.id, s.exerciseId || null, String(s.exerciseName || "Exercise"), Number(s.setNumber) || 1,
+          s.weight === "" || s.weight == null ? 0 : Number(s.weight),
+          s.reps === "" || s.reps == null ? 0 : Number(s.reps),
+          s.rir === "" || s.rir == null ? null : String(s.rir).trim(),
+          s.rpe === "" || s.rpe == null ? null : Number(s.rpe),
+          s.unit === "lb" ? "lb" : "kg",
+        ]
+      );
+    }
+    await client.query("commit");
+    res.json({ ok: true });
+  } catch (err) {
+    await client.query("rollback");
+    console.error("Update workout failed:", err);
+    res.status(500).json({ ok: false, error: "Could not update the workout." });
+  } finally {
+    client.release();
+  }
+});
+
 // ── Delete a workout ──
 app.delete("/api/workouts/:id", requireUser, async (req, res) => {
   try {
