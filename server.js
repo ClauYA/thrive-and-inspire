@@ -1679,6 +1679,23 @@ app.get("/api/admin/members/:id/nutrition", requireAdmin, async (req, res) => {
   }
 });
 
+// A member's logged foods for one day (coach view).
+app.get("/api/admin/members/:id/nutrition/:date", requireAdmin, async (req, res) => {
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(req.params.date) ? req.params.date : null;
+  if (!day) return res.status(400).json({ ok: false, error: "Invalid date." });
+  try {
+    const { rows } = await query(
+      `select id, meal, food_name, serving, quantity, calories, protein, carbs, fat
+       from nutrition_logs where user_id = $1 and logged_on = $2::date order by created_at`,
+      [req.params.id, day]
+    );
+    res.json({ ok: true, entries: rows });
+  } catch (err) {
+    console.error("Admin member nutrition day failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load the day's foods." });
+  }
+});
+
 // Load a member's plan (full tree)
 app.get("/api/admin/plans/:id", requireAdmin, async (req, res) => {
   try {
