@@ -240,14 +240,20 @@ export default function MembersAdmin({ onAuthError }) {
                     {detail[w.id].workout.notes && <p className="text-[0.82rem] text-warm-gray italic mb-3">"{detail[w.id].workout.notes}"</p>}
                     <SessionFeedback workout={detail[w.id].workout} tr={tr} />
                     <div className="divide-y divide-sand/60">
-                      {groupByExercise(detail[w.id].sets).map((g, gi) => (
-                        <div key={gi} className="flex items-baseline justify-between gap-3 py-2">
-                          <span className="text-[0.88rem] font-medium text-charcoal">{g.name}</span>
-                          <span className="text-[0.78rem] text-warm-gray text-right shrink-0">
-                            {g.sets.map((s) => `${s.weight || 0}${s.weight_unit || unitOf(w.id)}×${s.reps || 0}${s.rir ? ` (${s.rir})` : ""}`).join(" · ")}
-                          </span>
-                        </div>
-                      ))}
+                      {groupByExercise(detail[w.id].sets).map((g, gi) => {
+                        const note = (g.sets.find((s) => s.note) || {}).note;
+                        return (
+                          <div key={gi} className="py-2">
+                            <div className="flex items-baseline justify-between gap-3">
+                              <span className="text-[0.88rem] font-medium text-charcoal">{g.name}</span>
+                              <span className="text-[0.78rem] text-warm-gray text-right shrink-0">
+                                {g.sets.map((s) => `${s.weight || 0}${s.weight_unit || unitOf(w.id)}×${s.reps || 0}${s.rir ? ` (${s.rir})` : ""}`).join(" · ")}
+                              </span>
+                            </div>
+                            {note && <div className="text-[0.76rem] text-warm-gray italic mt-0.5">{note}</div>}
+                          </div>
+                        );
+                      })}
                     </div>
                     <button onClick={() => deleteWorkout(w.id)} className="text-[0.8rem] font-semibold text-red-500 hover:text-red-600 mt-3">{A.deleteWorkout}</button>
                   </div>

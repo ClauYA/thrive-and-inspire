@@ -187,6 +187,7 @@ export default function WorkoutLogger() {
               exerciseName: g.exName,
               mediaUrl: (d.exercises.find((x) => x.id === g.exId) || {}).media_url || "",
               sets: g.sets.map((s) => ({ weight: s.weight ?? "", reps: s.reps ?? "", rir: s.rir || "", unit: s.weight_unit || "kg" })),
+              note: (g.sets.find((s) => s.note) || {}).note || "",
               target: null,
               last: undefined,
             }));
@@ -282,6 +283,7 @@ export default function WorkoutLogger() {
       exerciseName: ex?.name || "",
       mediaUrl: ex?.media_url || "",
       sets: Array.from({ length: count }, () => ({ weight: "", reps: "", rir, unit })),
+      note: "",
       target: target ? { reps: target.reps || "", rir: target.rir || "", notes: target.notes || "" } : null,
       last: ex ? undefined : null,
     };
@@ -332,6 +334,7 @@ export default function WorkoutLogger() {
     if (ex) loadLast(u, ex.id);
   };
   const addSet = (u) => setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, sets: [...b.sets, emptySet(unit)] } : b)));
+  const setBlockNote = (u) => (e) => setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, note: e.target.value } : b)));
   const removeSet = (u, si) => setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, sets: b.sets.filter((_, j) => j !== si) } : b)));
   const updateSet = (u, si, field) => (e) => {
     const val = e.target.value;
@@ -343,7 +346,7 @@ export default function WorkoutLogger() {
     for (const blk of blocks) {
       if (!blk.exerciseName) continue;
       blk.sets.forEach((s, idx) => {
-        flatSets.push({ exerciseId: blk.exerciseId || null, exerciseName: blk.exerciseName, setNumber: idx + 1, weight: s.weight, reps: s.reps, rir: s.rir, rpe: "", unit: s.unit || unit });
+        flatSets.push({ exerciseId: blk.exerciseId || null, exerciseName: blk.exerciseName, setNumber: idx + 1, weight: s.weight, reps: s.reps, rir: s.rir, rpe: "", unit: s.unit || unit, note: idx === 0 ? (blk.note || "") : "" });
       });
     }
     if (flatSets.length === 0) {
@@ -585,6 +588,13 @@ export default function WorkoutLogger() {
                         {flashUid === blk.uid ? `✓ ${tr.saved}` : `💾 ${tr.saveExercise}`}
                       </button>
                     </div>
+                    <textarea
+                      rows="2"
+                      value={blk.note || ""}
+                      onChange={setBlockNote(blk.uid)}
+                      placeholder={tr.exNotePh}
+                      className={`${inputClass} resize-none mt-3`}
+                    />
                   </div>
                 </div>
               );

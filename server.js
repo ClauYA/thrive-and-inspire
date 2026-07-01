@@ -1070,8 +1070,8 @@ app.post("/api/workouts", requireUser, async (req, res) => {
     const workout = w.rows[0];
     for (const s of sets) {
       await client.query(
-        `insert into workout_sets (workout_id, exercise_id, exercise_name, set_number, weight, reps, rir, rpe, weight_unit)
-         values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        `insert into workout_sets (workout_id, exercise_id, exercise_name, set_number, weight, reps, rir, rpe, weight_unit, note)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
         [
           workout.id,
           s.exerciseId || null,
@@ -1082,6 +1082,7 @@ app.post("/api/workouts", requireUser, async (req, res) => {
           s.rir === "" || s.rir == null ? null : String(s.rir).trim(),
           s.rpe === "" || s.rpe == null ? null : Number(s.rpe),
           s.unit === "lb" ? "lb" : "kg",
+          String(s.note || "").trim(),
         ]
       );
     }
@@ -1152,8 +1153,8 @@ app.put("/api/workouts/:id", requireUser, async (req, res) => {
     await client.query(`delete from workout_sets where workout_id = $1`, [req.params.id]);
     for (const s of sets) {
       await client.query(
-        `insert into workout_sets (workout_id, exercise_id, exercise_name, set_number, weight, reps, rir, rpe, weight_unit)
-         values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        `insert into workout_sets (workout_id, exercise_id, exercise_name, set_number, weight, reps, rir, rpe, weight_unit, note)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
         [
           req.params.id, s.exerciseId || null, String(s.exerciseName || "Exercise"), Number(s.setNumber) || 1,
           s.weight === "" || s.weight == null ? 0 : Number(s.weight),
@@ -1161,6 +1162,7 @@ app.put("/api/workouts/:id", requireUser, async (req, res) => {
           s.rir === "" || s.rir == null ? null : String(s.rir).trim(),
           s.rpe === "" || s.rpe == null ? null : Number(s.rpe),
           s.unit === "lb" ? "lb" : "kg",
+          String(s.note || "").trim(),
         ]
       );
     }
