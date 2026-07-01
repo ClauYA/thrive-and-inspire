@@ -8,6 +8,7 @@ import Calendar from "./Calendar";
 import WeekStrip from "./WeekStrip";
 import DayPicker from "./DayPicker";
 import SessionFeedback from "./SessionFeedback";
+import ProgressRing from "./ProgressRing";
 import { Button } from "../ui";
 
 const localKey = (iso) => {
@@ -208,6 +209,21 @@ export default function Dashboard() {
                 <div className="text-[0.66rem] uppercase tracking-[0.08em] text-warm-gray">{tr.nutFat}</div>
               </div>
             </div>
+
+            {/* Mini macro-goal rings */}
+            {nutGoals && (Number(nutGoals.protein) > 0 || Number(nutGoals.carbs) > 0 || Number(nutGoals.fat) > 0) && (
+              <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-sand">
+                {[
+                  { key: "protein", label: tr.nutProtein, color: "#b07d1f" },
+                  { key: "carbs", label: tr.nutCarbs, color: "#3d5a3d" },
+                  { key: "fat", label: tr.nutFat, color: "#c47a54" },
+                ].map((m) => {
+                  const goal = Number(nutGoals[m.key]) || 0;
+                  const val = Number(nutToday[m.key]) || 0;
+                  return <ProgressRing key={m.key} pct={goal > 0 ? (val / goal) * 100 : 0} label={m.label} color={m.color} size={54} />;
+                })}
+              </div>
+            )}
           </Link>
         )}
 
