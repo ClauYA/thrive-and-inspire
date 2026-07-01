@@ -26,6 +26,7 @@ import MemberDashboard from "./components/members/Dashboard";
 import WorkoutLogger from "./components/members/WorkoutLogger";
 import RoutineEditor from "./components/members/RoutineEditor";
 import PlansList from "./components/members/PlansList";
+import PlanView from "./components/members/PlanView";
 import PlanEditor from "./components/members/PlanEditor";
 import ExerciseCatalog from "./components/members/ExerciseCatalog";
 import Progress from "./components/members/Progress";
@@ -74,6 +75,7 @@ export default function App() {
         <Route path="/app/new" element={<WorkoutLogger />} />
         <Route path="/app/routine" element={<RoutineEditor />} />
         <Route path="/app/plans" element={<PlansList />} />
+        <Route path="/app/plan/:id" element={<PlanView />} />
         <Route path="/app/plans/new" element={<PlanEditor />} />
         <Route path="/app/plans/:id" element={<PlanEditor />} />
         <Route path="/app/exercises" element={<ExerciseCatalog />} />

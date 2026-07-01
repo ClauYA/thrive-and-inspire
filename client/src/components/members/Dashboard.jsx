@@ -160,8 +160,8 @@ export default function Dashboard() {
                   <Button as={Link} to={`/app/new?plan=${plan.id}&week=${curWeekIdx}&day=${curDayIdx}`} size="sm">
                     {tr.startDay}
                   </Button>
-                  <Button as={Link} to={`/app/plans/${plan.id}`} variant="outlineLight" size="sm">
-                    {tr.editPlanBtn}
+                  <Button as={Link} to={`/app/plan/${plan.id}`} variant="outlineLight" size="sm">
+                    {tr.viewPlanBtn}
                   </Button>
                 </div>
               </div>
