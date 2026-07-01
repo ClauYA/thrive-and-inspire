@@ -4,6 +4,7 @@ import { apiAuth } from "../../lib/api";
 import { formatDate } from "../../lib/format";
 import { useLanguage } from "../../i18n/LanguageContext";
 import LineChart from "../members/LineChart";
+import SessionFeedback from "../members/SessionFeedback";
 
 // Group a flat list of sets by exercise, preserving first-seen order.
 function groupByExercise(sets) {
@@ -237,6 +238,7 @@ export default function MembersAdmin({ onAuthError }) {
                 {expanded === w.id && detail[w.id] && (
                   <div className="px-4 pb-5 border-t border-sand pt-4">
                     {detail[w.id].workout.notes && <p className="text-[0.82rem] text-warm-gray italic mb-3">"{detail[w.id].workout.notes}"</p>}
+                    <SessionFeedback workout={detail[w.id].workout} tr={tr} />
                     <div className="divide-y divide-sand/60">
                       {groupByExercise(detail[w.id].sets).map((g, gi) => (
                         <div key={gi} className="flex items-baseline justify-between gap-3 py-2">

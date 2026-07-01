@@ -109,7 +109,20 @@ export default function WorkoutLogger() {
   const [dayPos, setDayPos] = useState({ wi: 0, di: 0 });
   const [draftRestored, setDraftRestored] = useState(false);
   const [flashUid, setFlashUid] = useState(null);
+  // Session feedback captured when saving the day's workout.
+  const [sessionFeel, setSessionFeel] = useState("");
+  const [sessionEffort, setSessionEffort] = useState("");
+  const [muscleIntensity, setMuscleIntensity] = useState({});
   const uid = useRef(0);
+
+  // Muscle groups worked this session (from the chosen exercises).
+  const workedMuscles = [
+    ...new Set(
+      blocks
+        .map((b) => (exercises.find((x) => x.id === b.exerciseId) || {}).muscle_group)
+        .filter(Boolean)
+    ),
+  ].sort();
 
   const clearDraft = () => {
     try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
@@ -119,7 +132,7 @@ export default function WorkoutLogger() {
     try {
       localStorage.setItem(
         DRAFT_KEY,
-        JSON.stringify({ savedAt: Date.now(), title, date, notes, planId, fromRoutine, dayNotes, dayPos, routinePlan, blocks })
+        JSON.stringify({ savedAt: Date.now(), title, date, notes, planId, fromRoutine, dayNotes, dayPos, routinePlan, blocks, sessionFeel, sessionEffort, muscleIntensity })
       );
     } catch { /* ignore */ }
   };
@@ -181,6 +194,9 @@ export default function WorkoutLogger() {
             setDate(String(r.workout.performed_at).slice(0, 10));
             setNotes(r.workout.notes || "");
             setPlanId(r.workout.plan_id || null);
+            setSessionFeel(r.workout.session_feel || "");
+            setSessionEffort(r.workout.session_effort || "");
+            setMuscleIntensity(r.workout.muscle_intensity || {});
             setBlocks(nb.length ? nb : [makeBlock(null)]);
             setStarted(true);
             nb.forEach((b) => b.exerciseId && loadLast(b.uid, b.exerciseId));
@@ -212,6 +228,9 @@ export default function WorkoutLogger() {
               setDayPos(dr.dayPos || { wi: 0, di: 0 });
               setRoutinePlan(dr.routinePlan || null);
               setBlocks(dr.blocks);
+              setSessionFeel(dr.sessionFeel || "");
+              setSessionEffort(dr.sessionEffort || "");
+              setMuscleIntensity(dr.muscleIntensity || {});
               uid.current = Math.max(0, ...dr.blocks.map((b) => b.uid || 0)) + 1;
               setStarted(true);
               setDraftRestored(true);
@@ -249,10 +268,10 @@ export default function WorkoutLogger() {
     try {
       localStorage.setItem(
         DRAFT_KEY,
-        JSON.stringify({ savedAt: Date.now(), title, date, notes, planId, fromRoutine, dayNotes, dayPos, routinePlan, blocks })
+        JSON.stringify({ savedAt: Date.now(), title, date, notes, planId, fromRoutine, dayNotes, dayPos, routinePlan, blocks, sessionFeel, sessionEffort, muscleIntensity })
       );
     } catch { /* storage full / disabled — ignore */ }
-  }, [started, title, date, notes, planId, fromRoutine, dayNotes, dayPos, routinePlan, blocks]);
+  }, [started, title, date, notes, planId, fromRoutine, dayNotes, dayPos, routinePlan, blocks, sessionFeel, sessionEffort, muscleIntensity]);
 
   const makeBlock = (ex, target) => {
     const count = target && Number(target.sets) > 0 ? Number(target.sets) : 3;
@@ -338,10 +357,11 @@ export default function WorkoutLogger() {
     setSaving(true);
     setError("");
     try {
+      const feedback = { sessionFeel, sessionEffort, muscleIntensity };
       if (editId) {
-        await userApi(`/api/workouts/${editId}`, "PUT", { title, performedAt: date || null, notes, sets: flatSets, weightUnit: unit });
+        await userApi(`/api/workouts/${editId}`, "PUT", { title, performedAt: date || null, notes, sets: flatSets, weightUnit: unit, ...feedback });
       } else {
-        await userApi("/api/workouts", "POST", { title, performedAt: date || null, notes, sets: flatSets, planId, weightUnit: unit });
+        await userApi("/api/workouts", "POST", { title, performedAt: date || null, notes, sets: flatSets, planId, weightUnit: unit, ...feedback });
         clearDraft();
       }
       navigate("/app");
@@ -577,10 +597,81 @@ export default function WorkoutLogger() {
             {/* Cool-down */}
             <GuideCard title={`🧘 ${tr.cooldownTitle}`} steps={tr.cooldownSteps} />
 
-            {/* Notes — at the end, right before saving */}
-            <div className="bg-white rounded-2xl border border-sand p-5 sm:p-6 mb-4">
-              <label className="block text-[0.8rem] font-semibold text-charcoal mb-1.5">{tr.notes}</label>
-              <textarea rows="3" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={tr.notesPh} className={`${inputClass} resize-none`} />
+            {/* Session feedback — how the routine felt */}
+            <div className="bg-white rounded-2xl border border-sand p-5 sm:p-6 mb-4 grid gap-5">
+              <div className="font-display text-[1.15rem] font-semibold text-charcoal">{tr.feedbackTitle}</div>
+
+              {/* Q1 — intensity 1-10 */}
+              <div>
+                <label className="block text-[0.82rem] font-semibold text-charcoal mb-2">{tr.sessionFeelQ}</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setSessionFeel(n)}
+                      className={`w-9 h-9 rounded-full text-[0.85rem] font-semibold border transition-colors ${
+                        Number(sessionFeel) === n ? "bg-terracotta text-white border-terracotta" : "bg-white text-warm-gray border-sand hover:border-terracotta"
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Q2 — effort */}
+              <div>
+                <label className="block text-[0.82rem] font-semibold text-charcoal mb-2">{tr.effortQ}</label>
+                <div className="flex flex-wrap gap-2">
+                  {[["easy", tr.effortEasy], ["moderate", tr.effortModerate], ["hard", tr.effortHard], ["limit", tr.effortLimit]].map(([k, label]) => (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => setSessionEffort(k)}
+                      className={`px-4 py-2 rounded-full text-[0.82rem] font-semibold border transition-colors ${
+                        sessionEffort === k ? "bg-forest text-white border-forest" : "bg-white text-warm-gray border-sand hover:border-forest"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Q3 — per-muscle intensity 1-5 */}
+              {workedMuscles.length > 0 && (
+                <div>
+                  <label className="block text-[0.82rem] font-semibold text-charcoal mb-2">{tr.muscleIntensityQ}</label>
+                  <div className="grid gap-2">
+                    {workedMuscles.map((m) => (
+                      <div key={m} className="flex items-center justify-between gap-3">
+                        <span className="text-[0.85rem] text-charcoal capitalize">{m}</span>
+                        <div className="flex gap-1.5 shrink-0">
+                          {[1, 2, 3, 4, 5].map((n) => (
+                            <button
+                              key={n}
+                              type="button"
+                              onClick={() => setMuscleIntensity((mi) => ({ ...mi, [m]: n }))}
+                              className={`w-8 h-8 rounded-full text-[0.8rem] font-semibold border transition-colors ${
+                                Number(muscleIntensity[m]) === n ? "bg-terracotta text-white border-terracotta" : "bg-white text-warm-gray border-sand hover:border-terracotta"
+                              }`}
+                            >
+                              {n}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Notes */}
+              <div>
+                <label className="block text-[0.8rem] font-semibold text-charcoal mb-1.5">{tr.notes}</label>
+                <textarea rows="3" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={tr.notesPh} className={`${inputClass} resize-none`} />
+              </div>
             </div>
 
             {error && <p className="text-red-500 text-[0.85rem] mb-3">{error}</p>}
