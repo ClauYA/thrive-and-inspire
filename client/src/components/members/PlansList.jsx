@@ -99,6 +99,9 @@ export default function PlansList() {
                         {tr.makeActive}
                       </button>
                     )}
+                    <Link to={`/app/plan/${p.id}`} className="text-[0.8rem] font-semibold text-white bg-terracotta px-4 py-2 rounded-full hover:bg-terracotta-dark transition-colors">
+                      {tr.viewPlanBtn}
+                    </Link>
                     <Link to={`/app/plans/${p.id}`} className="text-[0.8rem] font-semibold text-forest border border-sage-light px-4 py-2 rounded-full hover:bg-sage-light/40 transition-colors">
                       {tr.editPlanBtn}
                     </Link>
