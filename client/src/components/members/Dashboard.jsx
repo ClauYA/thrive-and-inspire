@@ -7,6 +7,7 @@ import MemberHeader from "./MemberHeader";
 import Calendar from "./Calendar";
 import WeekStrip from "./WeekStrip";
 import DayPicker from "./DayPicker";
+import SessionFeedback from "./SessionFeedback";
 import { Button } from "../ui";
 
 const localKey = (iso) => {
@@ -256,6 +257,7 @@ export default function Dashboard() {
                 {expanded === w.id && detail[w.id] && (
                   <div className="px-4 sm:px-5 pb-5 border-t border-sand pt-4">
                     {detail[w.id].workout.notes && <p className="text-[0.82rem] text-warm-gray italic mb-4">"{detail[w.id].workout.notes}"</p>}
+                    <SessionFeedback workout={detail[w.id].workout} tr={tr} />
                     <div className="divide-y divide-sand/60">
                       {groupByExercise(detail[w.id].sets).map((g, gi) => (
                         <div key={gi} className="flex items-baseline justify-between gap-3 py-2">

@@ -1037,19 +1037,35 @@ app.get("/api/last-performance/:exerciseId", requireUser, async (req, res) => {
 });
 
 // ── Create a workout (with its sets) ──
+// Normalize the optional session-feedback fields sent with a workout.
+function parseFeedback(body) {
+  const f = Number(body.sessionFeel);
+  const feel = Number.isFinite(f) && f >= 1 && f <= 10 ? Math.round(f) : null;
+  const effort = ["easy", "moderate", "hard", "limit"].includes(body.sessionEffort) ? body.sessionEffort : "";
+  const mi = {};
+  if (body.muscleIntensity && typeof body.muscleIntensity === "object") {
+    for (const [k, v] of Object.entries(body.muscleIntensity)) {
+      const n = Math.round(Number(v));
+      if (k && Number.isFinite(n) && n >= 1 && n <= 5) mi[String(k).slice(0, 40)] = n;
+    }
+  }
+  return { feel, effort, muscleIntensity: JSON.stringify(mi) };
+}
+
 app.post("/api/workouts", requireUser, async (req, res) => {
   const { title, performedAt, notes, sets, planId, weightUnit } = req.body || {};
   if (!Array.isArray(sets) || sets.length === 0) {
     return res.status(400).json({ ok: false, error: "Add at least one set before saving." });
   }
   const unit = weightUnit === "lb" ? "lb" : "kg";
+  const fb = parseFeedback(req.body || {});
   const client = await pool.connect();
   try {
     await client.query("begin");
     const w = await client.query(
-      `insert into workouts (user_id, title, performed_at, notes, plan_id, weight_unit)
-       values ($1, $2, coalesce($3, now()), $4, $5, $6) returning *`,
-      [req.user.sub, String(title || "Workout").trim(), performedAt || null, String(notes || "").trim(), planId || null, unit]
+      `insert into workouts (user_id, title, performed_at, notes, plan_id, weight_unit, session_feel, session_effort, muscle_intensity)
+       values ($1, $2, coalesce($3, now()), $4, $5, $6, $7, $8, $9::jsonb) returning *`,
+      [req.user.sub, String(title || "Workout").trim(), performedAt || null, String(notes || "").trim(), planId || null, unit, fb.feel, fb.effort, fb.muscleIntensity]
     );
     const workout = w.rows[0];
     for (const s of sets) {
@@ -1121,14 +1137,17 @@ app.put("/api/workouts/:id", requireUser, async (req, res) => {
     return res.status(400).json({ ok: false, error: "Add at least one set before saving." });
   }
   const unit = weightUnit === "lb" ? "lb" : "kg";
+  const fb = parseFeedback(req.body || {});
   const own = await query(`select id from workouts where id = $1 and user_id = $2`, [req.params.id, req.user.sub]);
   if (!own.rows[0]) return res.status(404).json({ ok: false, error: "Workout not found." });
   const client = await pool.connect();
   try {
     await client.query("begin");
     await client.query(
-      `update workouts set title = $1, performed_at = coalesce($2, performed_at), notes = $3, weight_unit = $4 where id = $5`,
-      [String(title || "Workout").trim(), performedAt || null, String(notes || "").trim(), unit, req.params.id]
+      `update workouts set title = $1, performed_at = coalesce($2, performed_at), notes = $3, weight_unit = $4,
+              session_feel = $6, session_effort = $7, muscle_intensity = $8::jsonb
+       where id = $5`,
+      [String(title || "Workout").trim(), performedAt || null, String(notes || "").trim(), unit, req.params.id, fb.feel, fb.effort, fb.muscleIntensity]
     );
     await client.query(`delete from workout_sets where workout_id = $1`, [req.params.id]);
     for (const s of sets) {
