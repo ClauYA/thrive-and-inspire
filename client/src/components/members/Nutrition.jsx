@@ -211,7 +211,7 @@ export default function Nutrition() {
         {/* Daily totals */}
         <div className="bg-forest text-white rounded-2xl p-5 sm:p-6 mb-6">
           <div className="text-[0.72rem] uppercase tracking-[0.12em] text-sage-light mb-3">{tr.nutToday}</div>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="text-center"><div className="font-display text-[1.6rem] font-semibold">{round(totals.calories)}{goals?.calories ? <span className="text-[0.85rem] text-sage-light"> / {round(goals.calories)}</span> : null}</div><div className="text-[0.68rem] uppercase tracking-[0.08em] text-white/60">{tr.nutCalories}</div></div>
             <div className="text-center"><div className="font-display text-[1.6rem] font-semibold">{round(totals.protein)}{goals?.protein ? <span className="text-[0.85rem] text-sage-light">/{round(goals.protein)}</span> : null}g</div><div className="text-[0.68rem] uppercase tracking-[0.08em] text-white/60">{tr.nutProtein}</div></div>
             <div className="text-center"><div className="font-display text-[1.6rem] font-semibold">{round(totals.carbs)}{goals?.carbs ? <span className="text-[0.85rem] text-sage-light">/{round(goals.carbs)}</span> : null}g</div><div className="text-[0.68rem] uppercase tracking-[0.08em] text-white/60">{tr.nutCarbs}</div></div>
@@ -305,7 +305,7 @@ export default function Nutrition() {
                         <h4 className="font-semibold text-charcoal text-[0.9rem]">{selected.name}{selected.brand ? ` · ${selected.brand}` : ""}</h4>
                         <button onClick={() => setSelected(null)} className="text-warm-gray hover:text-charcoal text-lg leading-none">×</button>
                       </div>
-                      <div className="grid grid-cols-[1fr_120px] gap-2 mb-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-[1fr_120px] gap-2 mb-3">
                         <div>
                           <label className="block text-[0.74rem] font-semibold text-charcoal mb-1">{tr.nutServing}</label>
                           <select value={selected.servingIdx} onChange={(e) => { const idx = Number(e.target.value); setSelected((s) => ({ ...s, servingIdx: idx, amount: s.servings[idx]?.numberOfUnits || 1 })); }} className={`${inputClass} cursor-pointer`}>
@@ -318,7 +318,7 @@ export default function Nutrition() {
                         </div>
                       </div>
                       {scaled && (
-                        <div className="grid grid-cols-4 gap-2 bg-white rounded-lg p-2 mb-3 text-center">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-white rounded-lg p-2 mb-3 text-center">
                           <div><div className="font-semibold text-charcoal">{round(scaled.calories)}</div><div className="text-[0.62rem] uppercase text-warm-gray">{tr.nutCalories}</div></div>
                           <div><div className="font-semibold text-charcoal">{round(scaled.protein)}g</div><div className="text-[0.62rem] uppercase text-warm-gray">{tr.nutProtein}</div></div>
                           <div><div className="font-semibold text-charcoal">{round(scaled.carbs)}g</div><div className="text-[0.62rem] uppercase text-warm-gray">{tr.nutCarbs}</div></div>

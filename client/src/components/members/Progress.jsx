@@ -226,7 +226,7 @@ export default function Progress() {
             ) : (
               <>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-[0.84rem]">
+                  <table className="w-full min-w-[560px] text-[0.84rem]">
                     <thead>
                       <tr className="text-warm-gray text-left border-b border-sand">
                         <th className="font-semibold py-2 pr-3">{tr.colExercise}</th>
@@ -265,7 +265,7 @@ export default function Progress() {
             ) : (
               <>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-[0.84rem]">
+                  <table className="w-full min-w-[560px] text-[0.84rem]">
                     <thead>
                       <tr className="text-warm-gray text-left border-b border-sand">
                         <th className="font-semibold py-2 pr-3">{tr.colGroup}</th>

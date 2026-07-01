@@ -134,7 +134,14 @@ body {
   border-collapse: collapse;
   font-size: 0.92rem;
   margin: 1em 0;
+  display: block;            /* let wide tables scroll instead of overflowing */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
+
+/* Hide the scrollbar on horizontally-scrollable rows (e.g. member nav) */
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
 .blog-content th,
 .blog-content td {
   border: 1px solid var(--color-sand);
