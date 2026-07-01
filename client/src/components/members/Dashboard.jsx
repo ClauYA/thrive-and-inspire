@@ -190,7 +190,7 @@ export default function Dashboard() {
               <span className="text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-warm-gray">{tr.nutSummaryTitle}</span>
               <span className="text-[0.8rem] font-semibold text-terracotta">{tr.nutLogFood} →</span>
             </div>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <div className="text-center">
                 <div className="font-display text-[1.4rem] font-semibold text-charcoal">{Math.round(nutToday.calories)}</div>
                 <div className="text-[0.66rem] uppercase tracking-[0.08em] text-warm-gray">{tr.nutCalories}</div>

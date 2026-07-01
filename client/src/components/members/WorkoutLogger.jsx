@@ -540,7 +540,7 @@ export default function WorkoutLogger() {
                   )}
 
                   <div className="mt-4">
-                    <div className="grid grid-cols-[24px_1.7fr_1fr_1fr_24px] gap-2 items-center text-[0.72rem] font-semibold text-warm-gray mb-1.5 px-1">
+                    <div className="grid grid-cols-[18px_1.6fr_1fr_1.1fr_18px] gap-1.5 sm:gap-2 items-center text-[0.72rem] font-semibold text-warm-gray mb-1.5 px-1">
                       <span>{tr.set}</span>
                       <span>{tr.weight}</span>
                       <span>{tr.reps}</span>
@@ -548,7 +548,7 @@ export default function WorkoutLogger() {
                       <span />
                     </div>
                     {blk.sets.map((s, si) => (
-                      <div key={si} className="grid grid-cols-[24px_1.7fr_1fr_1fr_24px] gap-2 items-center mb-2">
+                      <div key={si} className="grid grid-cols-[18px_1.6fr_1fr_1.1fr_18px] gap-1.5 sm:gap-2 items-center mb-2">
                         <span className="text-[0.85rem] text-warm-gray text-center">{si + 1}</span>
                         <div className="flex gap-1 min-w-0">
                           <input type="number" inputMode="decimal" min="0" step="0.5" value={s.weight} onChange={updateSet(blk.uid, si, "weight")} className={`${inputClass} min-w-0`} />

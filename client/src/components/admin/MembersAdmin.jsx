@@ -322,7 +322,7 @@ export default function MembersAdmin({ onAuthError }) {
               {nutAvg && (
                 <div className="mb-4">
                   <div className="text-[0.72rem] font-semibold uppercase tracking-[0.06em] text-warm-gray mb-2">{tr.nutAvg7}</div>
-                  <div className="grid grid-cols-4 gap-2 bg-cream rounded-xl p-3 text-center">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-cream rounded-xl p-3 text-center">
                     <div><div className="font-display text-[1.3rem] font-semibold text-charcoal">{Math.round(nutAvg.calories)}</div><div className="text-[0.62rem] uppercase text-warm-gray">{tr.nutCalories}</div></div>
                     <div><div className="font-display text-[1.3rem] font-semibold text-charcoal">{Math.round(nutAvg.protein)}g</div><div className="text-[0.62rem] uppercase text-warm-gray">{tr.nutProtein}</div></div>
                     <div><div className="font-display text-[1.3rem] font-semibold text-charcoal">{Math.round(nutAvg.carbs)}g</div><div className="text-[0.62rem] uppercase text-warm-gray">{tr.nutCarbs}</div></div>

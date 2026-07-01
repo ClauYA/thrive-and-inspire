@@ -45,7 +45,7 @@ export default function Hero() {
           {h.eyebrow}
         </div>
 
-        <h1 className="font-display text-[clamp(2.8rem,5vw,4.2rem)] font-semibold leading-[1.1] tracking-tight text-charcoal mb-6">
+        <h1 className="font-display text-[clamp(2.1rem,6vw,4.2rem)] font-semibold leading-[1.1] tracking-tight text-charcoal mb-6">
           {h.title1} <em className="italic text-terracotta">{h.titleEm}</em>
         </h1>
 

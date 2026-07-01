@@ -48,9 +48,9 @@ export default function Calendar({ workouts, onOpenDay }) {
   return (
     <div className="bg-white rounded-2xl border border-sand p-5">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={() => move(-1)} className="w-8 h-8 rounded-full hover:bg-sand text-warm-gray flex items-center justify-center">‹</button>
+        <button onClick={() => move(-1)} className="w-10 h-10 rounded-full hover:bg-sand text-warm-gray flex items-center justify-center text-lg">‹</button>
         <span className="font-semibold text-charcoal capitalize">{monthLabel}</span>
-        <button onClick={() => move(1)} className="w-8 h-8 rounded-full hover:bg-sand text-warm-gray flex items-center justify-center">›</button>
+        <button onClick={() => move(1)} className="w-10 h-10 rounded-full hover:bg-sand text-warm-gray flex items-center justify-center text-lg">›</button>
       </div>
 
       <div className="grid grid-cols-7 gap-1 text-center text-[0.68rem] text-warm-gray mb-1">

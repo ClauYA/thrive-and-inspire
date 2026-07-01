@@ -13,11 +13,11 @@ export default function MemberHeader() {
   };
 
   return (
-    <nav className="flex items-center justify-between px-[5%] py-4 bg-white border-b border-sand sticky top-0 z-50">
-      <Link to="/app" className="font-display text-xl font-semibold text-forest tracking-tight">
+    <nav className="flex items-center justify-between gap-3 px-[5%] py-4 bg-white border-b border-sand sticky top-0 z-50">
+      <Link to="/app" className="font-display text-xl font-semibold text-forest tracking-tight shrink-0">
         Lift<span className="text-terracotta">&amp;</span>Inspire
       </Link>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 sm:gap-4 overflow-x-auto whitespace-nowrap no-scrollbar">
         <Link to="/app" className="text-[0.85rem] font-medium text-warm-gray hover:text-forest transition-colors">
           {tr.appTitle}
         </Link>
