@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { userApi, getUserToken } from "../../lib/userApi";
 import MemberHeader from "./MemberHeader";
+import ProgressRing from "./ProgressRing";
 import { Button } from "../ui";
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
@@ -218,6 +219,25 @@ export default function Nutrition() {
             <div className="text-center"><div className="font-display text-[1.6rem] font-semibold">{round(totals.fat)}{goals?.fat ? <span className="text-[0.85rem] text-sage-light">/{round(goals.fat)}</span> : null}g</div><div className="text-[0.68rem] uppercase tracking-[0.08em] text-white/60">{tr.nutFat}</div></div>
           </div>
         </div>
+
+        {/* % of macro goals reached (rings) */}
+        {goals && (Number(goals.protein) > 0 || Number(goals.carbs) > 0 || Number(goals.fat) > 0) && (
+          <div className="bg-white rounded-2xl border border-sand p-5 sm:p-6 mb-6">
+            <div className="text-[0.72rem] uppercase tracking-[0.12em] text-warm-gray mb-4">{tr.nutGoalsReached}</div>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { key: "protein", label: tr.nutProtein, color: "#b07d1f" },
+                { key: "carbs", label: tr.nutCarbs, color: "#3d5a3d" },
+                { key: "fat", label: tr.nutFat, color: "#c47a54" },
+              ].map((m) => {
+                const goal = Number(goals[m.key]) || 0;
+                const val = Number(totals[m.key]) || 0;
+                const pct = goal > 0 ? (val / goal) * 100 : 0;
+                return <ProgressRing key={m.key} pct={pct} label={m.label} value={val} goal={goal} color={m.color} />;
+              })}
+            </div>
+          </div>
+        )}
 
         {error && <p className="text-red-500 text-[0.85rem] mb-3">{error}</p>}
 
