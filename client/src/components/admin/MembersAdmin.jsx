@@ -5,6 +5,7 @@ import { formatDate } from "../../lib/format";
 import { useLanguage } from "../../i18n/LanguageContext";
 import LineChart from "../members/LineChart";
 import SessionFeedback from "../members/SessionFeedback";
+import PlanWeeks from "../members/PlanWeeks";
 
 // Group a flat list of sets by exercise, preserving first-seen order.
 function groupByExercise(sets) {
@@ -40,6 +41,7 @@ export default function MembersAdmin({ onAuthError }) {
   const [goals, setGoals] = useState({ calories: "", protein: "", carbs: "", fat: "" });
   const [savingGoals, setSavingGoals] = useState(false);
   const [checkins, setCheckins] = useState(null);
+  const [memberPlan, setMemberPlan] = useState(null); // active plan full tree
   const [error, setError] = useState("");
 
   const FACES = ["😣", "😕", "😐", "🙂", "😄"];
@@ -65,9 +67,12 @@ export default function MembersAdmin({ onAuthError }) {
     setNutExpanded(null);
     setNutDetail({});
     setCheckins(null);
+    setMemberPlan(null);
     try {
       const d = await apiAuth(`/api/admin/members/${id}`);
       setSel(d);
+      const activePlan = (d.plans || []).find((p) => p.is_active) || (d.plans || [])[0];
+      if (activePlan) apiAuth(`/api/admin/plans/${activePlan.id}`).then((r) => setMemberPlan(r.plan)).catch(() => {});
       apiAuth(`/api/admin/members/${id}/exercises`).then((r) => setExercises(r.exercises)).catch(() => {});
       apiAuth(`/api/admin/members/${id}/checkins`).then((r) => setCheckins(r.checkins)).catch(() => setCheckins([]));
       apiAuth(`/api/admin/members/${id}/nutrition`).then((r) => setNutDays(r.days)).catch(() => setNutDays([]));
@@ -169,6 +174,15 @@ export default function MembersAdmin({ onAuthError }) {
     const chartPts = (progPoints || []).map((p) => ({ label: formatDate(p.date, lang), value: Math.round(Number(p[progMetric]) || 0) }));
     const wkStart = (() => { const x = new Date(); const d = (x.getDay() + 6) % 7; x.setDate(x.getDate() - d); x.setHours(0, 0, 0, 0); return x; })();
     const weekWorkouts = (sel.workouts || []).filter((w) => new Date(w.performed_at) >= wkStart).length;
+    const exMapAdmin = {};
+    (exercises || []).forEach((e) => (exMapAdmin[e.id] = e));
+    const doneMap = {};
+    (sel.workouts || []).forEach((w) => { if (!doneMap[w.title]) doneMap[w.title] = { id: w.id, date: w.performed_at }; });
+    let planCwi = 0;
+    if (memberPlan) {
+      const wi = (memberPlan.weeks || []).findIndex((wk) => (wk.days || []).some((dd) => !doneMap[`${wk.name} · ${dd.name}`]));
+      planCwi = wi < 0 ? 0 : wi;
+    }
     const recentNut = (nutDays || []).slice(0, 7);
     const nutAvg = recentNut.length
       ? {
@@ -234,45 +248,12 @@ export default function MembersAdmin({ onAuthError }) {
           <Link to={`/admin/members/${sel.member.id}/plans/new`} className="text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark mt-1">+ {A.newPlan}</Link>
         </div>
 
-        {/* Workouts */}
-        <h2 className="text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-warm-gray mb-3">{A.workouts}</h2>
-        {sel.workouts.length === 0 ? (
-          <p className="text-warm-gray text-[0.88rem]">{A.noWorkouts}</p>
+        {/* Workouts — same plan design the member sees (read-only) */}
+        <h2 className="text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-warm-gray mb-3">{tr.weeksLabel}</h2>
+        {memberPlan ? (
+          <PlanWeeks plan={memberPlan} exMap={exMapAdmin} doneMap={doneMap} currentWeekIdx={planCwi} readOnly />
         ) : (
-          <div className="grid gap-3">
-            {sel.workouts.map((w) => (
-              <div key={w.id} className="bg-white rounded-2xl border border-sand overflow-hidden">
-                <button onClick={() => toggleWorkout(w.id)} className="w-full flex items-center justify-between gap-3 p-4 text-left hover:bg-cream/50">
-                  <div>
-                    <h3 className="font-semibold text-charcoal text-[0.95rem]">{w.title}</h3>
-                    <div className="text-[0.78rem] text-warm-gray mt-1">{formatDate(w.performed_at, lang)} · {w.exercise_count} {tr.exercises} · {w.set_count} {tr.sets}</div>
-                  </div>
-                  <span className="text-terracotta text-xs">{expanded === w.id ? "▲" : "▼"}</span>
-                </button>
-                {expanded === w.id && detail[w.id] && (
-                  <div className="px-4 pb-5 border-t border-sand pt-4">
-                    {detail[w.id].workout.notes && <p className="text-[0.82rem] text-warm-gray italic mb-3">"{detail[w.id].workout.notes}"</p>}
-                    <SessionFeedback workout={detail[w.id].workout} tr={tr} />
-                    <div className="divide-y divide-sand/60">
-                      {groupByExercise(detail[w.id].sets).map((g, gi) => {
-                        const note = (g.sets.find((s) => s.note) || {}).note;
-                        return (
-                          <div key={gi} className="py-2">
-                            <div className="text-[0.88rem] font-medium text-charcoal">{g.name}</div>
-                            <div className="text-[0.78rem] text-warm-gray break-words">
-                              {g.sets.map((s) => `${s.weight || 0}${s.weight_unit || unitOf(w.id)}×${s.reps || 0}${s.rir ? ` (${s.rir})` : ""}`).join(" · ")}
-                            </div>
-                            {note && <div className="text-[0.76rem] text-warm-gray italic mt-0.5">{note}</div>}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <button onClick={() => deleteWorkout(w.id)} className="text-[0.8rem] font-semibold text-red-500 hover:text-red-600 mt-3">{A.deleteWorkout}</button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+          <p className="text-warm-gray text-[0.88rem] mb-6">{A.noWorkouts}</p>
         )}
 
         {/* Progress */}
