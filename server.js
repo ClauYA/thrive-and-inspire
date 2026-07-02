@@ -17,7 +17,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json({ limit: "2mb" })); // posts can carry sizeable Markdown
+app.use(express.json({ limit: "8mb" })); // posts carry Markdown + check-in photos (data URLs)
 
 // ── Email transport (optional) ──
 // Applications are emailed to the coach if email is configured; otherwise they
@@ -2246,6 +2246,73 @@ app.delete("/api/nutrition/meals/:id", requireUser, async (req, res) => {
   } catch (err) {
     console.error("Delete saved meal failed:", err);
     res.status(500).json({ ok: false, error: "Could not delete the saved meal." });
+  }
+});
+
+// ── Weekly check-ins ──
+const CHECKIN_COLS = "week_start, weight, neck, waist, abdomen, hips, arm_left, arm_right, leg_left, leg_right, photo, challenges, nutrition_rating, training_rating, stress_level, sleep_level";
+function checkinValues(b) {
+  const num = (v) => (v === "" || v == null ? null : Number(v));
+  const rate = (v) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 1 && n <= 5 ? n : null; };
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(String(b.weekStart || "")) ? b.weekStart : null;
+  return [
+    day, num(b.weight), num(b.neck), num(b.waist), num(b.abdomen), num(b.hips),
+    num(b.armLeft), num(b.armRight), num(b.legLeft), num(b.legRight),
+    String(b.photo || "").slice(0, 3000000), String(b.challenges || "").trim(),
+    rate(b.nutritionRating), rate(b.trainingRating), rate(b.stressLevel), rate(b.sleepLevel),
+  ];
+}
+
+// Member: list own recent check-ins.
+app.get("/api/checkins", requireUser, async (req, res) => {
+  try {
+    const { rows } = await query(
+      `select id, ${CHECKIN_COLS} from checkins where user_id = $1 order by week_start desc limit 12`,
+      [req.user.sub]
+    );
+    res.json({ ok: true, checkins: rows });
+  } catch (err) {
+    console.error("Checkins fetch failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load your check-ins." });
+  }
+});
+
+// Member: create or update this week's check-in.
+app.post("/api/checkins", requireUser, async (req, res) => {
+  const b = req.body || {};
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(b.weekStart || ""))) {
+    return res.status(400).json({ ok: false, error: "Missing week." });
+  }
+  const vals = checkinValues(b);
+  try {
+    await query(
+      `insert into checkins (user_id, ${CHECKIN_COLS})
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+       on conflict (user_id, week_start) do update set
+         weight=excluded.weight, neck=excluded.neck, waist=excluded.waist, abdomen=excluded.abdomen, hips=excluded.hips,
+         arm_left=excluded.arm_left, arm_right=excluded.arm_right, leg_left=excluded.leg_left, leg_right=excluded.leg_right,
+         photo=excluded.photo, challenges=excluded.challenges, nutrition_rating=excluded.nutrition_rating,
+         training_rating=excluded.training_rating, stress_level=excluded.stress_level, sleep_level=excluded.sleep_level`,
+      [req.user.sub, ...vals]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Checkin save failed:", err);
+    res.status(500).json({ ok: false, error: "Could not save your check-in." });
+  }
+});
+
+// Admin: a member's check-ins (coach view).
+app.get("/api/admin/members/:id/checkins", requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await query(
+      `select id, ${CHECKIN_COLS} from checkins where user_id = $1 order by week_start desc limit 26`,
+      [req.params.id]
+    );
+    res.json({ ok: true, checkins: rows });
+  } catch (err) {
+    console.error("Admin checkins failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load check-ins." });
   }
 });
 
