@@ -10,7 +10,7 @@ export default function ProgressRing({ pct = 0, label, value, goal, unit = "g", 
   return (
     <div className="flex flex-col items-center text-center">
       <div className="relative" style={{ width: size, height: size }}>
-        <svg width={size} height={size} className="-rotate-90">
+        <svg width={size} height={size}>
           <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#e9e2d0" strokeWidth={stroke} />
           <circle
             cx={size / 2}
@@ -22,6 +22,7 @@ export default function ProgressRing({ pct = 0, label, value, goal, unit = "g", 
             strokeLinecap="round"
             strokeDasharray={circ}
             strokeDashoffset={offset}
+            transform={`rotate(-90 ${size / 2} ${size / 2})`}
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
