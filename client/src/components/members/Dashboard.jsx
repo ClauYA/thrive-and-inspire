@@ -9,6 +9,7 @@ import WeekStrip from "./WeekStrip";
 import DayPicker from "./DayPicker";
 import SessionFeedback from "./SessionFeedback";
 import ProgressRing from "./ProgressRing";
+import PlanWeeks from "./PlanWeeks";
 import { Button } from "../ui";
 
 const localKey = (iso) => {
@@ -225,6 +226,14 @@ export default function Dashboard() {
               </div>
             )}
           </Link>
+        )}
+
+        {/* Plan weeks (current week first) */}
+        {plan && plan.weeks && plan.weeks.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-warm-gray mb-3">{tr.weeksLabel}</h2>
+            <PlanWeeks plan={plan} exMap={exMap} doneTitles={doneTitles} currentWeekIdx={curWeekIdx} />
+          </div>
         )}
 
         {/* Toolbar: new workout + view toggle */}
