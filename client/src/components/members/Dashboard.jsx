@@ -233,17 +233,14 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* New workout + optional history/calendar */}
-        <div className="flex items-center justify-between mb-5 gap-3 flex-wrap">
-          <button onClick={() => setShowHistory((s) => !s)} className="text-[0.82rem] font-semibold text-forest border border-sage-light px-4 py-2 rounded-full hover:bg-sage-light/40">
-            {showHistory ? tr.hideHistory : tr.showHistory}
-          </button>
+        {/* New workout */}
+        <div className="flex justify-end mb-6">
           <Button as={Link} to="/app/new" size="sm" className="whitespace-nowrap">
             + {tr.newWorkout}
           </Button>
         </div>
 
-        {showHistory && (
+        {false && (
           <>
             <div className="flex bg-white border border-sand rounded-full p-1 w-fit mb-5">
               <button onClick={() => setView("list")} className={`text-[0.82rem] font-semibold px-4 py-1.5 rounded-full transition-colors ${view === "list" ? "bg-terracotta text-white" : "text-warm-gray"}`}>
