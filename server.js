@@ -2250,16 +2250,19 @@ app.delete("/api/nutrition/meals/:id", requireUser, async (req, res) => {
 });
 
 // ── Weekly check-ins ──
-const CHECKIN_COLS = "week_start, weight, neck, waist, abdomen, hips, arm_left, arm_right, leg_left, leg_right, photo, challenges, nutrition_rating, training_rating, stress_level, sleep_level";
+const CHECKIN_COLS = "week_start, weight, neck, waist, abdomen, hips, arm_left, arm_right, leg_left, leg_right, photo, challenges, nutrition_rating, training_rating, stress_level, sleep_level, weight_unit";
 function checkinValues(b) {
   const num = (v) => (v === "" || v == null ? null : Number(v));
   const rate = (v) => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 1 && n <= 5 ? n : null; };
   const day = /^\d{4}-\d{2}-\d{2}$/.test(String(b.weekStart || "")) ? b.weekStart : null;
+  const unit = b.weightUnit === "lb" ? "lb" : "kg";
+  const rawW = num(b.weight);
+  const weightKg = rawW == null ? null : (unit === "lb" ? rawW * 0.45359237 : rawW); // store canonical kg
   return [
-    day, num(b.weight), num(b.neck), num(b.waist), num(b.abdomen), num(b.hips),
+    day, weightKg, num(b.neck), num(b.waist), num(b.abdomen), num(b.hips),
     num(b.armLeft), num(b.armRight), num(b.legLeft), num(b.legRight),
     String(b.photo || "").slice(0, 3000000), String(b.challenges || "").trim(),
-    rate(b.nutritionRating), rate(b.trainingRating), rate(b.stressLevel), rate(b.sleepLevel),
+    rate(b.nutritionRating), rate(b.trainingRating), rate(b.stressLevel), rate(b.sleepLevel), unit,
   ];
 }
 
@@ -2287,12 +2290,13 @@ app.post("/api/checkins", requireUser, async (req, res) => {
   try {
     await query(
       `insert into checkins (user_id, ${CHECKIN_COLS})
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
        on conflict (user_id, week_start) do update set
          weight=excluded.weight, neck=excluded.neck, waist=excluded.waist, abdomen=excluded.abdomen, hips=excluded.hips,
          arm_left=excluded.arm_left, arm_right=excluded.arm_right, leg_left=excluded.leg_left, leg_right=excluded.leg_right,
          photo=excluded.photo, challenges=excluded.challenges, nutrition_rating=excluded.nutrition_rating,
-         training_rating=excluded.training_rating, stress_level=excluded.stress_level, sleep_level=excluded.sleep_level`,
+         training_rating=excluded.training_rating, stress_level=excluded.stress_level, sleep_level=excluded.sleep_level,
+         weight_unit=excluded.weight_unit`,
       [req.user.sub, ...vals]
     );
     res.json({ ok: true });

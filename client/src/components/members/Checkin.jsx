@@ -6,6 +6,7 @@ import { formatDate } from "../../lib/format";
 import MemberHeader from "./MemberHeader";
 import { Button } from "../ui";
 
+const LB_PER_KG = 0.45359237;
 const pad = (n) => String(n).padStart(2, "0");
 // Monday of the current local week, as YYYY-MM-DD.
 function currentWeekStart() {
@@ -74,6 +75,7 @@ export default function Checkin() {
   const navigate = useNavigate();
   const weekStart = currentWeekStart();
   const [form, setForm] = useState(EMPTY);
+  const [unit, setUnit] = useState("kg"); // weight input unit (stored value is kg)
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
@@ -86,8 +88,11 @@ export default function Checkin() {
       const d = await userApi("/api/checkins");
       const wk = (d.checkins || []).find((c) => String(c.week_start).slice(0, 10) === weekStart);
       if (wk) {
+        const u = wk.weight_unit === "lb" ? "lb" : "kg";
+        setUnit(u);
+        const shownWeight = wk.weight == null ? "" : (u === "lb" ? Math.round((wk.weight / LB_PER_KG) * 10) / 10 : wk.weight);
         setForm({
-          weight: wk.weight ?? "", neck: wk.neck ?? "", waist: wk.waist ?? "", abdomen: wk.abdomen ?? "", hips: wk.hips ?? "",
+          weight: shownWeight, neck: wk.neck ?? "", waist: wk.waist ?? "", abdomen: wk.abdomen ?? "", hips: wk.hips ?? "",
           armLeft: wk.arm_left ?? "", armRight: wk.arm_right ?? "", legLeft: wk.leg_left ?? "", legRight: wk.leg_right ?? "",
           photo: wk.photo || "", challenges: wk.challenges || "",
           nutritionRating: wk.nutrition_rating || 0, trainingRating: wk.training_rating || 0,
@@ -120,7 +125,7 @@ export default function Checkin() {
     setError("");
     setSaved(false);
     try {
-      await userApi("/api/checkins", "POST", { weekStart, ...form });
+      await userApi("/api/checkins", "POST", { weekStart, ...form, weightUnit: unit });
       setSaved(true);
     } catch (e) {
       if (e.unauthorized) return navigate("/login");
@@ -152,8 +157,17 @@ export default function Checkin() {
         <div className="grid gap-5">
           {/* Weight */}
           <div className="bg-white rounded-2xl border border-sand p-5">
-            <label className="block text-[0.82rem] font-semibold text-charcoal mb-1.5">{tr.ciWeight}</label>
-            <input type="number" inputMode="decimal" value={form.weight} onChange={set("weight")} className={`${inputClass} max-w-[160px]`} />
+            <label className="block text-[0.82rem] font-semibold text-charcoal mb-1.5">{tr.ciWeightLabel}</label>
+            <div className="flex items-center gap-2">
+              <input type="number" inputMode="decimal" value={form.weight} onChange={set("weight")} className={`${inputClass} max-w-[140px]`} />
+              <div className="flex gap-1">
+                {["kg", "lb"].map((u) => (
+                  <button key={u} type="button" onClick={() => setUnit(u)} className={`px-3 py-2 rounded-full text-[0.82rem] font-semibold border transition-colors ${unit === u ? "bg-terracotta text-white border-terracotta" : "bg-white text-warm-gray border-sand hover:border-terracotta"}`}>
+                    {u}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Measurements */}
