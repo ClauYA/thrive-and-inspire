@@ -120,7 +120,7 @@ export default function Dashboard() {
   weekList.forEach((w, wi) => (w.days || []).forEach((d, di) => planOrder.push({ wi, di, key: `${w.name} · ${d.name}` })));
   const doneTitles = new Set((workouts || []).map((w) => w.title));
   const doneMap = {};
-  (workouts || []).forEach((w) => { if (!doneMap[w.title]) doneMap[w.title] = w.id; });
+  (workouts || []).forEach((w) => { if (!doneMap[w.title]) doneMap[w.title] = { id: w.id, date: w.performed_at }; });
   let lastDone = -1;
   planOrder.forEach((p, i) => { if (doneTitles.has(p.key)) lastDone = i; });
   const nextPos = planOrder[lastDone + 1] || planOrder[0] || null;

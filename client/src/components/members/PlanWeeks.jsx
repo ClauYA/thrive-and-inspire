@@ -23,8 +23,8 @@ export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 
   const [openWeek, setOpenWeek] = useState(currentWeekIdx);
 
   const weeks = plan.weeks || [];
-  const dayWorkoutId = (week, day) => doneMap[`${week.name} · ${day.name}`];
-  const dayDone = (week, day) => Boolean(dayWorkoutId(week, day));
+  const dayWorkout = (week, day) => doneMap[`${week.name} · ${day.name}`];
+  const dayDone = (week, day) => Boolean(dayWorkout(week, day));
   const weekPct = (week) => {
     const days = week.days || [];
     if (!days.length) return 0;
@@ -55,7 +55,16 @@ export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 
 
             {open && (
               <div className="px-4 pb-4 border-t border-sand pt-3 grid gap-3">
-                {(week.days || []).map((day, di) => {
+                {(week.days || [])
+                  .map((day, di) => ({ day, di }))
+                  .sort((a, b) => {
+                    const da = dayDone(week, a.day);
+                    const db = dayDone(week, b.day);
+                    if (da !== db) return da ? 1 : -1; // pending days first
+                    if (da && db) return new Date(dayWorkout(week, a.day).date) - new Date(dayWorkout(week, b.day).date);
+                    return a.di - b.di; // both pending: keep plan order
+                  })
+                  .map(({ day, di }) => {
                   const done = dayDone(week, day);
                   const exs = day.exercises || [];
                   const byGroup = {};
@@ -103,7 +112,7 @@ export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 
 
                       {done ? (
                         <Link
-                          to={`/app/new?edit=${dayWorkoutId(week, day)}`}
+                          to={`/app/new?edit=${dayWorkout(week, day).id}`}
                           className="mt-4 block text-center bg-forest text-white font-semibold py-3 rounded-full hover:bg-forest/90 transition-colors"
                         >
                           {tr.viewSummary}
