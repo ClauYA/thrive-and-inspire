@@ -6,7 +6,11 @@ import MemberHeader from "./MemberHeader";
 import ProgressRing from "./ProgressRing";
 import { Button } from "../ui";
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
+// Local (not UTC) YYYY-MM-DD, so it matches the dashboard's date near midnight UTC.
+const todayStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
 const inputClass =
   "w-full px-3 py-2 border-[1.5px] border-sand rounded-xl text-[0.9rem] text-charcoal bg-cream outline-none transition-all focus:border-terracotta-light focus:bg-white";
 const round = (n) => Math.round(Number(n) || 0);
