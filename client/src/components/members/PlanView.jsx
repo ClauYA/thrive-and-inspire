@@ -13,7 +13,7 @@ export default function PlanView() {
   const { id } = useParams();
   const [plan, setPlan] = useState(undefined);
   const [exMap, setExMap] = useState({});
-  const [doneTitles, setDoneTitles] = useState(new Set());
+  const [doneMap, setDoneMap] = useState({});
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
@@ -27,7 +27,9 @@ export default function PlanView() {
       const map = {};
       ex.exercises.forEach((e) => (map[e.id] = e));
       setExMap(map);
-      setDoneTitles(new Set((w.workouts || []).map((x) => x.title)));
+      const m = {};
+      (w.workouts || []).forEach((x) => { if (!m[x.title]) m[x.title] = x.id; });
+      setDoneMap(m);
     } catch (e) {
       if (e.unauthorized) return navigate("/login");
       setError(e.message);
@@ -51,7 +53,7 @@ export default function PlanView() {
   if (!plan) return wrap(<p className="text-warm-gray">{error || tr.noPlans}</p>);
 
   const weeks = plan.weeks || [];
-  const dayDone = (week, day) => doneTitles.has(`${week.name} · ${day.name}`);
+  const dayDone = (week, day) => Boolean(doneMap[`${week.name} · ${day.name}`]);
   const totalDays = weeks.reduce((n, w) => n + (w.days || []).length, 0);
   const doneDays = weeks.reduce((n, w) => n + (w.days || []).filter((d) => dayDone(w, d)).length, 0);
   const overallPct = totalDays ? (doneDays / totalDays) * 100 : 0;
@@ -81,7 +83,7 @@ export default function PlanView() {
       </div>
 
       <h2 className="text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-warm-gray mb-3">{tr.weeksLabel}</h2>
-      <PlanWeeks plan={plan} exMap={exMap} doneTitles={doneTitles} currentWeekIdx={currentWeekIdx} />
+      <PlanWeeks plan={plan} exMap={exMap} doneMap={doneMap} currentWeekIdx={currentWeekIdx} />
     </>
   );
 }
