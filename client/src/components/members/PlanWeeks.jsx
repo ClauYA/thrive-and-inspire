@@ -17,7 +17,7 @@ function videoUrl(ex) {
 }
 
 // Weeks accordion + day cards for a plan. Reused by PlanView and the dashboard.
-export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 0 }) {
+export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 0, readOnly = false }) {
   const { t } = useLanguage();
   const tr = t.tracker;
   const [openWeek, setOpenWeek] = useState(currentWeekIdx);
@@ -110,7 +110,7 @@ export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 
                         </div>
                       )}
 
-                      {done ? (
+                      {readOnly ? null : done ? (
                         <Link
                           to={`/app/new?edit=${dayWorkout(week, day).id}`}
                           className="mt-4 block text-center bg-forest text-white font-semibold py-3 rounded-full hover:bg-forest/90 transition-colors"
