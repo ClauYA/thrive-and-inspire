@@ -40,6 +40,7 @@ export default function Dashboard() {
   const [expanded, setExpanded] = useState(null);
   const [detail, setDetail] = useState({});
   const [view, setView] = useState("list");
+  const [showHistory, setShowHistory] = useState(false);
   const [pickerDate, setPickerDate] = useState(null); // "YYYY-MM-DD" tapped in calendar/strip
   const [nutToday, setNutToday] = useState(null); // today's calories/macros (best-effort)
   const [nutGoals, setNutGoals] = useState(null); // coach-set macro goals (best-effort)
@@ -232,20 +233,26 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Toolbar: new workout + view toggle */}
-        <div className="flex items-center justify-between mb-5 gap-3">
-          <div className="flex bg-white border border-sand rounded-full p-1">
-            <button onClick={() => setView("list")} className={`text-[0.82rem] font-semibold px-4 py-1.5 rounded-full transition-colors ${view === "list" ? "bg-terracotta text-white" : "text-warm-gray"}`}>
-              {tr.viewList}
-            </button>
-            <button onClick={() => setView("calendar")} className={`text-[0.82rem] font-semibold px-4 py-1.5 rounded-full transition-colors ${view === "calendar" ? "bg-terracotta text-white" : "text-warm-gray"}`}>
-              {tr.viewCalendar}
-            </button>
-          </div>
+        {/* New workout + optional history/calendar */}
+        <div className="flex items-center justify-between mb-5 gap-3 flex-wrap">
+          <button onClick={() => setShowHistory((s) => !s)} className="text-[0.82rem] font-semibold text-forest border border-sage-light px-4 py-2 rounded-full hover:bg-sage-light/40">
+            {showHistory ? tr.hideHistory : tr.showHistory}
+          </button>
           <Button as={Link} to="/app/new" size="sm" className="whitespace-nowrap">
             + {tr.newWorkout}
           </Button>
         </div>
+
+        {showHistory && (
+          <>
+            <div className="flex bg-white border border-sand rounded-full p-1 w-fit mb-5">
+              <button onClick={() => setView("list")} className={`text-[0.82rem] font-semibold px-4 py-1.5 rounded-full transition-colors ${view === "list" ? "bg-terracotta text-white" : "text-warm-gray"}`}>
+                {tr.viewList}
+              </button>
+              <button onClick={() => setView("calendar")} className={`text-[0.82rem] font-semibold px-4 py-1.5 rounded-full transition-colors ${view === "calendar" ? "bg-terracotta text-white" : "text-warm-gray"}`}>
+                {tr.viewCalendar}
+              </button>
+            </div>
 
         {error && <p className="text-red-500 text-[0.85rem] mb-4">{error}</p>}
 
@@ -308,6 +315,8 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
+        )}
+          </>
         )}
 
         {pickerDate && (
