@@ -34,6 +34,7 @@ export default function Nutrition() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [goals, setGoals] = useState(null); // coach-set daily targets
+  const [openMeals, setOpenMeals] = useState({}); // per-meal expand/collapse override
 
   const mealLabel = (key) =>
     ({ breakfast: tr.mealBreakfast, lunch: tr.mealLunch, dinner: tr.mealDinner, snack: tr.mealSnack }[key] || key);
@@ -193,6 +194,7 @@ export default function Nutrition() {
 
   const openAdd = (meal) => {
     setActiveMeal(meal);
+    setOpenMeals((m) => ({ ...m, [meal]: true }));
     setQ("");
     setResults(null);
     setSelected(null);
@@ -249,13 +251,19 @@ export default function Nutrition() {
         {meals.map((meal) => {
           const mealEntries = entries.filter((e) => e.meal === meal);
           const sub = mealEntries.reduce((s, e) => s + Number(e.calories), 0);
+          const open = activeMeal === meal || (openMeals[meal] !== undefined ? openMeals[meal] : mealEntries.length > 0);
           return (
             <div key={meal} className="bg-white rounded-2xl border border-sand p-4 sm:p-5 mb-4">
-              <div className="flex items-center justify-between gap-2 mb-2">
+              <button onClick={() => setOpenMeals((m) => ({ ...m, [meal]: !open }))} className="w-full flex items-center justify-between gap-2 text-left">
                 <h3 className="font-semibold text-charcoal capitalize">{mealLabel(meal)}</h3>
-                <span className="text-[0.8rem] text-warm-gray shrink-0">{round(sub)} kcal</span>
-              </div>
+                <span className="flex items-center gap-2 shrink-0">
+                  <span className="text-[0.8rem] text-warm-gray">{round(sub)} kcal</span>
+                  <span className="text-terracotta text-xs">{open ? "▲" : "▼"}</span>
+                </span>
+              </button>
 
+              {open && (<>
+              <div className="mt-2" />
               {mealEntries.length === 0 ? (
                 <p className="text-[0.8rem] text-warm-gray mb-2">{tr.nutEmptyMeal}</p>
               ) : (
@@ -356,6 +364,7 @@ export default function Nutrition() {
                   <button onClick={() => setActiveMeal(null)} className="text-[0.8rem] font-semibold text-warm-gray hover:text-charcoal">{tr.nutDone}</button>
                 </div>
               )}
+              </>)}
             </div>
           );
         })}
