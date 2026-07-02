@@ -72,11 +72,11 @@ export default function PlanWeeks({ plan, exMap, doneTitles, currentWeekIdx = 0 
                       </div>
                       <Bar pct={done ? 100 : 0} />
 
-                      <div className="grid gap-1.5 mt-3">
+                      <div className="mt-3 flex flex-col gap-1.5">
                         {exs.map((e, ei) => {
                           const ex = exMap[e.exerciseId];
                           return (
-                            <div key={ei} className="flex items-center justify-between gap-2">
+                            <div key={ei} className="flex items-center justify-between gap-2 min-w-0">
                               <span className="text-[0.86rem] text-charcoal min-w-0 truncate">{ex?.name || tr.selectExercise}</span>
                               <div className="flex items-center gap-2 shrink-0">
                                 <span className="text-[0.68rem] font-semibold text-forest bg-sage-light/40 px-2 py-0.5 rounded-full whitespace-nowrap">{e.sets || 0} {tr.seriesShort}</span>
