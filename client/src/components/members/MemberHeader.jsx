@@ -20,6 +20,7 @@ export default function MemberHeader() {
     { to: "/app/exercises", label: tr.catalogLink },
     { to: "/app/nutrition", label: tr.nutLink },
     { to: "/app/progress", label: tr.progress },
+    { to: "/app/checkin", label: tr.ciLink },
   ];
 
   return (

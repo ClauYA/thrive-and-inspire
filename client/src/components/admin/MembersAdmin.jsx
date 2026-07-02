@@ -39,7 +39,11 @@ export default function MembersAdmin({ onAuthError }) {
   const [nutExporting, setNutExporting] = useState(false);
   const [goals, setGoals] = useState({ calories: "", protein: "", carbs: "", fat: "" });
   const [savingGoals, setSavingGoals] = useState(false);
+  const [checkins, setCheckins] = useState(null);
   const [error, setError] = useState("");
+
+  const FACES = ["😣", "😕", "😐", "🙂", "😄"];
+  const face = (n) => (n >= 1 && n <= 5 ? `${FACES[n - 1]} ${n}/5` : "—");
 
   const mealLabel = (k) =>
     ({ breakfast: tr.mealBreakfast, lunch: tr.mealLunch, dinner: tr.mealDinner, snack: tr.mealSnack }[k] || k);
@@ -60,10 +64,12 @@ export default function MembersAdmin({ onAuthError }) {
     setNutDays(null);
     setNutExpanded(null);
     setNutDetail({});
+    setCheckins(null);
     try {
       const d = await apiAuth(`/api/admin/members/${id}`);
       setSel(d);
       apiAuth(`/api/admin/members/${id}/exercises`).then((r) => setExercises(r.exercises)).catch(() => {});
+      apiAuth(`/api/admin/members/${id}/checkins`).then((r) => setCheckins(r.checkins)).catch(() => setCheckins([]));
       apiAuth(`/api/admin/members/${id}/nutrition`).then((r) => setNutDays(r.days)).catch(() => setNutDays([]));
       apiAuth(`/api/admin/members/${id}/nutrition-goals`)
         .then((r) => setGoals(r.goals ? { calories: r.goals.calories, protein: r.goals.protein, carbs: r.goals.carbs, fat: r.goals.fat } : { calories: "", protein: "", carbs: "", fat: "" }))
@@ -161,6 +167,8 @@ export default function MembersAdmin({ onAuthError }) {
     const unitOf = (wid) => detail[wid]?.workout?.weight_unit || "kg";
     const inputCls = "px-3 py-2 border-[1.5px] border-sand rounded-xl text-[0.88rem] text-charcoal bg-cream outline-none cursor-pointer focus:border-terracotta-light focus:bg-white";
     const chartPts = (progPoints || []).map((p) => ({ label: formatDate(p.date, lang), value: Math.round(Number(p[progMetric]) || 0) }));
+    const wkStart = (() => { const x = new Date(); const d = (x.getDay() + 6) % 7; x.setDate(x.getDate() - d); x.setHours(0, 0, 0, 0); return x; })();
+    const weekWorkouts = (sel.workouts || []).filter((w) => new Date(w.performed_at) >= wkStart).length;
     const recentNut = (nutDays || []).slice(0, 7);
     const nutAvg = recentNut.length
       ? {
@@ -176,7 +184,13 @@ export default function MembersAdmin({ onAuthError }) {
           ← {A.backToMembers}
         </button>
         <h1 className="font-display text-[1.7rem] font-semibold text-charcoal">{sel.member.name}</h1>
-        <p className="text-[0.85rem] text-warm-gray mb-6">{sel.member.email}</p>
+        <p className="text-[0.85rem] text-warm-gray mb-4">{sel.member.email}</p>
+
+        {/* This week's workout summary */}
+        <div className="bg-forest text-white rounded-2xl p-4 mb-6 flex items-center justify-between gap-3">
+          <span className="text-[0.8rem] uppercase tracking-[0.1em] text-sage-light">{tr.ciThisWeek}</span>
+          <span className="text-[0.95rem] font-semibold">🏋️ {weekWorkouts} {tr.ciWorkoutsWord}</span>
+        </div>
         {error && <p className="text-[0.85rem] text-red-500 mb-4">{error}</p>}
 
         {/* Plans */}
@@ -369,6 +383,41 @@ export default function MembersAdmin({ onAuthError }) {
             </>
           )}
         </div>
+
+        {/* Check-ins */}
+        <h2 className="text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-warm-gray mt-8 mb-3">{tr.ciTitle}</h2>
+        {checkins === null ? (
+          <p className="text-warm-gray text-[0.88rem]">{A.loading}</p>
+        ) : checkins.length === 0 ? (
+          <p className="text-warm-gray text-[0.88rem]">{tr.ciNone}</p>
+        ) : (
+          <div className="grid gap-3">
+            {checkins.map((c) => (
+              <div key={c.id} className="bg-white rounded-2xl border border-sand p-4 sm:p-5">
+                <div className="font-semibold text-charcoal mb-2">{tr.ciWeekOf} {formatDate(c.week_start, lang)}</div>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-[0.82rem] text-charcoal">
+                  {c.weight != null && <div><span className="text-warm-gray">{tr.ciWeight}:</span> {c.weight}</div>}
+                  {c.neck != null && <div><span className="text-warm-gray">{tr.ciNeck}:</span> {c.neck} cm</div>}
+                  {c.waist != null && <div><span className="text-warm-gray">{tr.ciWaist}:</span> {c.waist} cm</div>}
+                  {c.abdomen != null && <div><span className="text-warm-gray">{tr.ciAbdomen}:</span> {c.abdomen} cm</div>}
+                  {c.hips != null && <div><span className="text-warm-gray">{tr.ciHips}:</span> {c.hips} cm</div>}
+                  {c.arm_left != null && <div><span className="text-warm-gray">{tr.ciArmL}:</span> {c.arm_left} cm</div>}
+                  {c.arm_right != null && <div><span className="text-warm-gray">{tr.ciArmR}:</span> {c.arm_right} cm</div>}
+                  {c.leg_left != null && <div><span className="text-warm-gray">{tr.ciLegL}:</span> {c.leg_left} cm</div>}
+                  {c.leg_right != null && <div><span className="text-warm-gray">{tr.ciLegR}:</span> {c.leg_right} cm</div>}
+                </div>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-[0.82rem] text-charcoal mt-2">
+                  <div><span className="text-warm-gray">{tr.ciNutritionShort}:</span> {face(c.nutrition_rating)}</div>
+                  <div><span className="text-warm-gray">{tr.ciTrainingShort}:</span> {face(c.training_rating)}</div>
+                  <div><span className="text-warm-gray">{tr.ciStressShort}:</span> {face(c.stress_level)}</div>
+                  <div><span className="text-warm-gray">{tr.ciSleepShort}:</span> {face(c.sleep_level)}</div>
+                </div>
+                {c.challenges && <p className="text-[0.82rem] text-warm-gray italic mt-2">"{c.challenges}"</p>}
+                {c.photo && <img src={c.photo} alt="" className="w-40 h-40 object-cover rounded-xl mt-3 border border-sand" />}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
