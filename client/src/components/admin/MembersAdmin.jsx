@@ -377,7 +377,7 @@ export default function MembersAdmin({ onAuthError }) {
               <div key={c.id} className="bg-white rounded-2xl border border-sand p-4 sm:p-5">
                 <div className="font-semibold text-charcoal mb-2">{tr.ciWeekOf} {formatDate(c.week_start, lang)}</div>
                 <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-[0.82rem] text-charcoal">
-                  {c.weight != null && <div><span className="text-warm-gray">{tr.ciWeight}:</span> {c.weight}</div>}
+                  {c.weight != null && <div><span className="text-warm-gray">{tr.ciWeightLabel}:</span> {c.weight_unit === "lb" ? Math.round((c.weight / 0.45359237) * 10) / 10 : Math.round(c.weight * 10) / 10} {c.weight_unit || "kg"}</div>}
                   {c.neck != null && <div><span className="text-warm-gray">{tr.ciNeck}:</span> {c.neck} cm</div>}
                   {c.waist != null && <div><span className="text-warm-gray">{tr.ciWaist}:</span> {c.waist} cm</div>}
                   {c.abdomen != null && <div><span className="text-warm-gray">{tr.ciAbdomen}:</span> {c.abdomen} cm</div>}

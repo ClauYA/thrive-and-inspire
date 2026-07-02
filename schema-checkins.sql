@@ -26,6 +26,7 @@ create table if not exists checkins (
   training_rating  int,
   stress_level     int,
   sleep_level      int,
+  weight_unit      text default 'kg',   -- unit the member entered weight in (stored value is kg)
   created_at       timestamptz not null default now(),
   unique (user_id, week_start)
 );
