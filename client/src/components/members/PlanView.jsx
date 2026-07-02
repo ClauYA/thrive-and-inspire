@@ -28,7 +28,7 @@ export default function PlanView() {
       ex.exercises.forEach((e) => (map[e.id] = e));
       setExMap(map);
       const m = {};
-      (w.workouts || []).forEach((x) => { if (!m[x.title]) m[x.title] = x.id; });
+      (w.workouts || []).forEach((x) => { if (!m[x.title]) m[x.title] = { id: x.id, date: x.performed_at }; });
       setDoneMap(m);
     } catch (e) {
       if (e.unauthorized) return navigate("/login");
