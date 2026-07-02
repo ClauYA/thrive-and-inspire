@@ -291,11 +291,9 @@ export default function Dashboard() {
                         const note = (g.sets.find((s) => s.note) || {}).note;
                         return (
                           <div key={gi} className="py-2">
-                            <div className="flex items-baseline justify-between gap-3">
-                              <span className="text-[0.88rem] font-medium text-charcoal">{g.name}</span>
-                              <span className="text-[0.78rem] text-warm-gray text-right shrink-0">
-                                {g.sets.map((s) => `${s.weight || 0}${s.weight_unit || detail[w.id].workout.weight_unit || "kg"}×${s.reps || 0}${s.rir ? ` (${s.rir})` : ""}`).join(" · ")}
-                              </span>
+                            <div className="text-[0.88rem] font-medium text-charcoal">{g.name}</div>
+                            <div className="text-[0.78rem] text-warm-gray break-words">
+                              {g.sets.map((s) => `${s.weight || 0}${s.weight_unit || detail[w.id].workout.weight_unit || "kg"}×${s.reps || 0}${s.rir ? ` (${s.rir})` : ""}`).join(" · ")}
                             </div>
                             {note && <div className="text-[0.76rem] text-warm-gray italic mt-0.5">{note}</div>}
                           </div>
