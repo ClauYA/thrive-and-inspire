@@ -5,7 +5,6 @@ import { userApi, getUserToken } from "../../lib/userApi";
 import { formatDate } from "../../lib/format";
 import MemberHeader from "./MemberHeader";
 import Calendar from "./Calendar";
-import WeekStrip from "./WeekStrip";
 import DayPicker from "./DayPicker";
 import SessionFeedback from "./SessionFeedback";
 import ProgressRing from "./ProgressRing";
@@ -52,7 +51,7 @@ export default function Dashboard() {
       setWorkouts(w.workouts);
       setPlan(p.plan);
       const map = {};
-      ex.exercises.forEach((e) => (map[e.id] = e.name));
+      ex.exercises.forEach((e) => (map[e.id] = e));
       setExMap(map);
       // Today's nutrition summary — best-effort (skips quietly if not set up).
       userApi(`/api/nutrition/log?date=${localKey(new Date().toISOString())}`)
@@ -119,6 +118,8 @@ export default function Dashboard() {
   const planOrder = [];
   weekList.forEach((w, wi) => (w.days || []).forEach((d, di) => planOrder.push({ wi, di, key: `${w.name} · ${d.name}` })));
   const doneTitles = new Set((workouts || []).map((w) => w.title));
+  const doneMap = {};
+  (workouts || []).forEach((w) => { if (!doneMap[w.title]) doneMap[w.title] = w.id; });
   let lastDone = -1;
   planOrder.forEach((p, i) => { if (doneTitles.has(p.key)) lastDone = i; });
   const nextPos = planOrder[lastDone + 1] || planOrder[0] || null;
@@ -180,11 +181,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* This week strip */}
-        {workouts !== null && weekForStrip && weekForStrip.days.length > 0 && (
-          <WeekStrip workouts={workouts} routine={weekForStrip} planName={plan?.name} weekName={curWeek?.name} onOpenDay={setPickerDate} />
-        )}
-
         {/* Today's nutrition summary */}
         {nutToday && (
           <Link to="/app/nutrition" className="block bg-white border border-sand rounded-2xl p-4 sm:p-5 mb-6 hover:border-terracotta transition-colors">
@@ -232,7 +228,7 @@ export default function Dashboard() {
         {plan && plan.weeks && plan.weeks.length > 0 && (
           <div className="mb-6">
             <h2 className="text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-warm-gray mb-3">{tr.weeksLabel}</h2>
-            <PlanWeeks plan={plan} exMap={exMap} doneTitles={doneTitles} currentWeekIdx={curWeekIdx} />
+            <PlanWeeks plan={plan} exMap={exMap} doneMap={doneMap} currentWeekIdx={curWeekIdx} />
           </div>
         )}
 

@@ -17,13 +17,14 @@ function videoUrl(ex) {
 }
 
 // Weeks accordion + day cards for a plan. Reused by PlanView and the dashboard.
-export default function PlanWeeks({ plan, exMap, doneTitles, currentWeekIdx = 0 }) {
+export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 0 }) {
   const { t } = useLanguage();
   const tr = t.tracker;
   const [openWeek, setOpenWeek] = useState(currentWeekIdx);
 
   const weeks = plan.weeks || [];
-  const dayDone = (week, day) => doneTitles.has(`${week.name} · ${day.name}`);
+  const dayWorkoutId = (week, day) => doneMap[`${week.name} · ${day.name}`];
+  const dayDone = (week, day) => Boolean(dayWorkoutId(week, day));
   const weekPct = (week) => {
     const days = week.days || [];
     if (!days.length) return 0;
@@ -100,12 +101,21 @@ export default function PlanWeeks({ plan, exMap, doneTitles, currentWeekIdx = 0 
                         </div>
                       )}
 
-                      <Link
-                        to={`/app/new?plan=${plan.id}&week=${wi}&day=${di}`}
-                        className="mt-4 block text-center bg-terracotta text-white font-semibold py-3 rounded-full hover:bg-terracotta-dark transition-colors"
-                      >
-                        {tr.startBtn}
-                      </Link>
+                      {done ? (
+                        <Link
+                          to={`/app/new?edit=${dayWorkoutId(week, day)}`}
+                          className="mt-4 block text-center bg-forest text-white font-semibold py-3 rounded-full hover:bg-forest/90 transition-colors"
+                        >
+                          {tr.viewSummary}
+                        </Link>
+                      ) : (
+                        <Link
+                          to={`/app/new?plan=${plan.id}&week=${wi}&day=${di}`}
+                          className="mt-4 block text-center bg-terracotta text-white font-semibold py-3 rounded-full hover:bg-terracotta-dark transition-colors"
+                        >
+                          {tr.startBtn}
+                        </Link>
+                      )}
                     </div>
                   );
                 })}
