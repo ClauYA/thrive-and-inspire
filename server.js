@@ -2334,6 +2334,43 @@ if (fs.existsSync(CLIENT_DIST)) {
   });
 }
 
+// ── Self-healing schema ──
+// The app writes to several columns that were introduced by later SQL
+// migrations (session feedback, per-set notes/units, plan link). If one of
+// those migrations was never run by hand, saving a workout fails with a
+// 500 ("Could not save the workout."). To make deploys robust, we ensure
+// those columns exist on startup. Every statement is idempotent, and each
+// runs independently so a single failure never blocks the others.
+async function ensureSchema() {
+  if (!dbEnabled) return;
+  const statements = [
+    // workouts: plan link, weight unit, and session feedback
+    "alter table workouts add column if not exists plan_id uuid",
+    "alter table workouts add column if not exists weight_unit text not null default 'kg'",
+    "alter table workouts add column if not exists session_feel int",
+    "alter table workouts add column if not exists session_effort text default ''",
+    "alter table workouts add column if not exists muscle_intensity jsonb default '{}'::jsonb",
+    // workout_sets: per-set note, per-set weight unit, and RIR stored as text
+    "alter table workout_sets add column if not exists note text default ''",
+    "alter table workout_sets add column if not exists weight_unit text not null default 'kg'",
+    "alter table workout_sets alter column rir type text using rir::text",
+  ];
+  let ok = 0;
+  for (const sql of statements) {
+    try {
+      await pool.query(sql);
+      ok++;
+    } catch (err) {
+      console.error("⚠️  ensureSchema step skipped:", err.message);
+    }
+  }
+  console.log(`✅ Schema check complete (${ok}/${statements.length} workout columns ensured)`);
+}
+
+// Kick off the schema check on boot (non-blocking so the site still serves
+// even if the database is momentarily unreachable).
+ensureSchema();
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
   console.log(
