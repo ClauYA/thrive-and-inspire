@@ -81,13 +81,17 @@ export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 
                         <span className="text-[0.72rem] text-warm-gray shrink-0">{done ? "✓ 100%" : "0%"}</span>
                       </div>
                       <Bar pct={done ? 100 : 0} />
+                      {day.notes && <div className="mt-2 text-[0.76rem] text-warm-gray italic whitespace-pre-line">{day.notes}</div>}
 
                       <div className="mt-3 flex flex-col gap-1.5">
                         {exs.map((e, ei) => {
                           const ex = exMap[e.exerciseId];
                           return (
-                            <div key={ei} className="flex items-center justify-between gap-2 min-w-0">
-                              <span className="text-[0.86rem] text-charcoal min-w-0 truncate">{ex?.name || tr.selectExercise}</span>
+                            <div key={ei} className="flex items-start justify-between gap-2 min-w-0">
+                              <div className="min-w-0">
+                                <span className="block text-[0.86rem] text-charcoal truncate">{ex?.name || tr.selectExercise}</span>
+                                {e.notes && <span className="block text-[0.72rem] text-warm-gray">{e.notes}</span>}
+                              </div>
                               <div className="flex items-center gap-2 shrink-0">
                                 <span className="text-[0.68rem] font-semibold text-forest bg-sage-light/40 px-2 py-0.5 rounded-full whitespace-nowrap">{e.sets || 0} {tr.seriesShort}</span>
                                 <a href={videoUrl(ex)} target="_blank" rel="noopener noreferrer" aria-label={tr.watchVideo} className="text-forest hover:text-terracotta">👁️</a>

@@ -198,6 +198,7 @@ export default function PlanEditor({ admin = false }) {
                       <Input type="text" value={day.name} onChange={setDayField(wi, di, "name")} placeholder={tr.dayNamePh} className="font-semibold" />
                       <button onClick={() => removeDay(wi, di)} aria-label={tr.removeDay} className="shrink-0 text-warm-gray hover:text-red-500 text-xl leading-none px-1">×</button>
                     </div>
+                    <Textarea rows={1} value={day.notes} onChange={setDayField(wi, di, "notes")} placeholder={tr.dayNotes} className="mb-2.5 bg-cream/40 text-[0.82rem]" />
 
                     {/* Exercises: pick the muscle group first, then the exercise (filtered) */}
                     {day.exercises.map((ex, ei) => (
@@ -238,6 +239,7 @@ export default function PlanEditor({ admin = false }) {
                           </div>
                           <button onClick={() => removeEx(wi, di, ei)} aria-label={tr.removeExercise} className="text-warm-gray hover:text-red-500 text-lg leading-none pb-2">−</button>
                         </div>
+                        <Input type="text" value={ex.notes} onChange={setExField(wi, di, ei, "notes")} placeholder={tr.exNotePh} className="mt-1.5 text-[0.8rem] py-2" />
                       </div>
                     ))}
                     <button onClick={() => addEx(wi, di)} className="text-[0.8rem] font-semibold text-terracotta hover:text-terracotta-dark mt-1">
