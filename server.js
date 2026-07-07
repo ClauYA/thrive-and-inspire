@@ -1315,6 +1315,14 @@ async function loadPlan(planId, userId) {
   );
 }
 
+// Keep prescribed set counts sane: a whole number in 1–20, or null when unset.
+// Guards against corrupted values (e.g. a stray "323") ever reaching the DB.
+function clampSets(v) {
+  const n = Math.round(Number(v));
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.min(n, 20);
+}
+
 // Replace a plan's whole week→day→exercise tree inside an open transaction.
 async function writePlanStructure(client, planId, weeks) {
   await client.query(`delete from plan_weeks where plan_id = $1`, [planId]);
@@ -1339,7 +1347,7 @@ async function writePlanStructure(client, planId, weeks) {
         if (!e || !e.exerciseId) continue;
         await client.query(
           `insert into plan_exercises (day_id, position, exercise_id, sets, reps, rir, notes) values ($1, $2, $3, $4, $5, $6, $7)`,
-          [dayId, pos++, e.exerciseId, Number(e.sets) || null, String(e.reps || "").trim(), String(e.rir || "").trim(), String(e.notes || "").trim()]
+          [dayId, pos++, e.exerciseId, clampSets(e.sets), String(e.reps || "").trim(), String(e.rir || "").trim(), String(e.notes || "").trim()]
         );
       }
     }
