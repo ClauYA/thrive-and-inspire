@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "../../i18n/LanguageContext";
 import ProgressRing from "./ProgressRing";
+import VideoModal from "./VideoModal";
 
 function Bar({ pct }) {
   return (
@@ -11,16 +12,12 @@ function Bar({ pct }) {
   );
 }
 
-function videoUrl(ex) {
-  if (ex?.media_url) return ex.media_url;
-  return `https://www.youtube.com/results?search_query=${encodeURIComponent("how to " + (ex?.name || ""))}`;
-}
-
 // Weeks accordion + day cards for a plan. Reused by PlanView and the dashboard.
 export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 0, readOnly = false }) {
   const { t } = useLanguage();
   const tr = t.tracker;
   const [openWeek, setOpenWeek] = useState(currentWeekIdx);
+  const [video, setVideo] = useState(null); // { name, url } of the exercise demo to play, or null
 
   const weeks = plan.weeks || [];
   const dayWorkout = (week, day) => doneMap[`${week.name} · ${day.name}`];
@@ -35,6 +32,7 @@ export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 
   const order = weeks.map((_, i) => i).sort((a, b) => (a === currentWeekIdx ? -1 : b === currentWeekIdx ? 1 : a - b));
 
   return (
+    <>
     <div className="grid gap-3">
       {order.map((wi) => {
         const week = weeks[wi];
@@ -94,7 +92,7 @@ export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
                                 <span className="text-[0.68rem] font-semibold text-forest bg-sage-light/40 px-2 py-0.5 rounded-full whitespace-nowrap">{e.sets || 0} {tr.seriesShort}</span>
-                                <a href={videoUrl(ex)} target="_blank" rel="noopener noreferrer" aria-label={tr.watchVideo} className="text-forest hover:text-terracotta">👁️</a>
+                                <button type="button" onClick={() => setVideo({ name: ex?.name, url: ex?.media_url })} aria-label={tr.watchVideo} className="text-forest hover:text-terracotta">👁️</button>
                               </div>
                             </div>
                           );
@@ -138,5 +136,7 @@ export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 
         );
       })}
     </div>
+    <VideoModal open={!!video} onClose={() => setVideo(null)} url={video?.url} name={video?.name} />
+    </>
   );
 }
