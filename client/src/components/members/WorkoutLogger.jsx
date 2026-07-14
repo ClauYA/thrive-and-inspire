@@ -7,6 +7,7 @@ import { formatDate } from "../../lib/format";
 import { RIR_OPTIONS, rirLabel } from "../../lib/rir";
 import MemberHeader from "./MemberHeader";
 import VideoModal from "./VideoModal";
+import RestTimer, { DEFAULT_REST } from "./RestTimer";
 import { Button } from "../ui";
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
@@ -70,6 +71,7 @@ export default function WorkoutLogger() {
   const [unit] = useState("kg"); // default unit for newly added sets (each set can override)
   const [notes, setNotes] = useState("");
   const [blocks, setBlocks] = useState([]);
+  const restRef = useRef(null); // rest-timer bar; start it with restRef.current.start(seconds)
   const [started, setStarted] = useState(false);
   const [fromRoutine, setFromRoutine] = useState(false);
   const [planId, setPlanId] = useState(null);
@@ -551,9 +553,14 @@ export default function WorkoutLogger() {
                       </div>
                     ))}
                     <div className="flex items-center justify-between gap-3 mt-1">
-                      <button onClick={() => addSet(blk.uid)} className="text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark">
-                        {tr.addSet}
-                      </button>
+                      <div className="flex items-center gap-4">
+                        <button onClick={() => addSet(blk.uid)} className="text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark">
+                          {tr.addSet}
+                        </button>
+                        <button type="button" onClick={() => restRef.current?.start(DEFAULT_REST)} className="text-[0.82rem] font-semibold text-forest hover:text-terracotta inline-flex items-center gap-1">
+                          ⏱ {tr.restBtn}
+                        </button>
+                      </div>
                       <button
                         onClick={() => { persistDraft(); setFlashUid(blk.uid); setTimeout(() => setFlashUid((c) => (c === blk.uid ? null : c)), 1800); }}
                         className="text-[0.8rem] font-semibold text-forest border border-sage-light px-3 py-1.5 rounded-full hover:bg-sage-light/40"
@@ -670,6 +677,7 @@ export default function WorkoutLogger() {
           </>
         )}
       </main>
+      <RestTimer ref={restRef} />
     </div>
   );
 }
