@@ -161,6 +161,7 @@ export default function WorkoutLogger() {
               exerciseId: g.exId || "",
               exerciseName: g.exName,
               mediaUrl: (d.exercises.find((x) => x.id === g.exId) || {}).media_url || "",
+              unit: g.sets[0]?.weight_unit || "kg",
               sets: g.sets.map((s) => ({ weight: s.weight ?? "", reps: s.reps ?? "", rir: s.rir || "", unit: s.weight_unit || "kg" })),
               note: (g.sets.find((s) => s.note) || {}).note || "",
               target: null,
@@ -257,6 +258,7 @@ export default function WorkoutLogger() {
       exerciseId: ex?.id || "",
       exerciseName: ex?.name || "",
       mediaUrl: ex?.media_url || "",
+      unit, // one weight unit for the whole exercise (kg/lb)
       sets: Array.from({ length: count }, () => ({ weight: "", reps: "", rir, unit })),
       note: "",
       target: target ? { reps: target.reps || "", rir: target.rir || "", notes: target.notes || "" } : null,
@@ -308,8 +310,10 @@ export default function WorkoutLogger() {
     setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, exerciseId: ex?.id || "", exerciseName: ex?.name || "", mediaUrl: ex?.media_url || "", last: ex ? undefined : null } : b)));
     if (ex) loadLast(u, ex.id);
   };
-  const addSet = (u) => setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, sets: [...b.sets, emptySet(unit)] } : b)));
+  const addSet = (u) => setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, sets: [...b.sets, emptySet(b.unit || unit)] } : b)));
   const setBlockNote = (u) => (e) => setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, note: e.target.value } : b)));
+  // One kg/lb choice per exercise — applied to every set in that exercise.
+  const setBlockUnit = (u, newUnit) => setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, unit: newUnit, sets: b.sets.map((s) => ({ ...s, unit: newUnit })) } : b)));
   const removeSet = (u, si) => setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, sets: b.sets.filter((_, j) => j !== si) } : b)));
   const updateSet = (u, si, field) => (e) => {
     const val = e.target.value;
@@ -321,7 +325,7 @@ export default function WorkoutLogger() {
     for (const blk of blocks) {
       if (!blk.exerciseName) continue;
       blk.sets.forEach((s, idx) => {
-        flatSets.push({ exerciseId: blk.exerciseId || null, exerciseName: blk.exerciseName, setNumber: idx + 1, weight: s.weight, reps: s.reps, rir: s.rir, rpe: "", unit: s.unit || unit, note: idx === 0 ? (blk.note || "") : "" });
+        flatSets.push({ exerciseId: blk.exerciseId || null, exerciseName: blk.exerciseName, setNumber: idx + 1, weight: s.weight, reps: s.reps, rir: s.rir, rpe: "", unit: blk.unit || s.unit || "kg", note: idx === 0 ? (blk.note || "") : "" });
       });
     }
     if (flatSets.length === 0) {
@@ -518,6 +522,14 @@ export default function WorkoutLogger() {
                   )}
 
                   <div className="mt-4">
+                    <div className="flex items-center justify-end gap-1.5 mb-2">
+                      <span className="text-[0.72rem] text-warm-gray mr-1">{tr.weightUnit}:</span>
+                      {["kg", "lb"].map((un) => (
+                        <button key={un} type="button" onClick={() => setBlockUnit(blk.uid, un)} className={`text-[0.74rem] font-semibold px-3 py-1 rounded-full border transition-colors ${(blk.unit || "kg") === un ? "bg-terracotta text-white border-terracotta" : "bg-white text-warm-gray border-sand hover:border-terracotta"}`}>
+                          {un}
+                        </button>
+                      ))}
+                    </div>
                     <div className="grid grid-cols-[18px_1.6fr_1fr_1.1fr_18px] gap-1.5 sm:gap-2 items-center text-[0.72rem] font-semibold text-warm-gray mb-1.5 px-1">
                       <span>{tr.set}</span>
                       <span>{tr.weight}</span>
@@ -528,14 +540,11 @@ export default function WorkoutLogger() {
                     {blk.sets.map((s, si) => (
                       <div key={si} className="grid grid-cols-[18px_1.6fr_1fr_1.1fr_18px] gap-1.5 sm:gap-2 items-center mb-2">
                         <span className="text-[0.85rem] text-warm-gray text-center">{si + 1}</span>
-                        <div className="flex gap-1 min-w-0">
+                        <div className="flex items-center gap-1.5 min-w-0">
                           <input type="number" inputMode="decimal" min="0" step="0.5" value={s.weight} onChange={updateSet(blk.uid, si, "weight")} className={`${inputClass} min-w-0`} />
-                          <select value={s.unit || "kg"} onChange={updateSet(blk.uid, si, "unit")} aria-label={tr.weightUnit} className={`${inputClass} cursor-pointer w-[58px] px-1.5`}>
-                            <option value="kg">kg</option>
-                            <option value="lb">lb</option>
-                          </select>
+                          <span className="text-[0.8rem] text-warm-gray shrink-0 w-[22px]">{blk.unit || "kg"}</span>
                         </div>
-                        <select value={s.reps} onChange={updateSet(blk.uid, si, "reps")} className={`${inputClass} cursor-pointer`}>
+                        <select value={s.reps} onChange={(e) => { updateSet(blk.uid, si, "reps")(e); if (e.target.value) restRef.current?.start(DEFAULT_REST); }} className={`${inputClass} cursor-pointer`}>
                           <option value="">–</option>
                           {Array.from({ length: 51 }, (_, n) => (
                             <option key={n} value={n}>{n}</option>
