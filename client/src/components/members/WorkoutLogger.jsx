@@ -561,22 +561,10 @@ export default function WorkoutLogger() {
                         </button>
                       </div>
                     ))}
-                    <div className="flex items-center justify-between gap-3 mt-1">
-                      <div className="flex items-center gap-4">
-                        <button onClick={() => addSet(blk.uid)} className="text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark">
-                          {tr.addSet}
-                        </button>
-                        <button type="button" onClick={() => restRef.current?.start(DEFAULT_REST)} className="text-[0.82rem] font-semibold text-forest hover:text-terracotta inline-flex items-center gap-1">
-                          ⏱ {tr.restBtn}
-                        </button>
-                      </div>
-                      <button
-                        onClick={() => { persistDraft(); setFlashUid(blk.uid); setTimeout(() => setFlashUid((c) => (c === blk.uid ? null : c)), 1800); }}
-                        className="text-[0.8rem] font-semibold text-forest border border-sage-light px-3 py-1.5 rounded-full hover:bg-sage-light/40"
-                      >
-                        {flashUid === blk.uid ? `✓ ${tr.saved}` : `💾 ${tr.saveExercise}`}
-                      </button>
-                    </div>
+                    <button onClick={() => addSet(blk.uid)} className="text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark mt-1">
+                      {tr.addSet}
+                    </button>
+                    {/* Notes go before the save action so members jot cues, then save. */}
                     <textarea
                       rows="2"
                       value={blk.note || ""}
@@ -584,6 +572,17 @@ export default function WorkoutLogger() {
                       placeholder={tr.exNotePh}
                       className={`${inputClass} resize-none mt-3`}
                     />
+                    <div className="flex items-center justify-between gap-3 mt-3">
+                      <button type="button" onClick={() => restRef.current?.start(DEFAULT_REST)} className="text-[0.82rem] font-semibold text-forest hover:text-terracotta inline-flex items-center gap-1">
+                        ⏱ {tr.restBtn}
+                      </button>
+                      <button
+                        onClick={() => { persistDraft(); setFlashUid(blk.uid); setTimeout(() => setFlashUid((c) => (c === blk.uid ? null : c)), 1800); }}
+                        className="text-[0.8rem] font-semibold text-forest border border-sage-light px-3 py-1.5 rounded-full hover:bg-sage-light/40"
+                      >
+                        {flashUid === blk.uid ? `✓ ${tr.saved}` : `💾 ${tr.saveExercise}`}
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
