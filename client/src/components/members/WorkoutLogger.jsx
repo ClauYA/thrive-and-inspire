@@ -6,6 +6,8 @@ import { recommendation, toneStyles } from "../../lib/recommend";
 import { formatDate } from "../../lib/format";
 import { RIR_OPTIONS, rirLabel } from "../../lib/rir";
 import MemberHeader from "./MemberHeader";
+import VideoModal from "./VideoModal";
+import RestTimer, { DEFAULT_REST } from "./RestTimer";
 import { Button } from "../ui";
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
@@ -22,47 +24,19 @@ const GEN_GROUPS = {
   full: ["legs", "chest", "back", "shoulders", "core"],
 };
 
-function youtubeEmbed(url) {
-  if (!url) return null;
-  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([\w-]{11})/);
-  return m ? `https://www.youtube.com/embed/${m[1]}` : null;
-}
-
-// Shows the exercise demo via YouTube: embeds a specific video if media_url is
-// a YouTube link, otherwise links to a YouTube search for the exercise.
+// Shows the exercise demo in an in-app modal (never navigates away to YouTube).
 function ExerciseMedia({ url, name }) {
   const { t } = useLanguage();
   const tr = t.tracker;
-  const [show, setShow] = useState(false);
-  const embed = youtubeEmbed(url);
-
-  if (embed) {
-    return (
-      <div className="mt-3">
-        <button type="button" onClick={() => setShow((s) => !s)} className="inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark">
-          ▶ {show ? tr.hideMedia : tr.watchVideo}
-        </button>
-        {show && (
-          <div className="mt-2 aspect-video">
-            <iframe className="w-full h-full rounded-xl" src={embed} title={name || "video"} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-          </div>
-        )}
-      </div>
-    );
-  }
-  if (url) {
-    return (
-      <a href={url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark">
-        ▶ {tr.watchVideo} ↗
-      </a>
-    );
-  }
-  if (!name) return null;
-  const search = `https://www.youtube.com/results?search_query=${encodeURIComponent("how to " + name)}`;
+  const [open, setOpen] = useState(false);
+  if (!url && !name) return null;
   return (
-    <a href={search} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark">
-      ▶ {tr.watchYoutube} ↗
-    </a>
+    <>
+      <button type="button" onClick={() => setOpen(true)} className="mt-3 inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark">
+        ▶ {tr.watchVideo}
+      </button>
+      <VideoModal open={open} onClose={() => setOpen(false)} url={url} name={name} />
+    </>
   );
 }
 
@@ -97,6 +71,7 @@ export default function WorkoutLogger() {
   const [unit] = useState("kg"); // default unit for newly added sets (each set can override)
   const [notes, setNotes] = useState("");
   const [blocks, setBlocks] = useState([]);
+  const restRef = useRef(null); // rest-timer bar; start it with restRef.current.start(seconds)
   const [started, setStarted] = useState(false);
   const [fromRoutine, setFromRoutine] = useState(false);
   const [planId, setPlanId] = useState(null);
@@ -578,9 +553,14 @@ export default function WorkoutLogger() {
                       </div>
                     ))}
                     <div className="flex items-center justify-between gap-3 mt-1">
-                      <button onClick={() => addSet(blk.uid)} className="text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark">
-                        {tr.addSet}
-                      </button>
+                      <div className="flex items-center gap-4">
+                        <button onClick={() => addSet(blk.uid)} className="text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark">
+                          {tr.addSet}
+                        </button>
+                        <button type="button" onClick={() => restRef.current?.start(DEFAULT_REST)} className="text-[0.82rem] font-semibold text-forest hover:text-terracotta inline-flex items-center gap-1">
+                          ⏱ {tr.restBtn}
+                        </button>
+                      </div>
                       <button
                         onClick={() => { persistDraft(); setFlashUid(blk.uid); setTimeout(() => setFlashUid((c) => (c === blk.uid ? null : c)), 1800); }}
                         className="text-[0.8rem] font-semibold text-forest border border-sage-light px-3 py-1.5 rounded-full hover:bg-sage-light/40"
@@ -697,6 +677,7 @@ export default function WorkoutLogger() {
           </>
         )}
       </main>
+      <RestTimer ref={restRef} />
     </div>
   );
 }

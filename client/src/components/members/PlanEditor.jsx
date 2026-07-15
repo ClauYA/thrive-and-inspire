@@ -109,7 +109,13 @@ export default function PlanEditor({ admin = false }) {
 
   const addEx = (wi, di) => updWeeks((ws) => { ws[wi].days[di].exercises.push(newExercise()); return ws; });
   const removeEx = (wi, di, ei) => updWeeks((ws) => { ws[wi].days[di].exercises = ws[wi].days[di].exercises.filter((_, i) => i !== ei); return ws; });
-  const setExField = (wi, di, ei, f) => (e) => updWeeks((ws) => { ws[wi].days[di].exercises[ei][f] = e.target.value; return ws; });
+  const setExField = (wi, di, ei, f) => (e) => updWeeks((ws) => {
+    let val = e.target.value;
+    // Keep set counts in a sane 1–20 range (empty is allowed while typing/clearing).
+    if (f === "sets" && val !== "") val = String(Math.min(Math.max(Math.round(Number(val)) || 1, 1), 20));
+    ws[wi].days[di].exercises[ei][f] = val;
+    return ws;
+  });
   // Changing the muscle group clears the chosen exercise (it may not belong to the new group).
   const setExGroup = (wi, di, ei) => (e) => updWeeks((ws) => {
     const x = ws[wi].days[di].exercises[ei];
@@ -192,6 +198,7 @@ export default function PlanEditor({ admin = false }) {
                       <Input type="text" value={day.name} onChange={setDayField(wi, di, "name")} placeholder={tr.dayNamePh} className="font-semibold" />
                       <button onClick={() => removeDay(wi, di)} aria-label={tr.removeDay} className="shrink-0 text-warm-gray hover:text-red-500 text-xl leading-none px-1">×</button>
                     </div>
+                    <Textarea rows={1} value={day.notes} onChange={setDayField(wi, di, "notes")} placeholder={tr.dayNotes} className="mb-2.5 bg-cream/40 text-[0.82rem]" />
 
                     {/* Exercises: pick the muscle group first, then the exercise (filtered) */}
                     {day.exercises.map((ex, ei) => (
@@ -215,7 +222,7 @@ export default function PlanEditor({ admin = false }) {
                         <div className="grid grid-cols-[1fr_1fr_1fr_28px] gap-1.5 items-end">
                           <div>
                             <span className="block text-[0.62rem] font-semibold text-warm-gray mb-0.5">{tr.exTargetSets}</span>
-                            <Input type="number" inputMode="numeric" value={ex.sets} onChange={setExField(wi, di, ei, "sets")} className="text-center px-1 py-2" />
+                            <Input type="number" inputMode="numeric" min={1} max={20} value={ex.sets} onChange={setExField(wi, di, ei, "sets")} className="text-center px-1 py-2" />
                           </div>
                           <div>
                             <span className="block text-[0.62rem] font-semibold text-warm-gray mb-0.5">{tr.exTargetReps}</span>
@@ -232,6 +239,7 @@ export default function PlanEditor({ admin = false }) {
                           </div>
                           <button onClick={() => removeEx(wi, di, ei)} aria-label={tr.removeExercise} className="text-warm-gray hover:text-red-500 text-lg leading-none pb-2">−</button>
                         </div>
+                        <Input type="text" value={ex.notes} onChange={setExField(wi, di, ei, "notes")} placeholder={tr.exNotePh} className="mt-1.5 text-[0.8rem] py-2" />
                       </div>
                     ))}
                     <button onClick={() => addEx(wi, di)} className="text-[0.8rem] font-semibold text-terracotta hover:text-terracotta-dark mt-1">
