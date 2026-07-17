@@ -13,6 +13,7 @@ import { dbEnabled, query, pool } from "./db.js";
 import { clampSets } from "./lib/plan.js";
 import { parseFeedback } from "./lib/feedback.js";
 import { lbToKg } from "./lib/units.js";
+import { isApproved } from "./lib/status.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -821,22 +822,33 @@ function isStrongEnough(pw) {
   return typeof pw === "string" && pw.length >= 6;
 }
 
-// Verify a member (user) bearer token.
-function requireUser(req, res, next) {
+// Verify a member (user) bearer token, and that the account is still approved
+// (so a rejected/revoked member is blocked immediately even with a live token).
+async function requireUser(req, res, next) {
   if (!userAuthEnabled) {
     return res.status(503).json({ ok: false, error: "The workout tracker is not configured on the server." });
   }
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
   if (!token) return res.status(401).json({ ok: false, error: "Not authenticated." });
+  let payload;
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
+    payload = jwt.verify(token, JWT_SECRET);
     if (payload.role !== "user") throw new Error("wrong role");
-    req.user = payload;
-    next();
   } catch {
     return res.status(401).json({ ok: false, error: "Session expired. Please log in again." });
   }
+  try {
+    const { rows } = await query(`select status from users where id = $1`, [payload.sub]);
+    if (!rows[0] || !isApproved(rows[0].status)) {
+      return res.status(401).json({ ok: false, error: "Your account is no longer active. Contact your coach." });
+    }
+  } catch (err) {
+    console.error("Account status check failed:", err);
+    return res.status(500).json({ ok: false, error: "Could not verify your account." });
+  }
+  req.user = payload;
+  next();
 }
 
 function signUserToken(user) {
@@ -854,12 +866,13 @@ app.post("/api/auth/signup", async (req, res) => {
     const exists = await query(`select 1 from users where email = $1`, [String(email).trim().toLowerCase()]);
     if (exists.rows[0]) return res.status(409).json({ ok: false, error: "An account with this email already exists." });
     const hash = await bcrypt.hash(password, 10);
-    const { rows } = await query(
-      `insert into users (name, email, password_hash) values ($1, $2, $3) returning id, name, email`,
+    // Self-signups start as 'pending' — the coach approves them in the admin
+    // panel. No token is issued, so they cannot log in until approved.
+    await query(
+      `insert into users (name, email, password_hash, status) values ($1, $2, $3, 'pending')`,
       [String(name).trim(), String(email).trim().toLowerCase(), hash]
     );
-    const user = rows[0];
-    res.json({ ok: true, token: signUserToken(user), user: { id: user.id, name: user.name, email: user.email } });
+    res.json({ ok: true, pending: true, message: "Request sent. Your coach will review and approve your account soon." });
   } catch (err) {
     console.error("Signup failed:", err);
     res.status(500).json({ ok: false, error: "Could not create your account." });
@@ -876,6 +889,12 @@ app.post("/api/auth/login", async (req, res) => {
     const user = rows[0];
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
       return res.status(401).json({ ok: false, error: "Incorrect email or password." });
+    }
+    if (!isApproved(user.status)) {
+      const msg = user.status === "rejected"
+        ? "Your account request was declined. Please contact your coach."
+        : "Your account is pending approval by your coach.";
+      return res.status(403).json({ ok: false, error: msg });
     }
     res.json({ ok: true, token: signUserToken(user), user: { id: user.id, name: user.name, email: user.email } });
   } catch (err) {
@@ -1550,7 +1569,7 @@ function requireAdmin(req, res, next) {
 app.get("/api/admin/members", requireAdmin, async (req, res) => {
   try {
     const { rows } = await query(
-      `select u.id, u.name, u.email, u.created_at,
+      `select u.id, u.name, u.email, u.created_at, u.status,
               count(distinct w.id)::int as workout_count,
               max(w.performed_at) as last_workout
        from users u left join workouts w on w.user_id = u.id
@@ -1560,6 +1579,53 @@ app.get("/api/admin/members", requireAdmin, async (req, res) => {
   } catch (err) {
     console.error("Admin members failed:", err);
     res.status(500).json({ ok: false, error: "Could not load members." });
+  }
+});
+
+// Approve a pending member (they can now log in)
+app.post("/api/admin/members/:id/approve", requireAdmin, async (req, res) => {
+  try {
+    const { rowCount } = await query(`update users set status = 'approved' where id = $1`, [req.params.id]);
+    if (!rowCount) return res.status(404).json({ ok: false, error: "Member not found." });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Approve member failed:", err);
+    res.status(500).json({ ok: false, error: "Could not approve the member." });
+  }
+});
+
+// Reject / revoke a member (keeps their data; they can no longer log in)
+app.post("/api/admin/members/:id/reject", requireAdmin, async (req, res) => {
+  try {
+    const { rowCount } = await query(`update users set status = 'rejected' where id = $1`, [req.params.id]);
+    if (!rowCount) return res.status(404).json({ ok: false, error: "Member not found." });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Reject member failed:", err);
+    res.status(500).json({ ok: false, error: "Could not update the member." });
+  }
+});
+
+// Invite / create a member directly (approved immediately). The coach shares
+// the temporary password with the member; there is no email involved.
+app.post("/api/admin/members", requireAdmin, async (req, res) => {
+  if (!dbEnabled) return res.status(503).json({ ok: false, error: "The member area is not configured on the server." });
+  const { name, email, password } = req.body || {};
+  if (!name || !String(name).trim()) return res.status(400).json({ ok: false, error: "Please enter a name." });
+  if (!isValidEmail(email)) return res.status(400).json({ ok: false, error: "Please enter a valid email." });
+  if (!isStrongEnough(password)) return res.status(400).json({ ok: false, error: "Password must be at least 6 characters." });
+  try {
+    const exists = await query(`select 1 from users where email = $1`, [String(email).trim().toLowerCase()]);
+    if (exists.rows[0]) return res.status(409).json({ ok: false, error: "An account with this email already exists." });
+    const hash = await bcrypt.hash(password, 10);
+    const { rows } = await query(
+      `insert into users (name, email, password_hash, status) values ($1, $2, $3, 'approved') returning id, name, email`,
+      [String(name).trim(), String(email).trim().toLowerCase(), hash]
+    );
+    res.json({ ok: true, member: rows[0] });
+  } catch (err) {
+    console.error("Create member failed:", err);
+    res.status(500).json({ ok: false, error: "Could not create the member." });
   }
 });
 
@@ -2343,6 +2409,8 @@ async function ensureSchema() {
     "alter table workout_sets add column if not exists note text default ''",
     "alter table workout_sets add column if not exists weight_unit text not null default 'kg'",
     "alter table workout_sets alter column rir type text using rir::text",
+    // users: account gating (default 'approved' so existing members stay in)
+    "alter table users add column if not exists status text not null default 'approved'",
   ];
   let ok = 0;
   for (const sql of statements) {

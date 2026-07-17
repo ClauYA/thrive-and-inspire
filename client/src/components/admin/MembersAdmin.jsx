@@ -43,6 +43,9 @@ export default function MembersAdmin({ onAuthError }) {
   const [checkins, setCheckins] = useState(null);
   const [memberPlan, setMemberPlan] = useState(null); // active plan full tree
   const [error, setError] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
+  const [addForm, setAddForm] = useState({ name: "", email: "", password: "" });
+  const [addBusy, setAddBusy] = useState(false);
 
   const FACES = ["😣", "😕", "😐", "🙂", "😄"];
   const face = (n) => (n >= 1 && n <= 5 ? `${FACES[n - 1]} ${n}/5` : "—");
@@ -55,9 +58,11 @@ export default function MembersAdmin({ onAuthError }) {
     setError(err.message);
   }, [onAuthError]);
 
-  useEffect(() => {
+  const loadMembers = useCallback(() => {
     apiAuth("/api/admin/members").then((d) => setMembers(d.members)).catch(fail);
   }, [fail]);
+
+  useEffect(() => { loadMembers(); }, [loadMembers]);
 
   const openMember = async (id) => {
     setExpanded(null);
@@ -164,6 +169,25 @@ export default function MembersAdmin({ onAuthError }) {
   };
 
   const A = t.admin;
+
+  const approve = async (id) => {
+    try { await apiAuth(`/api/admin/members/${id}/approve`, "POST"); loadMembers(); } catch (err) { fail(err); }
+  };
+  const reject = async (id) => {
+    if (!window.confirm(A.confirmReject)) return;
+    try { await apiAuth(`/api/admin/members/${id}/reject`, "POST"); loadMembers(); } catch (err) { fail(err); }
+  };
+  const submitAdd = async (e) => {
+    e.preventDefault();
+    setAddBusy(true);
+    setError("");
+    try {
+      await apiAuth("/api/admin/members", "POST", addForm);
+      setAddForm({ name: "", email: "", password: "" });
+      setShowAdd(false);
+      loadMembers();
+    } catch (err) { fail(err); } finally { setAddBusy(false); }
+  };
 
   if (members === null) return <p className="text-warm-gray">{A.loading}</p>;
 
@@ -404,26 +428,79 @@ export default function MembersAdmin({ onAuthError }) {
   }
 
   // ── Members list ──
+  const listInput = "w-full px-3 py-2 border-[1.5px] border-sand rounded-xl text-[0.9rem] text-charcoal bg-cream outline-none focus:border-terracotta-light focus:bg-white";
+  const pending = members.filter((m) => m.status === "pending");
+  const others = members.filter((m) => m.status !== "pending");
   return (
     <div>
-      <h1 className="font-display text-[2rem] font-semibold text-charcoal mb-6">{A.members}</h1>
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <h1 className="font-display text-[2rem] font-semibold text-charcoal">{A.members}</h1>
+        <button onClick={() => setShowAdd((s) => !s)} className="text-[0.85rem] font-semibold text-white bg-terracotta px-4 py-2 rounded-full hover:bg-terracotta-dark shrink-0">+ {A.addMember}</button>
+      </div>
       {error && <p className="text-[0.85rem] text-red-500 mb-4">{error}</p>}
+
+      {showAdd && (
+        <form onSubmit={submitAdd} className="bg-white rounded-2xl border border-sand p-5 mb-6 grid gap-3">
+          <div className="font-semibold text-charcoal">{A.addMemberTitle}</div>
+          <p className="text-[0.8rem] text-warm-gray -mt-2">{A.addMemberHint}</p>
+          <input required value={addForm.name} onChange={(e) => setAddForm((s) => ({ ...s, name: e.target.value }))} placeholder={t.auth.name} className={listInput} />
+          <input required type="email" value={addForm.email} onChange={(e) => setAddForm((s) => ({ ...s, email: e.target.value }))} placeholder={t.auth.email} className={listInput} />
+          <input required value={addForm.password} onChange={(e) => setAddForm((s) => ({ ...s, password: e.target.value }))} placeholder={A.tempPassword} className={listInput} />
+          <div className="flex gap-2">
+            <button type="submit" disabled={addBusy} className="text-[0.85rem] font-semibold text-white bg-forest px-5 py-2 rounded-full hover:bg-forest/90 disabled:opacity-60">{A.create}</button>
+            <button type="button" onClick={() => setShowAdd(false)} className="text-[0.85rem] font-semibold text-warm-gray border border-sand px-5 py-2 rounded-full hover:bg-sand">{A.cancel}</button>
+          </div>
+        </form>
+      )}
+
+      {pending.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-terracotta mb-2">{A.pendingRequests} ({pending.length})</h2>
+          <div className="grid gap-2">
+            {pending.map((m) => (
+              <div key={m.id} className="flex items-center justify-between gap-3 bg-white rounded-2xl border border-terracotta/40 p-4">
+                <div className="min-w-0">
+                  <div className="font-semibold text-charcoal text-[0.95rem] truncate">{m.name}</div>
+                  <div className="text-[0.76rem] text-warm-gray truncate">{m.email}</div>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <button onClick={() => approve(m.id)} className="text-[0.8rem] font-semibold text-white bg-forest px-3 py-1.5 rounded-full hover:bg-forest/90">{A.approve}</button>
+                  <button onClick={() => reject(m.id)} className="text-[0.8rem] font-semibold text-red-500 border border-red-200 px-3 py-1.5 rounded-full hover:bg-red-50">{A.reject}</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {members.length === 0 ? (
         <p className="text-warm-gray py-8">{A.noMembers}</p>
       ) : (
         <div className="grid gap-2">
-          {members.map((m) => (
-            <button key={m.id} onClick={() => openMember(m.id)} className="flex items-center justify-between gap-3 bg-white rounded-2xl border border-sand p-4 text-left hover:bg-cream/50 transition-colors">
-              <div className="min-w-0">
-                <div className="font-semibold text-charcoal text-[0.95rem] truncate">{m.name}</div>
-                <div className="text-[0.76rem] text-warm-gray truncate">{m.email}</div>
+          {others.map((m) => {
+            const rejected = m.status === "rejected";
+            return (
+              <div key={m.id} className="flex items-center justify-between gap-3 bg-white rounded-2xl border border-sand p-4">
+                <button onClick={() => openMember(m.id)} className="min-w-0 flex-1 text-left">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-charcoal text-[0.95rem] truncate">{m.name}</span>
+                    <span className={`text-[0.64rem] font-semibold px-2 py-0.5 rounded-full shrink-0 ${rejected ? "text-red-500 bg-red-50" : "text-forest bg-sage-light/40"}`}>{rejected ? A.stRejected : A.stApproved}</span>
+                  </div>
+                  <div className="text-[0.76rem] text-warm-gray truncate">{m.email}</div>
+                </button>
+                <div className="text-right shrink-0">
+                  {rejected ? (
+                    <button onClick={() => approve(m.id)} className="text-[0.8rem] font-semibold text-forest border border-sage-light px-3 py-1.5 rounded-full hover:bg-sage-light/40">{A.approve}</button>
+                  ) : (
+                    <>
+                      <div className="text-[0.82rem] font-semibold text-forest">{m.workout_count} {A.workoutsShort}</div>
+                      <div className="text-[0.72rem] text-warm-gray">{m.last_workout ? formatDate(m.last_workout, lang) : A.never}</div>
+                    </>
+                  )}
+                </div>
               </div>
-              <div className="text-right shrink-0">
-                <div className="text-[0.82rem] font-semibold text-forest">{m.workout_count} {A.workoutsShort}</div>
-                <div className="text-[0.72rem] text-warm-gray">{m.last_workout ? formatDate(m.last_workout, lang) : A.never}</div>
-              </div>
-            </button>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
