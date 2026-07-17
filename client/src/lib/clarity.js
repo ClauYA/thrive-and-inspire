@@ -8,7 +8,7 @@
 // PRIVACY (important for the member area): set masking to "Strict" in the
 // Clarity dashboard (Settings → Masking) so personal data — names, weights,
 // measurements — is masked in recordings/heatmaps.
-export function initClarity(id = import.meta.env.VITE_CLARITY_ID) {
+export function initClarity(id = import.meta.env.VITE_CLARITY_ID || "xny7te0wup") {
   if (!id || typeof window === "undefined" || window.clarity) return;
   (function (c, l, a, r, i, t, y) {
     c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments); };
