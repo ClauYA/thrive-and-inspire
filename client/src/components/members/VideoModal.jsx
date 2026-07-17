@@ -5,7 +5,7 @@ import { useLanguage } from "../../i18n/LanguageContext";
 //  • a specific YouTube link  → embedded player for that video
 //  • no link (just a name)    → embedded player that plays the top
 //                               "how to <exercise>" search result
-function resolveEmbed(url, name) {
+export function resolveEmbed(url, name) {
   if (url) {
     const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([\w-]{11})/);
     if (m) return { type: "yt", src: `https://www.youtube.com/embed/${m[1]}?autoplay=1&rel=0` };

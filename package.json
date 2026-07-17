@@ -11,7 +11,11 @@
     "build": "node scripts/build-client.mjs",
     "postinstall": "node scripts/build-client.mjs",
     "start": "node server.js",
-    "install:all": "npm install && npm --prefix client install"
+    "install:all": "npm install && npm --prefix client install",
+    "test": "npm run test:server && npm run test:client",
+    "test:server": "vitest run",
+    "test:client": "npm --prefix client run test",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -24,6 +28,7 @@
     "pg": "^8.13.1"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "concurrently": "^9.1.0",
+    "vitest": "^4.1.10"
   }
 }

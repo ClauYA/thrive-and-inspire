@@ -10,6 +10,9 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { marked } from "marked";
 import { dbEnabled, query, pool } from "./db.js";
+import { clampSets } from "./lib/plan.js";
+import { parseFeedback } from "./lib/feedback.js";
+import { lbToKg } from "./lib/units.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -1037,20 +1040,6 @@ app.get("/api/last-performance/:exerciseId", requireUser, async (req, res) => {
 });
 
 // ── Create a workout (with its sets) ──
-// Normalize the optional session-feedback fields sent with a workout.
-function parseFeedback(body) {
-  const f = Number(body.sessionFeel);
-  const feel = Number.isFinite(f) && f >= 1 && f <= 10 ? Math.round(f) : null;
-  const effort = ["easy", "moderate", "hard", "limit"].includes(body.sessionEffort) ? body.sessionEffort : "";
-  const mi = {};
-  if (body.muscleIntensity && typeof body.muscleIntensity === "object") {
-    for (const [k, v] of Object.entries(body.muscleIntensity)) {
-      const n = Math.round(Number(v));
-      if (k && Number.isFinite(n) && n >= 1 && n <= 5) mi[String(k).slice(0, 40)] = n;
-    }
-  }
-  return { feel, effort, muscleIntensity: JSON.stringify(mi) };
-}
 
 app.post("/api/workouts", requireUser, async (req, res) => {
   const { title, performedAt, notes, sets, planId, weightUnit } = req.body || {};
@@ -1313,14 +1302,6 @@ async function loadPlan(planId, userId) {
     r.rows[0],
     weeks.map((w) => ({ position: w.position, name: w.name, notes: w.notes || "", days: daysByWeek[w.id] || [] }))
   );
-}
-
-// Keep prescribed set counts sane: a whole number in 1–20, or null when unset.
-// Guards against corrupted values (e.g. a stray "323") ever reaching the DB.
-function clampSets(v) {
-  const n = Math.round(Number(v));
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.min(n, 20);
 }
 
 // Replace a plan's whole week→day→exercise tree inside an open transaction.
@@ -2265,7 +2246,7 @@ function checkinValues(b) {
   const day = /^\d{4}-\d{2}-\d{2}$/.test(String(b.weekStart || "")) ? b.weekStart : null;
   const unit = b.weightUnit === "lb" ? "lb" : "kg";
   const rawW = num(b.weight);
-  const weightKg = rawW == null ? null : (unit === "lb" ? rawW * 0.45359237 : rawW); // store canonical kg
+  const weightKg = rawW == null ? null : (unit === "lb" ? lbToKg(rawW) : rawW); // store canonical kg
   return [
     day, weightKg, num(b.neck), num(b.waist), num(b.abdomen), num(b.hips),
     num(b.armLeft), num(b.armRight), num(b.legLeft), num(b.legRight),
