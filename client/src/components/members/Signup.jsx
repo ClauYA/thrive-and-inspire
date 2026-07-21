@@ -11,6 +11,7 @@ export default function Signup() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const update = (f) => (e) => setForm((s) => ({ ...s, [f]: e.target.value }));
 
@@ -26,6 +27,12 @@ export default function Signup() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Sign up failed");
+      // Registration is now approval-gated: the account is created as pending
+      // and the coach approves it — so show a confirmation instead of logging in.
+      if (data.pending) {
+        setSubmitted(true);
+        return;
+      }
       setSession(data.token, data.user);
       navigate("/app");
     } catch (err) {
@@ -40,6 +47,14 @@ export default function Signup() {
       <Link to="/" className="font-display text-2xl font-semibold text-forest tracking-tight mb-8">
         Lift<span className="text-terracotta">&amp;</span>Inspire
       </Link>
+      {submitted ? (
+        <div className="w-full max-w-[400px] bg-white rounded-[28px] p-8 sm:p-10 shadow-[0_20px_60px_rgba(44,44,42,0.08)] text-center">
+          <div className="text-4xl mb-3">✅</div>
+          <h1 className="font-display text-[1.5rem] font-semibold text-charcoal mb-2">{a.signupPendingTitle}</h1>
+          <p className="text-[0.9rem] text-warm-gray mb-6 leading-relaxed">{a.signupPendingMsg}</p>
+          <Link to="/login" className="text-terracotta font-semibold hover:text-terracotta-dark text-[0.9rem]">{a.loginLink}</Link>
+        </div>
+      ) : (
       <form onSubmit={submit} className="w-full max-w-[400px] bg-white rounded-[28px] p-8 sm:p-10 shadow-[0_20px_60px_rgba(44,44,42,0.08)]">
         <h1 className="font-display text-[1.7rem] font-semibold text-charcoal mb-1.5">{a.signupTitle}</h1>
         <p className="text-[0.85rem] text-warm-gray mb-6">{a.signupSub}</p>
@@ -70,6 +85,7 @@ export default function Signup() {
           <Link to="/login" className="text-terracotta font-semibold hover:text-terracotta-dark">{a.loginLink}</Link>
         </p>
       </form>
+      )}
     </div>
   );
 }
