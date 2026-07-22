@@ -1042,16 +1042,19 @@ app.delete("/api/exercises/:id", requireUser, async (req, res) => {
 // lookup returned null (does not expose the key).
 const gifCache = new Map();
 // ExerciseDB response shapes vary by version: bare array, { data: [...] },
-// { data: { exercises: [...] } }, etc. Pull the first item's gif URL robustly.
-function extractGif(data) {
+// { data: { exercises: [...] } }, etc. Return the first exercise object.
+function firstExercise(data) {
   const arr = Array.isArray(data) ? data
     : Array.isArray(data?.data) ? data.data
     : Array.isArray(data?.data?.exercises) ? data.data.exercises
     : Array.isArray(data?.exercises) ? data.exercises
     : Array.isArray(data?.results) ? data.results
     : [];
-  const g = arr[0] || null;
-  return (g && (g.gifUrl || g.gif || g.image)) || null;
+  return arr[0] || null;
+}
+function extractGif(data) {
+  const g = firstExercise(data);
+  return (g && (g.gifUrl || g.gif || g.image || g.gif_url)) || null;
 }
 app.get("/api/exercise-gif", async (req, res) => {
   const key = process.env.EXERCISEDB_KEY;
@@ -1070,9 +1073,10 @@ app.get("/api/exercise-gif", async (req, res) => {
     const text = await r.text();
     let data = null;
     try { data = JSON.parse(text); } catch { /* upstream returned non-JSON */ }
+    const first = firstExercise(data);
     const gif = extractGif(data);
     if (gif) gifCache.set(cacheKey, gif);
-    if (debug) return res.json({ ok: true, gif, debug: { ...debug, q, status: r.status, sample: text.slice(0, 500) } });
+    if (debug) return res.json({ ok: true, gif, debug: { ...debug, q, status: r.status, firstKeys: first ? Object.keys(first) : [], firstId: first?.id ?? null, sample: text.slice(0, 300) } });
     res.json({ ok: true, gif });
   } catch (err) {
     if (debug) return res.json({ ok: true, gif: null, debug: { ...debug, error: err.message } });
