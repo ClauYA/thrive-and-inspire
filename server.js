@@ -1038,28 +1038,44 @@ app.delete("/api/exercises/:id", requireUser, async (req, res) => {
 // Public: used from the member app AND the coach panel. Returns { gif: url|null }.
 // Fetches the anatomical exercise GIF by name. Degrades to null (modal falls
 // back to a YouTube search) when EXERCISEDB_KEY is unset or nothing matches.
-// Results are cached in memory by exercise name.
+// Results are cached in memory by exercise name. Add ?debug=1 to see why a
+// lookup returned null (does not expose the key).
 const gifCache = new Map();
+// ExerciseDB response shapes vary by version: bare array, { data: [...] },
+// { data: { exercises: [...] } }, etc. Pull the first item's gif URL robustly.
+function extractGif(data) {
+  const arr = Array.isArray(data) ? data
+    : Array.isArray(data?.data) ? data.data
+    : Array.isArray(data?.data?.exercises) ? data.data.exercises
+    : Array.isArray(data?.exercises) ? data.exercises
+    : Array.isArray(data?.results) ? data.results
+    : [];
+  const g = arr[0] || null;
+  return (g && (g.gifUrl || g.gif || g.image)) || null;
+}
 app.get("/api/exercise-gif", async (req, res) => {
   const key = process.env.EXERCISEDB_KEY;
   const host = process.env.EXERCISEDB_HOST || "exercisedb.p.rapidapi.com";
   const name = String(req.query.name || "").trim();
-  if (!key || !name) return res.json({ ok: true, gif: null });
+  const debug = req.query.debug ? { hasKey: Boolean(key), keyLen: key ? key.length : 0, host } : null;
+  if (!key || !name) return res.json({ ok: true, gif: null, ...(debug && { debug: { ...debug, reason: !key ? "no EXERCISEDB_KEY" : "no name" } }) });
   const cacheKey = name.toLowerCase();
-  if (gifCache.has(cacheKey)) return res.json({ ok: true, gif: gifCache.get(cacheKey) });
+  if (!req.query.debug && gifCache.has(cacheKey)) return res.json({ ok: true, gif: gifCache.get(cacheKey) });
   // ExerciseDB matches on a name substring; drop parenthetical qualifiers.
   const q = name.replace(/\(.*?\)/g, "").replace(/\s+/g, " ").trim().toLowerCase();
   try {
     const r = await fetch(`https://${host}/exercises/name/${encodeURIComponent(q)}?limit=1&offset=0`, {
       headers: { "X-RapidAPI-Key": key, "X-RapidAPI-Host": host },
     });
-    if (!r.ok) return res.json({ ok: true, gif: null });
-    const data = await r.json();
-    const g = Array.isArray(data) ? data[0] : null;
-    const url = (g && g.gifUrl) || null;
-    if (url) gifCache.set(cacheKey, url);
-    res.json({ ok: true, gif: url });
+    const text = await r.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch { /* upstream returned non-JSON */ }
+    const gif = extractGif(data);
+    if (gif) gifCache.set(cacheKey, gif);
+    if (debug) return res.json({ ok: true, gif, debug: { ...debug, q, status: r.status, sample: text.slice(0, 500) } });
+    res.json({ ok: true, gif });
   } catch (err) {
+    if (debug) return res.json({ ok: true, gif: null, debug: { ...debug, error: err.message } });
     console.error("Exercise GIF lookup failed:", err.message);
     res.json({ ok: true, gif: null });
   }
