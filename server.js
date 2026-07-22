@@ -1034,6 +1034,32 @@ app.delete("/api/exercises/:id", requireUser, async (req, res) => {
   }
 });
 
+// ── Exercise demo GIF (proxy to Giphy so the key stays server-side) ──
+// Public: used from the member app AND the coach panel. Returns { gif: url|null }.
+// Degrades to null (modal falls back to a YouTube search) when GIPHY_KEY is
+// unset or anything fails. Results are cached in memory by exercise name.
+const gifCache = new Map();
+app.get("/api/exercise-gif", async (req, res) => {
+  const key = process.env.GIPHY_KEY;
+  const name = String(req.query.name || "").trim();
+  if (!key || !name) return res.json({ ok: true, gif: null });
+  const cacheKey = name.toLowerCase();
+  if (gifCache.has(cacheKey)) return res.json({ ok: true, gif: gifCache.get(cacheKey) });
+  try {
+    const q = encodeURIComponent(`${name} exercise`);
+    const r = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${key}&q=${q}&limit=1&rating=g&lang=en`);
+    if (!r.ok) return res.json({ ok: true, gif: null });
+    const data = await r.json();
+    const g = data && data.data && data.data[0];
+    const url = (g && g.images && (g.images.downsized_medium?.url || g.images.original?.url)) || null;
+    if (url) gifCache.set(cacheKey, url);
+    res.json({ ok: true, gif: url });
+  } catch (err) {
+    console.error("Exercise GIF lookup failed:", err.message);
+    res.json({ ok: true, gif: null });
+  }
+});
+
 // ── Last performance for an exercise (for the "last time" + suggestion) ──
 app.get("/api/last-performance/:exerciseId", requireUser, async (req, res) => {
   try {
