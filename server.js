@@ -1034,24 +1034,29 @@ app.delete("/api/exercises/:id", requireUser, async (req, res) => {
   }
 });
 
-// ── Exercise demo GIF (proxy to Giphy so the key stays server-side) ──
+// ── Exercise demo GIF (proxy to ExerciseDB / RapidAPI, key stays server-side) ──
 // Public: used from the member app AND the coach panel. Returns { gif: url|null }.
-// Degrades to null (modal falls back to a YouTube search) when GIPHY_KEY is
-// unset or anything fails. Results are cached in memory by exercise name.
+// Fetches the anatomical exercise GIF by name. Degrades to null (modal falls
+// back to a YouTube search) when EXERCISEDB_KEY is unset or nothing matches.
+// Results are cached in memory by exercise name.
 const gifCache = new Map();
 app.get("/api/exercise-gif", async (req, res) => {
-  const key = process.env.GIPHY_KEY;
+  const key = process.env.EXERCISEDB_KEY;
+  const host = process.env.EXERCISEDB_HOST || "exercisedb.p.rapidapi.com";
   const name = String(req.query.name || "").trim();
   if (!key || !name) return res.json({ ok: true, gif: null });
   const cacheKey = name.toLowerCase();
   if (gifCache.has(cacheKey)) return res.json({ ok: true, gif: gifCache.get(cacheKey) });
+  // ExerciseDB matches on a name substring; drop parenthetical qualifiers.
+  const q = name.replace(/\(.*?\)/g, "").replace(/\s+/g, " ").trim().toLowerCase();
   try {
-    const q = encodeURIComponent(`${name} exercise`);
-    const r = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${key}&q=${q}&limit=1&rating=g&lang=en`);
+    const r = await fetch(`https://${host}/exercises/name/${encodeURIComponent(q)}?limit=1&offset=0`, {
+      headers: { "X-RapidAPI-Key": key, "X-RapidAPI-Host": host },
+    });
     if (!r.ok) return res.json({ ok: true, gif: null });
     const data = await r.json();
-    const g = data && data.data && data.data[0];
-    const url = (g && g.images && (g.images.downsized_medium?.url || g.images.original?.url)) || null;
+    const g = Array.isArray(data) ? data[0] : null;
+    const url = (g && g.gifUrl) || null;
     if (url) gifCache.set(cacheKey, url);
     res.json({ ok: true, gif: url });
   } catch (err) {
