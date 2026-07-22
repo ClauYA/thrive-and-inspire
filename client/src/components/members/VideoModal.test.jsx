@@ -1,9 +1,14 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, fireEvent } from "@testing-library/react";
 import { LanguageProvider } from "../../i18n/LanguageContext.jsx";
 import VideoModal, { resolveEmbed } from "./VideoModal.jsx";
 
 const wrap = (ui) => render(<LanguageProvider>{ui}</LanguageProvider>);
+
+// The modal auto-fetches a GIF (/api/exercise-gif) when there's no linked video;
+// stub it so tests never touch the network.
+beforeEach(() => vi.stubGlobal("fetch", vi.fn(() => Promise.resolve({ ok: true, json: () => Promise.resolve({ ok: true, gif: null }) }))));
+afterEach(() => vi.unstubAllGlobals());
 
 describe("resolveEmbed", () => {
   it("embeds specific YouTube links by id", () => {
