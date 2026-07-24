@@ -33,6 +33,7 @@ export default function VideoModal({ open, onClose, url, name }) {
   const linked = linkedMedia(url);
   const [gif, setGif] = useState(null);
   const [gifDone, setGifDone] = useState(false);
+  const [gifError, setGifError] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -51,6 +52,7 @@ export default function VideoModal({ open, onClose, url, name }) {
     let active = true;
     setGif(null);
     setGifDone(false);
+    setGifError(false);
     fetchExerciseGif(name)
       .then((g) => { if (active) { setGif(g); setGifDone(true); } })
       .catch(() => { if (active) setGifDone(true); });
@@ -71,8 +73,8 @@ export default function VideoModal({ open, onClose, url, name }) {
     media = <iframe className="w-full h-full" src={linked.src} title={name || "video"} allow={YT_ALLOW} allowFullScreen />;
   } else if (!gifDone) {
     media = <span className="text-white/60 text-[0.85rem]">…</span>;
-  } else if (gif) {
-    media = <img src={gif} alt={name || ""} className="w-full h-full object-contain" />;
+  } else if (gif && !gifError) {
+    media = <img src={gif} alt={name || ""} onError={() => setGifError(true)} className="w-full h-full object-contain" />;
   } else {
     media = <iframe className="w-full h-full" src={searchEmbed.src} title={name || "video"} allow={YT_ALLOW} allowFullScreen />;
   }
