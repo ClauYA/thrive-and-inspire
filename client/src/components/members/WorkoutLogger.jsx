@@ -5,6 +5,7 @@ import { userApi, getUserToken } from "../../lib/userApi";
 import { recommendation, toneStyles } from "../../lib/recommend";
 import { formatDate } from "../../lib/format";
 import { RIR_OPTIONS, rirLabel } from "../../lib/rir";
+import { equipmentChips } from "../../lib/equipment";
 import MemberHeader from "./MemberHeader";
 import VideoModal from "./VideoModal";
 import RestTimer, { DEFAULT_REST } from "./RestTimer";
@@ -98,6 +99,9 @@ export default function WorkoutLogger() {
         .filter(Boolean)
     ),
   ].sort();
+
+  // Equipment to grab for this session (from the chosen exercises).
+  const sessionEquip = equipmentChips(blocks.map((b) => exercises.find((x) => x.id === b.exerciseId)));
 
   const clearDraft = () => {
     try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
@@ -414,6 +418,16 @@ export default function WorkoutLogger() {
                 >
                   {tr.discardDraft}
                 </button>
+              </div>
+            )}
+            {sessionEquip.length > 0 && (
+              <div className="bg-sage-light/20 border border-sage-light rounded-2xl px-4 py-3 mb-4">
+                <div className="text-[0.72rem] font-semibold uppercase tracking-wide text-forest mb-1.5">{tr.equipmentNeed}</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {sessionEquip.map((eq) => (
+                    <span key={eq.label} className="text-[0.78rem] font-medium text-forest bg-white border border-sage-light px-2.5 py-1 rounded-full whitespace-nowrap">{eq.icon} {eq.label}</span>
+                  ))}
+                </div>
               </div>
             )}
             <div className="bg-white rounded-2xl border border-sand p-5 sm:p-6 mb-5 grid gap-4">
