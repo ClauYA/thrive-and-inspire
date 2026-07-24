@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useLanguage } from "../../i18n/LanguageContext";
 import ProgressRing from "./ProgressRing";
 import VideoModal from "./VideoModal";
+import { equipmentChips } from "../../lib/equipment";
 
 function Bar({ pct }) {
   return (
@@ -72,6 +73,7 @@ export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 
                     if (g) byGroup[g] = (byGroup[g] || 0) + s;
                   });
                   const chips = Object.entries(byGroup).sort((a, b) => b[1] - a[1]);
+                  const equip = equipmentChips(exs.map((e) => exMap[e.exerciseId]));
                   return (
                     <div key={di} className="min-w-0 border border-sand rounded-xl p-3 sm:p-4 bg-cream/30">
                       <div className="flex items-center justify-between gap-2 mb-1">
@@ -106,6 +108,19 @@ export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 
                             {chips.map(([g, n]) => (
                               <span key={g} className="text-[0.72rem] font-medium text-charcoal bg-white border border-sand px-2.5 py-1 rounded-full capitalize">
                                 <span className="text-terracotta font-semibold">{n}</span> {g}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {equip.length > 0 && (
+                        <div className="mt-2.5">
+                          <div className="text-[0.72rem] text-warm-gray mb-1.5">{tr.equipmentNeed}</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {equip.map((eq) => (
+                              <span key={eq.label} className="text-[0.72rem] font-medium text-forest bg-sage-light/30 border border-sage-light px-2.5 py-1 rounded-full whitespace-nowrap">
+                                {eq.icon} {eq.label}
                               </span>
                             ))}
                           </div>
