@@ -1074,7 +1074,10 @@ app.get("/api/exercise-gif", async (req, res) => {
     let data = null;
     try { data = JSON.parse(text); } catch { /* upstream returned non-JSON */ }
     const first = firstExercise(data);
-    const gif = extractGif(data);
+    let gif = extractGif(data);
+    // ExerciseDB v2.2 has no gifUrl in search results — serve the GIF through
+    // our own image proxy by id (the browser can't send the RapidAPI key).
+    if (!gif && first?.id) gif = `/api/exercise-gif-image?id=${encodeURIComponent(first.id)}`;
     if (gif) gifCache.set(cacheKey, gif);
     if (debug) return res.json({ ok: true, gif, debug: { ...debug, q, status: r.status, firstKeys: first ? Object.keys(first) : [], firstId: first?.id ?? null, sample: text.slice(0, 300) } });
     res.json({ ok: true, gif });
@@ -1082,6 +1085,30 @@ app.get("/api/exercise-gif", async (req, res) => {
     if (debug) return res.json({ ok: true, gif: null, debug: { ...debug, error: err.message } });
     console.error("Exercise GIF lookup failed:", err.message);
     res.json({ ok: true, gif: null });
+  }
+});
+
+// ── Exercise GIF image (streams the ExerciseDB GIF by id; key stays server-side) ──
+// The search endpoint above returns "/api/exercise-gif-image?id=…" as the gif
+// URL, which the <img> loads same-origin so the RapidAPI key is never exposed.
+app.get("/api/exercise-gif-image", async (req, res) => {
+  const key = process.env.EXERCISEDB_KEY;
+  const host = process.env.EXERCISEDB_HOST || "exercisedb.p.rapidapi.com";
+  const id = String(req.query.id || "").trim();
+  const resolution = /^\d{2,4}$/.test(String(req.query.res || "")) ? String(req.query.res) : "180";
+  if (!key || !id) return res.status(404).end();
+  try {
+    const r = await fetch(`https://${host}/image?exerciseId=${encodeURIComponent(id)}&resolution=${resolution}`, {
+      headers: { "X-RapidAPI-Key": key, "X-RapidAPI-Host": host },
+    });
+    if (!r.ok) return res.status(502).end();
+    const buf = Buffer.from(await r.arrayBuffer());
+    res.set("Content-Type", r.headers.get("content-type") || "image/gif");
+    res.set("Cache-Control", "public, max-age=604800"); // cache 1 week
+    res.send(buf);
+  } catch (err) {
+    console.error("Exercise GIF image failed:", err.message);
+    res.status(502).end();
   }
 });
 
