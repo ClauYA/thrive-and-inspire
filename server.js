@@ -14,6 +14,7 @@ import { clampSets } from "./lib/plan.js";
 import { parseFeedback } from "./lib/feedback.js";
 import { lbToKg } from "./lib/units.js";
 import { isApproved } from "./lib/status.js";
+import { edbQueries, bestByOverlap } from "./lib/exercisedb.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -1041,20 +1042,22 @@ app.delete("/api/exercises/:id", requireUser, async (req, res) => {
 // Results are cached in memory by exercise name. Add ?debug=1 to see why a
 // lookup returned null (does not expose the key).
 const gifCache = new Map();
-// ExerciseDB response shapes vary by version: bare array, { data: [...] },
-// { data: { exercises: [...] } }, etc. Return the first exercise object.
-function firstExercise(data) {
-  const arr = Array.isArray(data) ? data
+// ExerciseDB response shapes vary by version: bare array, { data: [...] }, etc.
+function edbToArray(data) {
+  return Array.isArray(data) ? data
     : Array.isArray(data?.data) ? data.data
     : Array.isArray(data?.data?.exercises) ? data.data.exercises
     : Array.isArray(data?.exercises) ? data.exercises
     : Array.isArray(data?.results) ? data.results
     : [];
-  return arr[0] || null;
 }
-function extractGif(data) {
-  const g = firstExercise(data);
-  return (g && (g.gifUrl || g.gif || g.image || g.gif_url)) || null;
+async function edbSearch(host, key, q) {
+  const r = await fetch(`https://${host}/exercises/name/${encodeURIComponent(q)}?limit=20&offset=0`, {
+    headers: { "X-RapidAPI-Key": key, "X-RapidAPI-Host": host },
+  });
+  if (!r.ok) return { list: [], status: r.status };
+  const data = await r.json().catch(() => null);
+  return { list: edbToArray(data), status: r.status };
 }
 app.get("/api/exercise-gif", async (req, res) => {
   const key = process.env.EXERCISEDB_KEY;
@@ -1064,22 +1067,21 @@ app.get("/api/exercise-gif", async (req, res) => {
   if (!key || !name) return res.json({ ok: true, gif: null, ...(debug && { debug: { ...debug, reason: !key ? "no EXERCISEDB_KEY" : "no name" } }) });
   const cacheKey = name.toLowerCase();
   if (!req.query.debug && gifCache.has(cacheKey)) return res.json({ ok: true, gif: gifCache.get(cacheKey) });
-  // ExerciseDB matches on a name substring; drop parenthetical qualifiers.
-  const q = name.replace(/\(.*?\)/g, "").replace(/\s+/g, " ").trim().toLowerCase();
   try {
-    const r = await fetch(`https://${host}/exercises/name/${encodeURIComponent(q)}?limit=1&offset=0`, {
-      headers: { "X-RapidAPI-Key": key, "X-RapidAPI-Host": host },
-    });
-    const text = await r.text();
-    let data = null;
-    try { data = JSON.parse(text); } catch { /* upstream returned non-JSON */ }
-    const first = firstExercise(data);
-    let gif = extractGif(data);
-    // ExerciseDB v2.2 has no gifUrl in search results — serve the GIF through
-    // our own image proxy by id (the browser can't send the RapidAPI key).
-    if (!gif && first?.id) gif = `/api/exercise-gif-image?id=${encodeURIComponent(first.id)}`;
+    // Try broad→narrow searches; take the result that shares the most words.
+    let match = null, usedQ = null, status = 0;
+    const tried = [];
+    for (const cq of edbQueries(name)) {
+      const { list, status: st } = await edbSearch(host, key, cq);
+      status = st;
+      tried.push({ q: cq, n: list.length });
+      if (list.length) { match = bestByOverlap(name, list); usedQ = cq; break; }
+    }
+    let gif = (match && (match.gifUrl || match.gif || match.image)) || null;
+    // ExerciseDB v2.2 has no gifUrl — serve the GIF through our image proxy by id.
+    if (!gif && match?.id) gif = `/api/exercise-gif-image?id=${encodeURIComponent(match.id)}`;
     if (gif) gifCache.set(cacheKey, gif);
-    if (debug) return res.json({ ok: true, gif, debug: { ...debug, q, status: r.status, firstKeys: first ? Object.keys(first) : [], firstId: first?.id ?? null, sample: text.slice(0, 300) } });
+    if (debug) return res.json({ ok: true, gif, debug: { ...debug, status, tried, matchedName: match?.name ?? null, matchedId: match?.id ?? null, usedQuery: usedQ } });
     res.json({ ok: true, gif });
   } catch (err) {
     if (debug) return res.json({ ok: true, gif: null, debug: { ...debug, error: err.message } });
