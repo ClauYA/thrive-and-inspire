@@ -280,6 +280,59 @@ export default function MembersAdmin({ onAuthError }) {
           <p className="text-warm-gray text-[0.88rem] mb-6">{A.noWorkouts}</p>
         )}
 
+        {/* Workout log — the member's logged sessions with her per-exercise notes */}
+        <h2 className="text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-warm-gray mt-8 mb-3">{A.logTitle}</h2>
+        {(sel.workouts || []).length === 0 ? (
+          <p className="text-warm-gray text-[0.88rem]">{A.logNone}</p>
+        ) : (
+          <div className="grid gap-2">
+            {(sel.workouts || []).map((w) => {
+              const isOpen = expanded === w.id;
+              const d = detail[w.id];
+              return (
+                <div key={w.id} className="bg-white rounded-2xl border border-sand overflow-hidden">
+                  <button onClick={() => toggleWorkout(w.id)} className="w-full flex items-center justify-between gap-3 p-4 text-left hover:bg-cream/50">
+                    <div className="min-w-0">
+                      <div className="font-semibold text-charcoal truncate">{w.title}</div>
+                      <div className="text-[0.74rem] text-warm-gray">{formatDate(w.performed_at, lang)} · {w.exercise_count} · {w.set_count} {tr.seriesShort}</div>
+                    </div>
+                    <span className="text-terracotta text-xs shrink-0">{isOpen ? "▲" : "▼"}</span>
+                  </button>
+                  {isOpen && (
+                    <div className="px-4 pb-4 border-t border-sand pt-3">
+                      {!d ? (
+                        <p className="text-warm-gray text-[0.85rem]">{A.loading}</p>
+                      ) : (
+                        <>
+                          <div className="grid gap-3">
+                            {groupByExercise(d.sets).map((g, gi) => {
+                              const note = (g.sets.find((s) => s.note) || {}).note;
+                              return (
+                                <div key={gi}>
+                                  <div className="font-semibold text-charcoal text-[0.88rem]">{g.name}</div>
+                                  <div className="text-[0.82rem] text-warm-gray flex flex-wrap gap-x-3 gap-y-0.5">
+                                    {g.sets.map((s, si) => (
+                                      <span key={si}>{s.weight}{s.weight_unit || unitOf(w.id)} × {s.reps}{s.rir ? ` · RIR ${s.rir}` : ""}</span>
+                                    ))}
+                                  </div>
+                                  {note && <div className="text-[0.82rem] text-forest italic mt-1">📝 {note}</div>}
+                                </div>
+                              );
+                            })}
+                          </div>
+                          {w.notes && <p className="text-[0.82rem] text-warm-gray italic mt-3">{w.notes}</p>}
+                          {d.workout && <SessionFeedback workout={d.workout} tr={tr} />}
+                          <button onClick={() => deleteWorkout(w.id)} className="mt-3 text-[0.78rem] font-semibold text-red-500 border border-red-200 px-3 py-1.5 rounded-full hover:bg-red-50">{A.deleteWorkout}</button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Progress */}
         <h2 className="text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-warm-gray mt-8 mb-3">{tr.progress}</h2>
         <div className="bg-white rounded-2xl border border-sand p-5">
