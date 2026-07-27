@@ -94,7 +94,7 @@ export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
                                 <span className="text-[0.68rem] font-semibold text-forest bg-sage-light/40 px-2 py-0.5 rounded-full whitespace-nowrap">{e.sets || 0} {tr.seriesShort}</span>
-                                <button type="button" onClick={() => setVideo({ name: ex?.name, url: ex?.media_url })} aria-label={tr.watchVideo} className="text-forest hover:text-terracotta">👁️</button>
+                                <button type="button" onClick={() => setVideo({ name: ex?.name, url: ex?.media_url, gifId: ex?.gif_id })} aria-label={tr.watchVideo} className="text-forest hover:text-terracotta">👁️</button>
                               </div>
                             </div>
                           );
@@ -151,7 +151,7 @@ export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 
         );
       })}
     </div>
-    <VideoModal open={!!video} onClose={() => setVideo(null)} url={video?.url} name={video?.name} />
+    <VideoModal open={!!video} onClose={() => setVideo(null)} url={video?.url} name={video?.name} gifId={video?.gifId} />
     </>
   );
 }

@@ -27,7 +27,7 @@ const YT_ALLOW = "accelerometer; autoplay; clipboard-write; encrypted-media; gyr
 //  2. an auto GIF searched by the exercise name (Giphy, until a video is linked), else
 //  3. the YouTube "how to <exercise>" search embed.
 // Close via the ✕ (top-right), clicking the backdrop, or pressing Esc.
-export default function VideoModal({ open, onClose, url, name }) {
+export default function VideoModal({ open, onClose, url, name, gifId }) {
   const { t } = useLanguage();
   const tr = t.tracker;
   const linked = linkedMedia(url);
@@ -46,9 +46,9 @@ export default function VideoModal({ open, onClose, url, name }) {
     };
   }, [open, onClose]);
 
-  // No linked video → try to auto-load a GIF of the exercise by name.
+  // No linked video and no pinned GIF → auto-load a GIF of the exercise by name.
   useEffect(() => {
-    if (!open || linkedMedia(url)) return;
+    if (!open || linkedMedia(url) || gifId) { setGifError(false); return; }
     let active = true;
     setGif(null);
     setGifDone(false);
@@ -71,7 +71,9 @@ export default function VideoModal({ open, onClose, url, name }) {
     media = <img src={linked.src} alt={name || ""} className="w-full h-full object-contain" />;
   } else if (linked) {
     media = <iframe className="w-full h-full" src={linked.src} title={name || "video"} allow={YT_ALLOW} allowFullScreen />;
-  } else if (!gifDone) {
+  } else if (gifId && !gifError) {
+    media = <img src={`/api/exercise-gif-image?id=${encodeURIComponent(gifId)}`} alt={name || ""} onError={() => setGifError(true)} className="w-full h-full object-contain" />;
+  } else if (!gifId && !gifDone) {
     media = <span className="text-white/60 text-[0.85rem]">…</span>;
   } else if (gif && !gifError) {
     media = <img src={gif} alt={name || ""} onError={() => setGifError(true)} className="w-full h-full object-contain" />;
