@@ -1,0 +1,27 @@
+[
+  {
+    "id": "g1",
+    "titulo": "Borrador: cardio en ayunas mata el músculo",
+    "hookId": "h1",
+    "template": "[X] acaba de matar a [Y]",
+    "angulo": "polémico / mito del gym",
+    "x": "El cardio en ayunas",
+    "y": "tu masa muscular",
+    "cuerpo": "",
+    "estado": "borrador",
+    "creado": "2026-06-25"
+  },
+  {
+    "id": "g2",
+    "titulo": "[número] cosas que ojalá hubiera sabido",
+    "hookId": "h3",
+    "template": "[número] cosas que ojalá hubiera sabido",
+    "angulo": "listicle",
+    "x": "",
+    "y": "",
+    "numero": "",
+    "cuerpo": "",
+    "estado": "borrador",
+    "creado": "2026-06-26"
+  }
+]

@@ -1,9 +1,10 @@
-// Badge / chip — small status pill. tones: amber | sage | gold | neutral
+// Badge / chip — small status pill. tones: amber | sage | gold | neutral | mint
 const TONES = {
   amber: "bg-terracotta/10 text-terracotta",
   sage: "bg-sage-light/50 text-forest",
   gold: "bg-gold/20 text-charcoal",
   neutral: "bg-sand text-warm-gray",
+  mint: "bg-support-mint text-action-primary",
 };
 
 export default function Badge({ tone = "amber", className = "", ...props }) {

@@ -1,0 +1,113 @@
+{
+  "actualizado": "2026-06-27",
+  "items": [
+    {
+      "id": "t1",
+      "fuente": "Stronger by Science",
+      "titulo": "Nuevo metaanálisis: volumen óptimo para hipertrofia",
+      "util": true,
+      "ideaContenido": "Reel: “cuántas series necesitas DE VERDAD” · bodybuilding",
+      "fecha": "2026-06-21",
+      "url": "https://example.com/2"
+    },
+    {
+      "id": "t2",
+      "fuente": "MASS Research Review",
+      "titulo": "Estudio: proteína y saciedad en déficit calórico",
+      "util": true,
+      "ideaContenido": "Gancho: “come esto y dejas de tener hambre” · conscious eating",
+      "fecha": "2026-06-24",
+      "url": "https://example.com/3"
+    },
+    {
+      "id": "t3",
+      "fuente": "Examine.com",
+      "titulo": "Herramienta IA que corta tus reels largos en clips",
+      "util": true,
+      "ideaContenido": "Setup: “edito 10 reels de mis entrenos en 10 min”",
+      "fecha": "2026-06-22",
+      "url": "https://example.com/4"
+    },
+    {
+      "id": "t4",
+      "fuente": "Precision Nutrition",
+      "titulo": "Revisión: frecuencia por grupo muscular a la semana",
+      "util": true,
+      "ideaContenido": "Explainer: “¿cuántas veces entrenar cada músculo?” · powerbuilding",
+      "fecha": "2026-06-24",
+      "url": "https://example.com/5"
+    },
+    {
+      "id": "t5",
+      "fuente": "NSCA",
+      "titulo": "Paper denso de biomecánica de sentadilla",
+      "util": false,
+      "ideaContenido": "",
+      "fecha": "2026-06-21",
+      "url": "https://example.com/6"
+    },
+    {
+      "id": "t6",
+      "fuente": "Jeff Nippard (YT)",
+      "titulo": "Voz IA para narrar reels sin grabar tu voz",
+      "util": true,
+      "ideaContenido": "Demo: narra tu reel de hábitos sin grabar · healthy lifestyle",
+      "fecha": "2026-06-24",
+      "url": "https://example.com/7"
+    },
+    {
+      "id": "t7",
+      "fuente": "Layne Norton",
+      "titulo": "Nuevo metaanálisis: volumen óptimo para hipertrofia",
+      "util": true,
+      "ideaContenido": "Reel: “cuántas series necesitas DE VERDAD” · bodybuilding",
+      "fecha": "2026-06-25",
+      "url": "https://example.com/8"
+    },
+    {
+      "id": "t8",
+      "fuente": "Renaissance Periodization",
+      "titulo": "Estudio: proteína y saciedad en déficit calórico",
+      "util": true,
+      "ideaContenido": "Gancho: “come esto y dejas de tener hambre” · conscious eating",
+      "fecha": "2026-06-23",
+      "url": "https://example.com/9"
+    },
+    {
+      "id": "t9",
+      "fuente": "PubMed · entrenamiento",
+      "titulo": "Herramienta IA que corta tus reels largos en clips",
+      "util": true,
+      "ideaContenido": "Setup: “edito 10 reels de mis entrenos en 10 min”",
+      "fecha": "2026-06-22",
+      "url": "https://example.com/10"
+    },
+    {
+      "id": "t10",
+      "fuente": "Opus Clip (IA)",
+      "titulo": "Revisión: frecuencia por grupo muscular a la semana",
+      "util": true,
+      "ideaContenido": "Explainer: “¿cuántas veces entrenar cada músculo?” · powerbuilding",
+      "fecha": "2026-06-25",
+      "url": "https://example.com/11"
+    },
+    {
+      "id": "t11",
+      "fuente": "CapCut IA",
+      "titulo": "Paper denso de biomecánica de sentadilla",
+      "util": false,
+      "ideaContenido": "",
+      "fecha": "2026-06-21",
+      "url": "https://example.com/12"
+    },
+    {
+      "id": "t12",
+      "fuente": "ElevenLabs (voz IA)",
+      "titulo": "Voz IA para narrar reels sin grabar tu voz",
+      "util": true,
+      "ideaContenido": "Demo: narra tu reel de hábitos sin grabar · healthy lifestyle",
+      "fecha": "2026-06-25",
+      "url": "https://example.com/13"
+    }
+  ]
+}

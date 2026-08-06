@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "../i18n/LanguageContext";
 import { Button } from "./ui";
+import { Globe } from "lucide-react";
 
 const links = [
   { href: "#struggles", key: "about" },
@@ -69,7 +70,7 @@ export default function Navbar() {
           onClick={toggle}
           className="bg-transparent border-[1.5px] border-sage-light text-forest px-4 py-2 rounded-full text-[0.82rem] font-semibold hover:bg-forest hover:text-white hover:border-forest transition-all"
         >
-          🌐 {t.nav.langLabel}
+          <span className="inline-flex items-center gap-1.5"><Globe size={15} /> {t.nav.langLabel}</span>
         </button>
         <button
           onClick={() => setMenuOpen((o) => !o)}

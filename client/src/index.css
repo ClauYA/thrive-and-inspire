@@ -1,47 +1,109 @@
 @import "tailwindcss";
 
-/* ── DESIGN TOKENS (Tailwind v4 @theme) ──
-   These become utilities automatically, e.g. bg-cream, text-terracotta,
-   font-display. Same warm palette as the original site. */
+/* TOKENS:START – auto-generated from tokens/tokens.json via `npm run tokens`. Do not edit between these markers. */
 @theme {
-  /* ── Paleta: Eucalipto · Durazno · Marfil · Arcilla · Pistacho ──
-     Combina cinco tonos cálidos y naturales. Los nombres de token se
-     conservan por compatibilidad, pero ahora apuntan a la nueva paleta:
-       cream/warm-white/sand  → Marfil (ivory)
-       terracotta (principal) → Ámbar / dorado profundo
-       forest/sage            → Eucalipto (eucalyptus)
-       sage-light             → Pistacho (pistachio)
-       gold                   → Durazno (peach) */
-
-  /* Marfil (ivory) — fondos */
-  --color-cream: #f6f1e6;
-  --color-warm-white: #fdfaf3;
-  --color-sand: #e7dcc9;
-
-  /* Ámbar / dorado profundo — acento principal */
-  --color-terracotta: #b07d1f;
-  --color-terracotta-light: #c99a3a;
-  --color-terracotta-dark: #916615;
-
-  /* Eucalipto (eucalyptus) — verdes */
-  --color-forest: #3e564a;
-  --color-forest-light: #5a7567;
-  --color-sage: #82a392;
-
-  /* Pistacho (pistachio) — verde claro */
-  --color-sage-light: #c6dbac;
-
-  /* Neutros con matiz eucalipto */
-  --color-charcoal: #303a33;
-  --color-warm-gray: #61706a;
-  --color-light-gray: #bcc6bd;
-
-  /* Dorado miel — acento cálido */
-  --color-gold: #d9a441;
-
+  /* ── PRIMITIVES · raw palette (honest names) ── */
+  --color-forest-300: #b98fbc;
+  --color-forest-400: #7e4e82;
+  --color-forest-500: #511a54;
+  --color-forest-600: #47174a;
+  --color-forest-700: #38103a;
+  --color-orange-200: #f9e4b3;
+  --color-orange-300: #f4d488;
+  --color-orange-500: #edb93b;
+  --color-orange-600: #c29320;
+  --color-teal-200: #c3e9f5;
+  --color-teal-300: #8fdcf3;
+  --color-teal-500: #3ab6e0;
+  --color-teal-600: #2183a6;
+  --color-purple-200: #f6c7d6;
+  --color-purple-300: #f09bb6;
+  --color-purple-500: #db2e63;
+  --color-purple-600: #a81e49;
+  --color-lime-200: #c8e6d6;
+  --color-lime-300: #8fd6b7;
+  --color-lime-500: #2fae74;
+  --color-lime-600: #1f7d53;
+  --color-mint-300: #bcd6a6;
+  --color-ink-800: #3f3c38;
+  --color-ink-900: #1d1c1d;
+  --color-neutral-100: #f7f6f7;
+  --color-neutral-200: #efedef;
+  --color-neutral-300: #e2dee3;
+  --color-neutral-400: #9b939c;
+  --color-neutral-500: #6d636e;
+  --color-neutral-600: #453a47;
+  --color-neutral-700: #1d1c1d;
+  --color-neutral-000: #ffffff;
+  --color-state-success: #279458;
+  --color-state-warning: #e0a020;
+  --color-state-danger: #db2e63;
+  --color-state-info: #2fa0c4;
+  --color-tint-danger: #fbe3ec;
+  --color-tint-warning: #fbf0d5;
+  --color-tint-info: #e3f5fc;
   --font-display: "Cormorant Garamond", Georgia, serif;
   --font-body: "DM Sans", sans-serif;
+  --shadow-card: 0 8px 24px rgba(29,28,29,0.06);
+  --shadow-card-sm: 0 6px 18px rgba(29,28,29,0.05);
+  --shadow-elevated: 0 20px 50px rgba(29,28,29,0.12);
+  --shadow-button: 0 8px 24px rgba(81,26,84,0.32);
+  --shadow-button-dark: 0 8px 24px rgba(0,0,0,0.20);
+  --shadow-feature: 0 20px 50px rgba(81,26,84,0.22);
+  --text-display-sm: 1.4rem;
+  --text-display-md: 1.7rem;
+  --text-display-lg: 2rem;
+  --text-display-xl: clamp(2rem, 5vw, 3rem);
+
+  /* ── SEMANTIC · roles → primitives ── */
+  --color-bg-default: var(--color-neutral-100);
+  --color-bg-surface: var(--color-neutral-000);
+  --color-bg-subtle: var(--color-neutral-200);
+  --color-text-primary: var(--color-ink-900);
+  --color-text-muted: var(--color-neutral-500);
+  --color-text-on-accent: var(--color-neutral-000);
+  --color-action-primary: var(--color-forest-500);
+  --color-action-hover: var(--color-forest-700);
+  --color-accent: var(--color-purple-500);
+  --color-border-subtle: var(--color-neutral-300);
+  --color-border-strong: var(--color-neutral-400);
+  --color-support-green: var(--color-lime-500);
+  --color-support-green-strong: var(--color-lime-600);
+  --color-support-mint: var(--color-mint-300);
+  --color-status-success-bg: var(--color-lime-200);
+  --color-status-success-fg: var(--color-lime-600);
+  --color-status-success-solid: var(--color-state-success);
+  --color-status-error-bg: var(--color-tint-danger);
+  --color-status-error-fg: var(--color-state-danger);
+  --color-status-error-solid: var(--color-state-danger);
+  --color-status-warning-bg: var(--color-orange-200);
+  --color-status-warning-fg: var(--color-orange-600);
+  --color-status-warning-solid: var(--color-state-warning);
+  --color-status-info-bg: var(--color-teal-200);
+  --color-status-info-fg: var(--color-teal-600);
+  --color-status-info-solid: var(--color-state-info);
+  --color-data-energy: var(--color-orange-500);
+  --color-data-fat: var(--color-teal-500);
+  --color-data-protein: var(--color-purple-500);
+  --color-data-activity: var(--color-lime-500);
+
+  /* ── LEGACY · compat shim, remove as components migrate to semantic ── */
+  --color-cream: var(--color-neutral-100);
+  --color-warm-white: var(--color-neutral-000);
+  --color-sand: var(--color-neutral-300);
+  --color-terracotta: var(--color-forest-500);
+  --color-terracotta-light: var(--color-forest-400);
+  --color-terracotta-dark: var(--color-forest-700);
+  --color-forest: var(--color-forest-700);
+  --color-forest-light: var(--color-forest-400);
+  --color-sage: var(--color-lime-500);
+  --color-sage-light: var(--color-lime-300);
+  --color-charcoal: var(--color-ink-900);
+  --color-warm-gray: var(--color-neutral-500);
+  --color-light-gray: var(--color-neutral-400);
+  --color-gold: var(--color-orange-500);
 }
+/* TOKENS:END */
 
 *,
 *::before,

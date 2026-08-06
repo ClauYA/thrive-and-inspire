@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLanguage } from "../i18n/LanguageContext";
-import { Button } from "./ui";
+import { Button, Badge } from "./ui";
 
 export default function Hero() {
   const { t } = useLanguage();
@@ -39,10 +39,10 @@ export default function Hero() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
       >
-        <div className="inline-flex items-center gap-2 text-[0.8rem] font-semibold tracking-[0.12em] uppercase text-terracotta mb-6 px-4 py-2 bg-terracotta/10 rounded-full border border-terracotta/20">
-          <span className="w-1.5 h-1.5 bg-terracotta rounded-full" style={{ animation: "pulseDot 2s ease-in-out infinite" }} />
+        <Badge tone="mint" className="!inline-flex items-center gap-2 mb-6 !px-4 !py-2 !text-[0.8rem] tracking-[0.12em] uppercase">
+          <span className="w-1.5 h-1.5 bg-action-primary rounded-full" style={{ animation: "pulseDot 2s ease-in-out infinite" }} />
           {h.eyebrow}
-        </div>
+        </Badge>
 
         <h1 className="font-display text-[clamp(2.8rem,5vw,4.2rem)] font-semibold leading-[1.1] tracking-tight text-charcoal mb-6">
           {h.title1} <em className="italic text-terracotta">{h.titleEm}</em>
@@ -57,20 +57,18 @@ export default function Hero() {
               <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </Button>
+          <Button as="a" href="#guide" variant="secondary" size="lg">
+            {h.ctaGuide}
+          </Button>
         </div>
+        <p className="text-[0.82rem] text-warm-gray mt-3">{h.ctaMicro}</p>
 
-        <div className="flex items-center gap-4 mt-12 pt-8 border-t border-sand">
-          <div className="flex">
-            {["🌿", "💪", "✨", "🌱"].map((e, i) => (
-              <span key={i} className={`w-9 h-9 rounded-full border-2 border-warm-white flex items-center justify-center text-[0.9rem] bg-sage-light ${i ? "-ml-2" : ""}`}>
-                {e}
-              </span>
-            ))}
+        <div className="mt-10 pt-8 border-t border-sand">
+          <div className="flex items-center gap-2 text-[0.9rem]">
+            <span className="text-terracotta tracking-[2px]">★★★★★</span>
+            <strong className="text-charcoal">{h.trustStrong}</strong>
           </div>
-          <div className="text-[0.85rem] text-warm-gray">
-            <strong className="block text-charcoal text-[0.9rem] mb-0.5">{h.trustStrong}</strong>
-            {h.trustText}
-          </div>
+          <p className="text-[0.8rem] text-warm-gray mt-1">{h.trustText}</p>
         </div>
       </motion.div>
 

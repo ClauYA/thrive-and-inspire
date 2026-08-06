@@ -1,4 +1,5 @@
 import { useLanguage } from "../../i18n/LanguageContext";
+import { Check } from "lucide-react";
 
 const localKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
@@ -65,7 +66,7 @@ export default function WeekStrip({ workouts, routine, exMap, onPick }) {
             </div>
             {c.done ? (
               <button onClick={() => onPick(c.done[0].id)} className="flex-1 text-left">
-                <span className="text-[0.62rem] text-forest font-semibold block leading-tight">✓ {c.done[0].title}</span>
+                <span className="text-[0.62rem] text-forest font-semibold flex items-center gap-1 leading-tight"><Check size={11} strokeWidth={3} /> {c.done[0].title}</span>
               </button>
             ) : c.plan ? (
               <div className="flex-1">

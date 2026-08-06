@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Reveal from "./Reveal";
 import { useLanguage } from "../i18n/LanguageContext";
+import { ChevronDown } from "lucide-react";
 
 export default function Faq() {
   const { t } = useLanguage();
@@ -42,7 +43,7 @@ export default function Faq() {
                       isOpen ? "bg-sage-light rotate-180" : "bg-sand"
                     }`}
                   >
-                    ▾
+                    <ChevronDown size={14} strokeWidth={2.5} />
                   </span>
                 </button>
                 <AnimatePresence initial={false}>

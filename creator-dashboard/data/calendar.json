@@ -1,0 +1,41 @@
+[
+  {
+    "id": "cal1",
+    "fecha": "2026-06-26",
+    "titulo": "El cardio en ayunas mata tu masa muscular",
+    "hookId": "h1",
+    "angulo": "polémico",
+    "plataformas": [
+      "instagram",
+      "tiktok"
+    ],
+    "estado": "planeado",
+    "origen": "/guion"
+  },
+  {
+    "id": "cal2",
+    "fecha": "2026-06-28",
+    "titulo": "7 cosas que ojalá hubiera sabido antes de hacer fuerza",
+    "hookId": "h3",
+    "angulo": "listicle",
+    "plataformas": [
+      "instagram",
+      "youtube"
+    ],
+    "estado": "planeado",
+    "origen": "/guion"
+  },
+  {
+    "id": "cal3",
+    "fecha": "2026-07-01",
+    "titulo": "[número] cosas que ojalá hubiera sabido",
+    "hookId": "h3",
+    "angulo": "listicle",
+    "plataformas": [
+      "instagram",
+      "tiktok"
+    ],
+    "estado": "planeado",
+    "origen": "/guion"
+  }
+]

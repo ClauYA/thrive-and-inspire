@@ -4,6 +4,7 @@ import { useLanguage } from "../../i18n/LanguageContext";
 import { userApi, getUserToken } from "../../lib/userApi";
 import MemberHeader from "./MemberHeader";
 import { Button, Input, Textarea, Field } from "../ui";
+import { Play, ExternalLink, X } from "lucide-react";
 
 export default function ExerciseCatalog() {
   const { t } = useLanguage();
@@ -77,13 +78,13 @@ export default function ExerciseCatalog() {
         </div>
         {ex.media_url && (
           <a href={ex.media_url} target="_blank" rel="noopener noreferrer" className="text-[0.78rem] font-semibold text-terracotta hover:text-terracotta-dark">
-            ▶ {tr.watchVideo} ↗
+            <span className="inline-flex items-center gap-1"><Play size={12} className="fill-current" /> {tr.watchVideo} <ExternalLink size={12} /></span>
           </a>
         )}
       </div>
       {deletable && (
-        <button onClick={() => remove(ex)} aria-label={tr.delete} className="shrink-0 text-warm-gray hover:text-red-500 transition-colors text-xl leading-none px-1">
-          ×
+        <button onClick={() => remove(ex)} aria-label={tr.delete} className="shrink-0 text-warm-gray hover:text-red-500 transition-colors leading-none px-1">
+          <X size={18} />
         </button>
       )}
     </div>

@@ -1,0 +1,781 @@
+{
+  "actualizado": "2026-06-25",
+  "daily": [
+    {
+      "date": "2026-03-28",
+      "vistas": 43166,
+      "guardados": 804,
+      "seguidores": 38337,
+      "seguidoresNuevos": 154,
+      "dms": 58
+    },
+    {
+      "date": "2026-03-29",
+      "vistas": 56891,
+      "guardados": 1289,
+      "seguidores": 38433,
+      "seguidoresNuevos": 110,
+      "dms": 70
+    },
+    {
+      "date": "2026-03-30",
+      "vistas": 44968,
+      "guardados": 880,
+      "seguidores": 38559,
+      "seguidoresNuevos": 139,
+      "dms": 49
+    },
+    {
+      "date": "2026-03-31",
+      "vistas": 49616,
+      "guardados": 1039,
+      "seguidores": 38678,
+      "seguidoresNuevos": 126,
+      "dms": 74
+    },
+    {
+      "date": "2026-04-01",
+      "vistas": 49133,
+      "guardados": 1316,
+      "seguidores": 38772,
+      "seguidoresNuevos": 98,
+      "dms": 49
+    },
+    {
+      "date": "2026-04-02",
+      "vistas": 51747,
+      "guardados": 1215,
+      "seguidores": 38916,
+      "seguidoresNuevos": 146,
+      "dms": 73
+    },
+    {
+      "date": "2026-04-03",
+      "vistas": 58575,
+      "guardados": 1418,
+      "seguidores": 39039,
+      "seguidoresNuevos": 147,
+      "dms": 67
+    },
+    {
+      "date": "2026-04-04",
+      "vistas": 83967,
+      "guardados": 2206,
+      "seguidores": 39159,
+      "seguidoresNuevos": 124,
+      "dms": 69
+    },
+    {
+      "date": "2026-04-05",
+      "vistas": 71487,
+      "guardados": 1301,
+      "seguidores": 39254,
+      "seguidoresNuevos": 114,
+      "dms": 65
+    },
+    {
+      "date": "2026-04-06",
+      "vistas": 57184,
+      "guardados": 1297,
+      "seguidores": 39403,
+      "seguidoresNuevos": 167,
+      "dms": 69
+    },
+    {
+      "date": "2026-04-07",
+      "vistas": 54668,
+      "guardados": 1179,
+      "seguidores": 39500,
+      "seguidoresNuevos": 100,
+      "dms": 74
+    },
+    {
+      "date": "2026-04-08",
+      "vistas": 53547,
+      "guardados": 1066,
+      "seguidores": 39630,
+      "seguidoresNuevos": 138,
+      "dms": 48
+    },
+    {
+      "date": "2026-04-09",
+      "vistas": 59774,
+      "guardados": 1627,
+      "seguidores": 39747,
+      "seguidoresNuevos": 138,
+      "dms": 69
+    },
+    {
+      "date": "2026-04-10",
+      "vistas": 62965,
+      "guardados": 1207,
+      "seguidores": 39871,
+      "seguidoresNuevos": 140,
+      "dms": 77
+    },
+    {
+      "date": "2026-04-11",
+      "vistas": 77156,
+      "guardados": 2035,
+      "seguidores": 40008,
+      "seguidoresNuevos": 161,
+      "dms": 85
+    },
+    {
+      "date": "2026-04-12",
+      "vistas": 63378,
+      "guardados": 1660,
+      "seguidores": 40094,
+      "seguidoresNuevos": 99,
+      "dms": 60
+    },
+    {
+      "date": "2026-04-13",
+      "vistas": 51807,
+      "guardados": 1217,
+      "seguidores": 40216,
+      "seguidoresNuevos": 146,
+      "dms": 62
+    },
+    {
+      "date": "2026-04-14",
+      "vistas": 51157,
+      "guardados": 1141,
+      "seguidores": 40334,
+      "seguidoresNuevos": 136,
+      "dms": 62
+    },
+    {
+      "date": "2026-04-15",
+      "vistas": 37639,
+      "guardados": 767,
+      "seguidores": 40404,
+      "seguidoresNuevos": 71,
+      "dms": 68
+    },
+    {
+      "date": "2026-04-16",
+      "vistas": 45799,
+      "guardados": 1113,
+      "seguidores": 40469,
+      "seguidoresNuevos": 80,
+      "dms": 61
+    },
+    {
+      "date": "2026-04-17",
+      "vistas": 40661,
+      "guardados": 1136,
+      "seguidores": 40539,
+      "seguidoresNuevos": 95,
+      "dms": 61
+    },
+    {
+      "date": "2026-04-18",
+      "vistas": 49977,
+      "guardados": 1212,
+      "seguidores": 40686,
+      "seguidoresNuevos": 150,
+      "dms": 75
+    },
+    {
+      "date": "2026-04-19",
+      "vistas": 39287,
+      "guardados": 930,
+      "seguidores": 40761,
+      "seguidoresNuevos": 85,
+      "dms": 47
+    },
+    {
+      "date": "2026-04-20",
+      "vistas": 35870,
+      "guardados": 955,
+      "seguidores": 40872,
+      "seguidoresNuevos": 127,
+      "dms": 69
+    },
+    {
+      "date": "2026-04-21",
+      "vistas": 29936,
+      "guardados": 759,
+      "seguidores": 40998,
+      "seguidoresNuevos": 138,
+      "dms": 44
+    },
+    {
+      "date": "2026-04-22",
+      "vistas": 28157,
+      "guardados": 731,
+      "seguidores": 41121,
+      "seguidoresNuevos": 128,
+      "dms": 53
+    },
+    {
+      "date": "2026-04-23",
+      "vistas": 25109,
+      "guardados": 584,
+      "seguidores": 41185,
+      "seguidoresNuevos": 70,
+      "dms": 48
+    },
+    {
+      "date": "2026-04-24",
+      "vistas": 24745,
+      "guardados": 488,
+      "seguidores": 41237,
+      "seguidoresNuevos": 56,
+      "dms": 36
+    },
+    {
+      "date": "2026-04-25",
+      "vistas": 21343,
+      "guardados": 571,
+      "seguidores": 41365,
+      "seguidoresNuevos": 130,
+      "dms": 39
+    },
+    {
+      "date": "2026-04-26",
+      "vistas": 29870,
+      "guardados": 687,
+      "seguidores": 41476,
+      "seguidoresNuevos": 120,
+      "dms": 48
+    },
+    {
+      "date": "2026-04-27",
+      "vistas": 33026,
+      "guardados": 829,
+      "seguidores": 41592,
+      "seguidoresNuevos": 129,
+      "dms": 62
+    },
+    {
+      "date": "2026-04-28",
+      "vistas": 26492,
+      "guardados": 626,
+      "seguidores": 41660,
+      "seguidoresNuevos": 81,
+      "dms": 59
+    },
+    {
+      "date": "2026-04-29",
+      "vistas": 21327,
+      "guardados": 438,
+      "seguidores": 41757,
+      "seguidoresNuevos": 118,
+      "dms": 57
+    },
+    {
+      "date": "2026-04-30",
+      "vistas": 30813,
+      "guardados": 665,
+      "seguidores": 41887,
+      "seguidoresNuevos": 136,
+      "dms": 48
+    },
+    {
+      "date": "2026-05-01",
+      "vistas": 34211,
+      "guardados": 900,
+      "seguidores": 41961,
+      "seguidoresNuevos": 98,
+      "dms": 55
+    },
+    {
+      "date": "2026-05-02",
+      "vistas": 44961,
+      "guardados": 962,
+      "seguidores": 42075,
+      "seguidoresNuevos": 121,
+      "dms": 70
+    },
+    {
+      "date": "2026-05-03",
+      "vistas": 51955,
+      "guardados": 1447,
+      "seguidores": 42216,
+      "seguidoresNuevos": 153,
+      "dms": 59
+    },
+    {
+      "date": "2026-05-04",
+      "vistas": 46993,
+      "guardados": 1283,
+      "seguidores": 42324,
+      "seguidoresNuevos": 124,
+      "dms": 49
+    },
+    {
+      "date": "2026-05-05",
+      "vistas": 49673,
+      "guardados": 1088,
+      "seguidores": 42435,
+      "seguidoresNuevos": 132,
+      "dms": 56
+    },
+    {
+      "date": "2026-05-06",
+      "vistas": 43989,
+      "guardados": 832,
+      "seguidores": 42549,
+      "seguidoresNuevos": 132,
+      "dms": 72
+    },
+    {
+      "date": "2026-05-07",
+      "vistas": 46949,
+      "guardados": 967,
+      "seguidores": 42617,
+      "seguidoresNuevos": 86,
+      "dms": 72
+    },
+    {
+      "date": "2026-05-08",
+      "vistas": 59005,
+      "guardados": 1551,
+      "seguidores": 42782,
+      "seguidoresNuevos": 171,
+      "dms": 78
+    },
+    {
+      "date": "2026-05-09",
+      "vistas": 63025,
+      "guardados": 1474,
+      "seguidores": 42893,
+      "seguidoresNuevos": 129,
+      "dms": 73
+    },
+    {
+      "date": "2026-05-10",
+      "vistas": 73965,
+      "guardados": 1868,
+      "seguidores": 43038,
+      "seguidoresNuevos": 160,
+      "dms": 63
+    },
+    {
+      "date": "2026-05-11",
+      "vistas": 64729,
+      "guardados": 1478,
+      "seguidores": 43131,
+      "seguidoresNuevos": 111,
+      "dms": 65
+    },
+    {
+      "date": "2026-05-12",
+      "vistas": 59756,
+      "guardados": 1405,
+      "seguidores": 43272,
+      "seguidoresNuevos": 165,
+      "dms": 54
+    },
+    {
+      "date": "2026-05-13",
+      "vistas": 50433,
+      "guardados": 1052,
+      "seguidores": 43388,
+      "seguidoresNuevos": 126,
+      "dms": 72
+    },
+    {
+      "date": "2026-05-14",
+      "vistas": 66124,
+      "guardados": 1541,
+      "seguidores": 43555,
+      "seguidoresNuevos": 174,
+      "dms": 66
+    },
+    {
+      "date": "2026-05-15",
+      "vistas": 66930,
+      "guardados": 1657,
+      "seguidores": 43713,
+      "seguidoresNuevos": 166,
+      "dms": 79
+    },
+    {
+      "date": "2026-05-16",
+      "vistas": 83461,
+      "guardados": 2206,
+      "seguidores": 43830,
+      "seguidoresNuevos": 121,
+      "dms": 81
+    },
+    {
+      "date": "2026-05-17",
+      "vistas": 58887,
+      "guardados": 1109,
+      "seguidores": 43989,
+      "seguidoresNuevos": 166,
+      "dms": 66
+    },
+    {
+      "date": "2026-05-18",
+      "vistas": 48556,
+      "guardados": 1260,
+      "seguidores": 44128,
+      "seguidoresNuevos": 140,
+      "dms": 58
+    },
+    {
+      "date": "2026-05-19",
+      "vistas": 61437,
+      "guardados": 1156,
+      "seguidores": 44221,
+      "seguidoresNuevos": 103,
+      "dms": 73
+    },
+    {
+      "date": "2026-05-20",
+      "vistas": 52941,
+      "guardados": 1097,
+      "seguidores": 44345,
+      "seguidoresNuevos": 127,
+      "dms": 61
+    },
+    {
+      "date": "2026-05-21",
+      "vistas": 44968,
+      "guardados": 1054,
+      "seguidores": 44417,
+      "seguidoresNuevos": 91,
+      "dms": 52
+    },
+    {
+      "date": "2026-05-22",
+      "vistas": 47563,
+      "guardados": 1252,
+      "seguidores": 44496,
+      "seguidoresNuevos": 84,
+      "dms": 66
+    },
+    {
+      "date": "2026-05-23",
+      "vistas": 61236,
+      "guardados": 1275,
+      "seguidores": 44643,
+      "seguidoresNuevos": 163,
+      "dms": 59
+    },
+    {
+      "date": "2026-05-24",
+      "vistas": 36833,
+      "guardados": 702,
+      "seguidores": 44774,
+      "seguidoresNuevos": 148,
+      "dms": 47
+    },
+    {
+      "date": "2026-05-25",
+      "vistas": 35702,
+      "guardados": 668,
+      "seguidores": 44872,
+      "seguidoresNuevos": 109,
+      "dms": 63
+    },
+    {
+      "date": "2026-05-26",
+      "vistas": 25768,
+      "guardados": 655,
+      "seguidores": 44936,
+      "seguidoresNuevos": 70,
+      "dms": 41
+    },
+    {
+      "date": "2026-05-27",
+      "vistas": 38637,
+      "guardados": 707,
+      "seguidores": 44986,
+      "seguidoresNuevos": 74,
+      "dms": 68
+    },
+    {
+      "date": "2026-05-28",
+      "vistas": 28410,
+      "guardados": 675,
+      "seguidores": 45098,
+      "seguidoresNuevos": 116,
+      "dms": 52
+    },
+    {
+      "date": "2026-05-29",
+      "vistas": 18285,
+      "guardados": 438,
+      "seguidores": 45183,
+      "seguidoresNuevos": 106,
+      "dms": 34
+    },
+    {
+      "date": "2026-05-30",
+      "vistas": 34468,
+      "guardados": 748,
+      "seguidores": 45231,
+      "seguidoresNuevos": 71,
+      "dms": 47
+    },
+    {
+      "date": "2026-05-31",
+      "vistas": 22725,
+      "guardados": 473,
+      "seguidores": 45292,
+      "seguidoresNuevos": 81,
+      "dms": 59
+    },
+    {
+      "date": "2026-06-01",
+      "vistas": 32887,
+      "guardados": 846,
+      "seguidores": 45391,
+      "seguidoresNuevos": 121,
+      "dms": 57
+    },
+    {
+      "date": "2026-06-02",
+      "vistas": 29689,
+      "guardados": 739,
+      "seguidores": 45467,
+      "seguidoresNuevos": 86,
+      "dms": 57
+    },
+    {
+      "date": "2026-06-03",
+      "vistas": 22524,
+      "guardados": 460,
+      "seguidores": 45545,
+      "seguidoresNuevos": 93,
+      "dms": 54
+    },
+    {
+      "date": "2026-06-04",
+      "vistas": 25749,
+      "guardados": 647,
+      "seguidores": 45603,
+      "seguidoresNuevos": 76,
+      "dms": 51
+    },
+    {
+      "date": "2026-06-05",
+      "vistas": 27586,
+      "guardados": 605,
+      "seguidores": 45724,
+      "seguidoresNuevos": 124,
+      "dms": 53
+    },
+    {
+      "date": "2026-06-06",
+      "vistas": 39504,
+      "guardados": 972,
+      "seguidores": 45844,
+      "seguidoresNuevos": 122,
+      "dms": 53
+    },
+    {
+      "date": "2026-06-07",
+      "vistas": 52920,
+      "guardados": 1330,
+      "seguidores": 45955,
+      "seguidoresNuevos": 128,
+      "dms": 56
+    },
+    {
+      "date": "2026-06-08",
+      "vistas": 45451,
+      "guardados": 847,
+      "seguidores": 46084,
+      "seguidoresNuevos": 140,
+      "dms": 50
+    },
+    {
+      "date": "2026-06-09",
+      "vistas": 37957,
+      "guardados": 769,
+      "seguidores": 46198,
+      "seguidoresNuevos": 139,
+      "dms": 56
+    },
+    {
+      "date": "2026-06-10",
+      "vistas": 50226,
+      "guardados": 988,
+      "seguidores": 46316,
+      "seguidoresNuevos": 122,
+      "dms": 46
+    },
+    {
+      "date": "2026-06-11",
+      "vistas": 47913,
+      "guardados": 1228,
+      "seguidores": 46415,
+      "seguidoresNuevos": 99,
+      "dms": 59
+    },
+    {
+      "date": "2026-06-12",
+      "vistas": 49895,
+      "guardados": 1054,
+      "seguidores": 46517,
+      "seguidoresNuevos": 126,
+      "dms": 54
+    },
+    {
+      "date": "2026-06-13",
+      "vistas": 62665,
+      "guardados": 1564,
+      "seguidores": 46636,
+      "seguidoresNuevos": 122,
+      "dms": 69
+    },
+    {
+      "date": "2026-06-14",
+      "vistas": 54363,
+      "guardados": 1276,
+      "seguidores": 46744,
+      "seguidoresNuevos": 125,
+      "dms": 71
+    },
+    {
+      "date": "2026-06-15",
+      "vistas": 58724,
+      "guardados": 1395,
+      "seguidores": 46886,
+      "seguidoresNuevos": 155,
+      "dms": 71
+    },
+    {
+      "date": "2026-06-16",
+      "vistas": 57891,
+      "guardados": 1398,
+      "seguidores": 47009,
+      "seguidoresNuevos": 140,
+      "dms": 71
+    },
+    {
+      "date": "2026-06-17",
+      "vistas": 61640,
+      "guardados": 1650,
+      "seguidores": 47157,
+      "seguidoresNuevos": 165,
+      "dms": 68
+    },
+    {
+      "date": "2026-06-18",
+      "vistas": 50685,
+      "guardados": 1042,
+      "seguidores": 47316,
+      "seguidoresNuevos": 164,
+      "dms": 72
+    },
+    {
+      "date": "2026-06-19",
+      "vistas": 48935,
+      "guardados": 1246,
+      "seguidores": 47419,
+      "seguidoresNuevos": 124,
+      "dms": 53
+    },
+    {
+      "date": "2026-06-20",
+      "vistas": 65171,
+      "guardados": 1386,
+      "seguidores": 47559,
+      "seguidoresNuevos": 156,
+      "dms": 61
+    },
+    {
+      "date": "2026-06-21",
+      "vistas": 62803,
+      "guardados": 1326,
+      "seguidores": 47730,
+      "seguidoresNuevos": 173,
+      "dms": 55
+    },
+    {
+      "date": "2026-06-22",
+      "vistas": 52524,
+      "guardados": 1330,
+      "seguidores": 47798,
+      "seguidoresNuevos": 86,
+      "dms": 46
+    },
+    {
+      "date": "2026-06-23",
+      "vistas": 66502,
+      "guardados": 1535,
+      "seguidores": 47963,
+      "seguidoresNuevos": 180,
+      "dms": 63
+    },
+    {
+      "date": "2026-06-24",
+      "vistas": 60565,
+      "guardados": 1257,
+      "seguidores": 48071,
+      "seguidoresNuevos": 125,
+      "dms": 72
+    },
+    {
+      "date": "2026-06-25",
+      "vistas": 53755,
+      "guardados": 1365,
+      "seguidores": 48174,
+      "seguidoresNuevos": 118,
+      "dms": 54
+    }
+  ],
+  "reels": [
+    {
+      "id": "r1",
+      "titulo": "El cardio en ayunas mata tu masa muscular",
+      "nicho": "bodybuilding",
+      "fecha": "2026-06-22",
+      "vistas": 1640000,
+      "guardados": 38200,
+      "porque": "Gancho polémico que ataca una creencia común del gym: alto share por debate."
+    },
+    {
+      "id": "r2",
+      "titulo": "7 cosas que ojalá hubiera sabido antes de hacer fuerza",
+      "nicho": "powerbuilding",
+      "fecha": "2026-06-19",
+      "vistas": 960000,
+      "guardados": 31200,
+      "porque": "Listicle con promesa clara; guardado altísimo porque es “para mi próxima rutina”."
+    },
+    {
+      "id": "r3",
+      "titulo": "Deja de entrenar siempre al fallo",
+      "nicho": "powerbuilding",
+      "fecha": "2026-06-17",
+      "vistas": 740000,
+      "guardados": 18900,
+      "porque": "Contradice el “sin dolor no hay ganancia”; retención alta en los primeros 3s."
+    },
+    {
+      "id": "r4",
+      "titulo": "Probé 200g de proteína al día por 30 días",
+      "nicho": "bodybuilding",
+      "fecha": "2026-06-14",
+      "vistas": 560000,
+      "guardados": 24100,
+      "porque": "Reto medible + before/after; se guarda para replicar el experimento."
+    },
+    {
+      "id": "r5",
+      "titulo": "Lo que nadie te dice del déficit calórico",
+      "nicho": "conscious eating",
+      "fecha": "2026-06-11",
+      "vistas": 470000,
+      "guardados": 21800,
+      "porque": "Curiosidad + tema de pérdida de grasa; comentarios pidiendo la parte 2."
+    },
+    {
+      "id": "r6",
+      "titulo": "Mi rutina de powerbuilding en 45 min",
+      "nicho": "powerbuilding",
+      "fecha": "2026-06-08",
+      "vistas": 320000,
+      "guardados": 14200,
+      "porque": "Valor práctico inmediato; se guarda para usar en el gym."
+    }
+  ]
+}

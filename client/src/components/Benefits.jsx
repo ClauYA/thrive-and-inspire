@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import Reveal from "./Reveal";
 import { useLanguage } from "../i18n/LanguageContext";
 import { Card, Badge, Button } from "./ui";
+import { Check } from "lucide-react";
 
 export default function Benefits() {
   const { t } = useLanguage();
@@ -51,7 +52,7 @@ export default function Benefits() {
                 <ul className="grid gap-3 my-7">
                   {p.features.map((f, j) => (
                     <li key={j} className="flex items-start gap-2.5 text-[0.9rem] text-charcoal/80 leading-[1.55]">
-                      <span className="text-terracotta mt-0.5 shrink-0 font-semibold">✓</span>
+                      <Check size={16} strokeWidth={2.5} className="text-terracotta mt-0.5 shrink-0" />
                       {f}
                     </li>
                   ))}
