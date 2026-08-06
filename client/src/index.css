@@ -14,30 +14,30 @@
        gold                   → Durazno (peach) */
 
   /* Marfil (ivory) — fondos */
-  --color-cream: #f6f1e6;
-  --color-warm-white: #fdfaf3;
-  --color-sand: #e7dcc9;
+  --color-cream: #f7f6f7;
+  --color-warm-white: #ffffff;
+  --color-sand: #e2dee3;
 
   /* Ámbar / dorado profundo — acento principal */
-  --color-terracotta: #b07d1f;
-  --color-terracotta-light: #c99a3a;
-  --color-terracotta-dark: #916615;
+  --color-terracotta: #511a54;
+  --color-terracotta-light: #7e4e82;
+  --color-terracotta-dark: #38103a;
 
   /* Eucalipto (eucalyptus) — verdes */
-  --color-forest: #3e564a;
-  --color-forest-light: #5a7567;
-  --color-sage: #82a392;
+  --color-forest: #1f7d53;
+  --color-forest-light: #2fae74;
+  --color-sage: #4fa987;
 
   /* Pistacho (pistachio) — verde claro */
-  --color-sage-light: #c6dbac;
+  --color-sage-light: #bcd6a6;
 
   /* Neutros con matiz eucalipto */
-  --color-charcoal: #303a33;
-  --color-warm-gray: #61706a;
-  --color-light-gray: #bcc6bd;
+  --color-charcoal: #1d1c1d;
+  --color-warm-gray: #6d636e;
+  --color-light-gray: #c9c3cb;
 
   /* Dorado miel — acento cálido */
-  --color-gold: #d9a441;
+  --color-gold: #db2e63;
 
   --font-display: "Cormorant Garamond", Georgia, serif;
   --font-body: "DM Sans", sans-serif;
