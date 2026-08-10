@@ -7,7 +7,7 @@ import MemberHeader from "./MemberHeader";
 import { Button, Input, Textarea, Select, Field } from "../ui";
 import { RIR_OPTIONS, rirLabel } from "../../lib/rir";
 const newExercise = () => ({ muscleGroup: "", exerciseId: "", sets: 3, reps: "", rir: "", notes: "" });
-const newDay = (n) => ({ name: `Day ${n}`, notes: "", exercises: [] });
+const newDay = (n) => ({ name: `Day ${n}`, notes: "", cardio: "", exercises: [] });
 const newWeek = (n) => ({ name: `Week ${n}`, notes: "", days: [newDay(1)] });
 
 export default function PlanEditor({ admin = false }) {
@@ -64,6 +64,7 @@ export default function PlanEditor({ admin = false }) {
               days: (w.days || []).map((dd) => ({
                 name: dd.name,
                 notes: dd.notes || "",
+                cardio: dd.cardio || "",
                 exercises: (dd.exercises || []).map((e) => ({
                   muscleGroup: exById[e.exerciseId]?.muscle_group || "",
                   exerciseId: e.exerciseId || "",
@@ -199,6 +200,10 @@ export default function PlanEditor({ admin = false }) {
                       <button onClick={() => removeDay(wi, di)} aria-label={tr.removeDay} className="shrink-0 text-warm-gray hover:text-red-500 text-xl leading-none px-1">×</button>
                     </div>
                     <Textarea rows={1} value={day.notes} onChange={setDayField(wi, di, "notes")} placeholder={tr.dayNotes} className="mb-2.5 bg-cream/40 text-[0.82rem]" />
+                    <div className="mb-2.5">
+                      <label className="block text-[0.72rem] font-semibold text-forest mb-1">🏃 {tr.cardioLabel}</label>
+                      <Textarea rows={1} value={day.cardio} onChange={setDayField(wi, di, "cardio")} placeholder={tr.dayCardioPh} className="bg-sage-light/20 text-[0.82rem]" />
+                    </div>
 
                     {/* Exercises: pick the muscle group first, then the exercise (filtered) */}
                     {day.exercises.map((ex, ei) => (

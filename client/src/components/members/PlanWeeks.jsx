@@ -82,6 +82,15 @@ export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 
                       </div>
                       <Bar pct={done ? 100 : 0} />
                       {day.notes && <div className="mt-2 text-[0.76rem] text-warm-gray italic whitespace-pre-line">{day.notes}</div>}
+                      {day.cardio && (
+                        <div className="mt-2 flex items-start gap-2 bg-sage-light/25 border border-sage-light rounded-xl px-3 py-2">
+                          <span className="shrink-0">🏃</span>
+                          <div className="min-w-0">
+                            <div className="text-[0.68rem] font-semibold uppercase tracking-wide text-forest">{tr.cardioLabel}</div>
+                            <div className="text-[0.8rem] text-charcoal whitespace-pre-line">{day.cardio}</div>
+                          </div>
+                        </div>
+                      )}
 
                       <div className="mt-3 flex flex-col gap-1.5">
                         {exs.map((e, ei) => {

@@ -9,6 +9,8 @@ import DayPicker from "./DayPicker";
 import SessionFeedback from "./SessionFeedback";
 import ProgressRing from "./ProgressRing";
 import PlanWeeks from "./PlanWeeks";
+import CardioModal from "./CardioModal";
+import { cardioTypeInfo } from "../../lib/cardioTypes";
 import { Button } from "../ui";
 
 const localKey = (iso) => {
@@ -44,6 +46,8 @@ export default function Dashboard() {
   const [pickerDate, setPickerDate] = useState(null); // "YYYY-MM-DD" tapped in calendar/strip
   const [nutToday, setNutToday] = useState(null); // today's calories/macros (best-effort)
   const [nutGoals, setNutGoals] = useState(null); // coach-set macro goals (best-effort)
+  const [cardio, setCardio] = useState([]);
+  const [cardioOpen, setCardioOpen] = useState(false);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
@@ -58,6 +62,7 @@ export default function Dashboard() {
       userApi(`/api/nutrition/log?date=${localKey(new Date().toISOString())}`)
         .then((d) => setNutToday(d.totals))
         .catch(() => {});
+      userApi("/api/cardio").then((d) => setCardio(d.cardio || [])).catch(() => {});
       userApi("/api/nutrition/goals").then((d) => setNutGoals(d.goals)).catch(() => {});
     } catch (e) {
       if (e.unauthorized) return navigate("/login");
@@ -233,12 +238,33 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* New workout */}
-        <div className="flex justify-end mb-6">
+        {/* New workout / cardio */}
+        <div className="flex justify-end gap-2 mb-4">
+          <button onClick={() => setCardioOpen(true)} className="text-[0.85rem] font-semibold text-forest border border-sage-light bg-white px-4 py-2 rounded-full hover:bg-sage-light/40 whitespace-nowrap">🏃 + {tr.cardioLabel}</button>
           <Button as={Link} to="/app/new" size="sm" className="whitespace-nowrap">
             + {tr.newWorkout}
           </Button>
         </div>
+
+        {cardio.length > 0 && (
+          <div className="bg-white rounded-2xl border border-sand p-4 mb-6">
+            <div className="text-[0.72rem] font-semibold uppercase tracking-[0.1em] text-warm-gray mb-2">🏃 {tr.cardioRecent}</div>
+            <div className="grid gap-1.5">
+              {cardio.slice(0, 5).map((c) => {
+                const info = cardioTypeInfo(c.type, lang);
+                const bits = [c.duration_min ? `${c.duration_min} min` : null, c.distance ? `${c.distance} ${c.distance_unit || "km"}` : null, c.avg_hr ? `${c.avg_hr} bpm` : null, c.rpe ? `RPE ${c.rpe}` : null].filter(Boolean);
+                return (
+                  <div key={c.id} className="flex items-center justify-between gap-2 text-[0.84rem]">
+                    <span className="text-charcoal truncate">{info.icon} {info.label}{bits.length ? ` · ${bits.join(" · ")}` : ""}</span>
+                    <span className="text-[0.72rem] text-warm-gray shrink-0">{c.performed_at ? formatDate(c.performed_at, lang) : ""}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <CardioModal open={cardioOpen} onClose={() => setCardioOpen(false)} onSaved={load} planId={plan?.id} />
 
         {false && (
           <>
