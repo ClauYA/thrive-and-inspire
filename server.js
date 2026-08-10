@@ -1419,7 +1419,7 @@ async function loadPlan(planId, userId) {
   let days = [];
   let exs = [];
   if (weekIds.length) {
-    days = (await query(`select id, week_id, position, name, notes from plan_days where week_id = any($1) order by position`, [weekIds])).rows;
+    days = (await query(`select id, week_id, position, name, notes, cardio from plan_days where week_id = any($1) order by position`, [weekIds])).rows;
     const dayIds = days.map((d) => d.id);
     if (dayIds.length) {
       exs = (await query(
@@ -1437,7 +1437,7 @@ async function loadPlan(planId, userId) {
   const daysByWeek = {};
   for (const d of days) {
     (daysByWeek[d.week_id] = daysByWeek[d.week_id] || []).push({
-      position: d.position, name: d.name, notes: d.notes || "", exercises: exByDay[d.id] || [],
+      position: d.position, name: d.name, notes: d.notes || "", cardio: d.cardio || "", exercises: exByDay[d.id] || [],
     });
   }
   return shapePlan(
@@ -1460,8 +1460,8 @@ async function writePlanStructure(client, planId, weeks) {
     for (let di = 0; di < days.length; di++) {
       const d = days[di] || {};
       const dins = await client.query(
-        `insert into plan_days (plan_id, week_id, position, name, notes) values ($1, $2, $3, $4, $5) returning id`,
-        [planId, weekId, di, String(d.name || `Day ${di + 1}`).trim(), String(d.notes || "").trim()]
+        `insert into plan_days (plan_id, week_id, position, name, notes, cardio) values ($1, $2, $3, $4, $5, $6) returning id`,
+        [planId, weekId, di, String(d.name || `Day ${di + 1}`).trim(), String(d.notes || "").trim(), String(d.cardio || "").trim()]
       );
       const dayId = dins.rows[0].id;
       const exs = Array.isArray(d.exercises) ? d.exercises : [];
@@ -2536,6 +2536,8 @@ async function ensureSchema() {
     "alter table users add column if not exists status text not null default 'approved'",
     // exercises: manual GIF override (an ExerciseDB id chosen by the coach)
     "alter table exercises add column if not exists gif_id text",
+    // plan_days: coach's cardio prescription/note for that day
+    "alter table plan_days add column if not exists cardio text",
   ];
   let ok = 0;
   for (const sql of statements) {
