@@ -987,7 +987,7 @@ app.get("/api/exercises", requireUser, async (req, res) => {
   try {
     // The shared default library (owner_id is null) plus this member's own.
     const { rows } = await query(
-      `select id, name, muscle_group, equipment, media_url, instructions, owner_id
+      `select id, name, muscle_group, equipment, media_url, instructions, owner_id, gif_id
        from exercises where owner_id is null or owner_id = $1 order by name`,
       [req.user.sub]
     );
@@ -1111,6 +1111,49 @@ app.get("/api/exercise-gif-image", async (req, res) => {
   } catch (err) {
     console.error("Exercise GIF image failed:", err.message);
     res.status(502).end();
+  }
+});
+
+// ── Coach GIF picker: list exercises, search ExerciseDB, pin a GIF by id ──
+app.get("/api/admin/exercises", requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await query(`select id, name, muscle_group, equipment, gif_id from exercises order by name`);
+    res.json({ ok: true, exercises: rows });
+  } catch (err) {
+    console.error("Admin exercises list failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load exercises." });
+  }
+});
+
+// Search ExerciseDB for candidate GIFs (name substring). Returns up to 12
+// { id, name, target, equipment } — the client previews each via the image proxy.
+app.get("/api/admin/exercisedb-search", requireAdmin, async (req, res) => {
+  const key = process.env.EXERCISEDB_KEY;
+  const host = process.env.EXERCISEDB_HOST || "exercisedb.p.rapidapi.com";
+  const q = String(req.query.q || "").trim().toLowerCase();
+  if (!key) return res.status(503).json({ ok: false, error: "EXERCISEDB_KEY is not set on the server." });
+  if (!q) return res.json({ ok: true, results: [] });
+  try {
+    const { list } = await edbSearch(host, key, q);
+    const results = list.slice(0, 12).map((e) => ({ id: e.id, name: e.name, target: e.target, equipment: e.equipment }));
+    res.json({ ok: true, results });
+  } catch (err) {
+    console.error("ExerciseDB search failed:", err.message);
+    res.status(502).json({ ok: false, error: "ExerciseDB search failed." });
+  }
+});
+
+// Pin (or clear, with gifId = "") an exercise's GIF override.
+app.patch("/api/admin/exercises/:id/gif", requireAdmin, async (req, res) => {
+  const gifId = String((req.body && req.body.gifId) || "").trim() || null;
+  try {
+    const { rowCount } = await query(`update exercises set gif_id = $1 where id = $2`, [gifId, req.params.id]);
+    if (!rowCount) return res.status(404).json({ ok: false, error: "Exercise not found." });
+    gifCache.clear(); // the name→gif cache may be stale for this exercise
+    res.json({ ok: true, gifId });
+  } catch (err) {
+    console.error("Set exercise gif failed:", err);
+    res.status(500).json({ ok: false, error: "Could not update the exercise." });
   }
 });
 
@@ -1810,7 +1853,7 @@ app.delete("/api/admin/sets/:id", requireAdmin, async (req, res) => {
 app.get("/api/admin/members/:id/exercises", requireAdmin, async (req, res) => {
   try {
     const { rows } = await query(
-      `select id, name, muscle_group, equipment, media_url, instructions
+      `select id, name, muscle_group, equipment, media_url, instructions, gif_id
        from exercises where owner_id is null or owner_id = $1 order by name`,
       [req.params.id]
     );
@@ -2491,6 +2534,8 @@ async function ensureSchema() {
     "alter table workout_sets alter column rir type text using rir::text",
     // users: account gating (default 'approved' so existing members stay in)
     "alter table users add column if not exists status text not null default 'approved'",
+    // exercises: manual GIF override (an ExerciseDB id chosen by the coach)
+    "alter table exercises add column if not exists gif_id text",
   ];
   let ok = 0;
   for (const sql of statements) {

@@ -7,6 +7,7 @@ import PostEditor from "./PostEditor";
 import TestimonialsAdmin from "./TestimonialsAdmin";
 import EmailLog from "./EmailLog";
 import MembersAdmin from "./MembersAdmin";
+import ExerciseGifs from "./ExerciseGifs";
 
 export default function AdminDashboard() {
   const { t, lang } = useLanguage();
@@ -83,7 +84,7 @@ export default function AdminDashboard() {
           />
         ) : (
           <>
-            <div className="flex items-center gap-2 mb-8 bg-white border border-sand rounded-full p-1 w-fit">
+            <div className="flex flex-wrap items-center gap-2 mb-8 bg-white border border-sand rounded-2xl p-1 w-fit max-w-full">
               <button
                 onClick={() => setTab("posts")}
                 className={`text-[0.85rem] font-semibold px-5 py-2 rounded-full transition-colors ${tab === "posts" ? "bg-terracotta text-white" : "text-warm-gray"}`}
@@ -108,10 +109,18 @@ export default function AdminDashboard() {
               >
                 {a.tabMembers}
               </button>
+              <button
+                onClick={() => setTab("gifs")}
+                className={`text-[0.85rem] font-semibold px-5 py-2 rounded-full transition-colors ${tab === "gifs" ? "bg-terracotta text-white" : "text-warm-gray"}`}
+              >
+                {a.tabGifs}
+              </button>
             </div>
 
             {tab === "members" ? (
               <MembersAdmin onAuthError={goLogin} />
+            ) : tab === "gifs" ? (
+              <ExerciseGifs onAuthError={goLogin} />
             ) : tab === "testimonials" ? (
               <TestimonialsAdmin onAuthError={goLogin} />
             ) : tab === "emails" ? (

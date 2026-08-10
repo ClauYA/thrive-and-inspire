@@ -26,7 +26,7 @@ const GEN_GROUPS = {
 };
 
 // Shows the exercise demo in an in-app modal (never navigates away to YouTube).
-function ExerciseMedia({ url, name }) {
+function ExerciseMedia({ url, name, gifId }) {
   const { t } = useLanguage();
   const tr = t.tracker;
   const [open, setOpen] = useState(false);
@@ -36,7 +36,7 @@ function ExerciseMedia({ url, name }) {
       <button type="button" onClick={() => setOpen(true)} className="mt-3 inline-flex items-center gap-1.5 text-[0.82rem] font-semibold text-terracotta hover:text-terracotta-dark">
         ▶ {tr.watchVideo}
       </button>
-      <VideoModal open={open} onClose={() => setOpen(false)} url={url} name={name} />
+      <VideoModal open={open} onClose={() => setOpen(false)} url={url} name={name} gifId={gifId} />
     </>
   );
 }
@@ -498,7 +498,7 @@ export default function WorkoutLogger() {
                     </button>
                   </div>
 
-                  <ExerciseMedia url={blk.mediaUrl} name={blk.exerciseName} />
+                  <ExerciseMedia url={blk.mediaUrl} name={blk.exerciseName} gifId={(exercises.find((x) => x.id === blk.exerciseId) || {}).gif_id} />
 
                   {blk.target && (blk.target.reps || blk.target.rir || blk.sets.length) && (
                     <div className="mt-2 inline-block bg-gold/15 text-charcoal/80 text-[0.76rem] font-medium px-2.5 py-1 rounded-full">
