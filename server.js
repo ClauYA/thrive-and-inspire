@@ -1228,6 +1228,51 @@ app.post("/api/workouts", requireUser, async (req, res) => {
   }
 });
 
+// ── Cardio sessions (member logs; coach reviews) ──
+const CARDIO_COLS = "id, performed_at, type, duration_min, distance, distance_unit, avg_hr, rpe, notes, plan_id";
+const numOrNull = (v) => (v === "" || v === null || v === undefined || Number.isNaN(Number(v)) ? null : Number(v));
+
+app.post("/api/cardio", requireUser, async (req, res) => {
+  const b = req.body || {};
+  const type = String(b.type || "").trim();
+  if (!type) return res.status(400).json({ ok: false, error: "Pick a cardio type." });
+  try {
+    const { rows } = await query(
+      `insert into cardio_logs (user_id, performed_at, type, duration_min, distance, distance_unit, avg_hr, rpe, notes, plan_id)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning ${CARDIO_COLS}`,
+      [
+        req.user.sub, b.performedAt || null, type, numOrNull(b.durationMin), numOrNull(b.distance),
+        String(b.distanceUnit || "km"), numOrNull(b.avgHr), numOrNull(b.rpe), String(b.notes || "").trim(), b.planId || null,
+      ]
+    );
+    res.json({ ok: true, cardio: rows[0] });
+  } catch (err) {
+    console.error("Create cardio failed:", err);
+    res.status(500).json({ ok: false, error: "Could not save the cardio session." });
+  }
+});
+
+app.get("/api/cardio", requireUser, async (req, res) => {
+  try {
+    const { rows } = await query(`select ${CARDIO_COLS} from cardio_logs where user_id = $1 order by performed_at desc nulls last, created_at desc limit 60`, [req.user.sub]);
+    res.json({ ok: true, cardio: rows });
+  } catch (err) {
+    console.error("List cardio failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load cardio." });
+  }
+});
+
+app.delete("/api/cardio/:id", requireUser, async (req, res) => {
+  try {
+    const { rowCount } = await query(`delete from cardio_logs where id = $1 and user_id = $2`, [req.params.id, req.user.sub]);
+    if (!rowCount) return res.status(404).json({ ok: false, error: "Not found." });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Delete cardio failed:", err);
+    res.status(500).json({ ok: false, error: "Could not delete." });
+  }
+});
+
 // ── List the user's workouts (with a short summary) ──
 app.get("/api/workouts", requireUser, async (req, res) => {
   try {
@@ -2498,6 +2543,20 @@ app.get("/api/admin/members/:id/checkins", requireAdmin, async (req, res) => {
   }
 });
 
+// Coach: a member's logged cardio sessions.
+app.get("/api/admin/members/:id/cardio", requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await query(
+      `select ${CARDIO_COLS} from cardio_logs where user_id = $1 order by performed_at desc nulls last, created_at desc limit 60`,
+      [req.params.id]
+    );
+    res.json({ ok: true, cardio: rows });
+  } catch (err) {
+    console.error("Admin cardio failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load cardio." });
+  }
+});
+
 // ── Serve the built React client ──
 const CLIENT_DIST = path.join(__dirname, "client", "dist");
 if (fs.existsSync(CLIENT_DIST)) {
@@ -2538,6 +2597,9 @@ async function ensureSchema() {
     "alter table exercises add column if not exists gif_id text",
     // plan_days: coach's cardio prescription/note for that day
     "alter table plan_days add column if not exists cardio text",
+    // cardio_logs: member's logged cardio sessions
+    "create table if not exists cardio_logs (id uuid primary key default gen_random_uuid(), user_id uuid not null references users(id) on delete cascade, performed_at date, type text not null default '', duration_min int, distance numeric, distance_unit text default 'km', avg_hr int, rpe int, notes text default '', plan_id uuid references plans(id) on delete set null, created_at timestamptz not null default now())",
+    "create index if not exists cardio_logs_user_idx on cardio_logs (user_id, performed_at desc)",
   ];
   let ok = 0;
   for (const sql of statements) {

@@ -6,6 +6,7 @@ import { useLanguage } from "../../i18n/LanguageContext";
 import LineChart from "../members/LineChart";
 import SessionFeedback from "../members/SessionFeedback";
 import PlanWeeks from "../members/PlanWeeks";
+import { cardioTypeInfo } from "../../lib/cardioTypes";
 
 // Group a flat list of sets by exercise, preserving first-seen order.
 function groupByExercise(sets) {
@@ -41,6 +42,7 @@ export default function MembersAdmin({ onAuthError }) {
   const [goals, setGoals] = useState({ calories: "", protein: "", carbs: "", fat: "" });
   const [savingGoals, setSavingGoals] = useState(false);
   const [checkins, setCheckins] = useState(null);
+  const [cardio, setCardio] = useState(null);
   const [memberPlan, setMemberPlan] = useState(null); // active plan full tree
   const [error, setError] = useState("");
   const [showAdd, setShowAdd] = useState(false);
@@ -80,6 +82,7 @@ export default function MembersAdmin({ onAuthError }) {
       if (activePlan) apiAuth(`/api/admin/plans/${activePlan.id}`).then((r) => setMemberPlan(r.plan)).catch(() => {});
       apiAuth(`/api/admin/members/${id}/exercises`).then((r) => setExercises(r.exercises)).catch(() => {});
       apiAuth(`/api/admin/members/${id}/checkins`).then((r) => setCheckins(r.checkins)).catch(() => setCheckins([]));
+      apiAuth(`/api/admin/members/${id}/cardio`).then((r) => setCardio(r.cardio)).catch(() => setCardio([]));
       apiAuth(`/api/admin/members/${id}/nutrition`).then((r) => setNutDays(r.days)).catch(() => setNutDays([]));
       apiAuth(`/api/admin/members/${id}/nutrition-goals`)
         .then((r) => setGoals(r.goals ? { calories: r.goals.calories, protein: r.goals.protein, carbs: r.goals.carbs, fat: r.goals.fat } : { calories: "", protein: "", carbs: "", fat: "" }))
@@ -327,6 +330,31 @@ export default function MembersAdmin({ onAuthError }) {
                       )}
                     </div>
                   )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Cardio log */}
+        <h2 className="text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-warm-gray mt-8 mb-3">🏃 {tr.cardioLabel}</h2>
+        {cardio === null ? (
+          <p className="text-warm-gray text-[0.88rem]">{A.loading}</p>
+        ) : cardio.length === 0 ? (
+          <p className="text-warm-gray text-[0.88rem]">{A.cardioNone}</p>
+        ) : (
+          <div className="bg-white rounded-2xl border border-sand p-4 grid gap-2">
+            {cardio.map((c) => {
+              const info = cardioTypeInfo(c.type, lang);
+              const bits = [c.duration_min ? `${c.duration_min} min` : null, c.distance ? `${c.distance} ${c.distance_unit || "km"}` : null, c.avg_hr ? `${c.avg_hr} bpm` : null, c.rpe ? `RPE ${c.rpe}` : null].filter(Boolean);
+              return (
+                <div key={c.id} className="border-b border-sand last:border-0 pb-2 last:pb-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium text-charcoal text-[0.9rem]">{info.icon} {info.label}</span>
+                    <span className="text-[0.72rem] text-warm-gray shrink-0">{c.performed_at ? formatDate(c.performed_at, lang) : ""}</span>
+                  </div>
+                  {bits.length > 0 && <div className="text-[0.82rem] text-warm-gray">{bits.join(" · ")}</div>}
+                  {c.notes && <div className="text-[0.82rem] text-forest italic">📝 {c.notes}</div>}
                 </div>
               );
             })}
