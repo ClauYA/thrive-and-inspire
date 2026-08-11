@@ -9,7 +9,6 @@ import DayPicker from "./DayPicker";
 import SessionFeedback from "./SessionFeedback";
 import ProgressRing from "./ProgressRing";
 import PlanWeeks from "./PlanWeeks";
-import CardioModal from "./CardioModal";
 import { cardioTypeInfo } from "../../lib/cardioTypes";
 import { Button } from "../ui";
 
@@ -47,7 +46,6 @@ export default function Dashboard() {
   const [nutToday, setNutToday] = useState(null); // today's calories/macros (best-effort)
   const [nutGoals, setNutGoals] = useState(null); // coach-set macro goals (best-effort)
   const [cardio, setCardio] = useState([]);
-  const [cardioOpen, setCardioOpen] = useState(false);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
@@ -234,13 +232,12 @@ export default function Dashboard() {
         {plan && plan.weeks && plan.weeks.length > 0 && (
           <div className="mb-6">
             <h2 className="text-[0.8rem] font-semibold uppercase tracking-[0.1em] text-warm-gray mb-3">{tr.weeksLabel}</h2>
-            <PlanWeeks plan={plan} exMap={exMap} doneMap={doneMap} currentWeekIdx={curWeekIdx} />
+            <PlanWeeks plan={plan} exMap={exMap} doneMap={doneMap} currentWeekIdx={curWeekIdx} onCardioSaved={load} />
           </div>
         )}
 
-        {/* New workout / cardio */}
+        {/* New workout — cardio is now logged per day inside each plan day (PlanWeeks) */}
         <div className="flex justify-end gap-2 mb-4">
-          <button onClick={() => setCardioOpen(true)} className="text-[0.85rem] font-semibold text-forest border border-sage-light bg-white px-4 py-2 rounded-full hover:bg-sage-light/40 whitespace-nowrap">🏃 + {tr.cardioLabel}</button>
           <Button as={Link} to="/app/new" size="sm" className="whitespace-nowrap">
             + {tr.newWorkout}
           </Button>
@@ -263,8 +260,6 @@ export default function Dashboard() {
             </div>
           </div>
         )}
-
-        <CardioModal open={cardioOpen} onClose={() => setCardioOpen(false)} onSaved={load} planId={plan?.id} />
 
         {false && (
           <>

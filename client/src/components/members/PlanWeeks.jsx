@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useLanguage } from "../../i18n/LanguageContext";
 import ProgressRing from "./ProgressRing";
 import VideoModal from "./VideoModal";
+import CardioModal from "./CardioModal";
 import { equipmentChips } from "../../lib/equipment";
 
 function Bar({ pct }) {
@@ -14,11 +15,12 @@ function Bar({ pct }) {
 }
 
 // Weeks accordion + day cards for a plan. Reused by PlanView and the dashboard.
-export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 0, readOnly = false }) {
+export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 0, readOnly = false, onCardioSaved }) {
   const { t } = useLanguage();
   const tr = t.tracker;
   const [openWeek, setOpenWeek] = useState(currentWeekIdx);
   const [video, setVideo] = useState(null); // { name, url } of the exercise demo to play, or null
+  const [cardioDay, setCardioDay] = useState(null); // the plan day whose cardio is being logged, or null
 
   const weeks = plan.weeks || [];
   const dayWorkout = (week, day) => doneMap[`${week.name} · ${day.name}`];
@@ -136,6 +138,16 @@ export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 
                         </div>
                       )}
 
+                      {!readOnly && (
+                        <button
+                          type="button"
+                          onClick={() => setCardioDay(day)}
+                          className="mt-3 w-full flex items-center justify-center gap-1.5 text-[0.82rem] font-semibold text-forest border border-sage-light bg-white rounded-full py-2 hover:bg-sage-light/40 transition-colors"
+                        >
+                          🏃 + {tr.cardioLabel}
+                        </button>
+                      )}
+
                       {readOnly ? null : done ? (
                         <Link
                           to={`/app/new?edit=${dayWorkout(week, day).id}`}
@@ -161,6 +173,13 @@ export default function PlanWeeks({ plan, exMap, doneMap = {}, currentWeekIdx = 
       })}
     </div>
     <VideoModal open={!!video} onClose={() => setVideo(null)} url={video?.url} name={video?.name} gifId={video?.gifId} />
+    <CardioModal
+      open={!!cardioDay}
+      onClose={() => setCardioDay(null)}
+      onSaved={onCardioSaved}
+      planId={plan.id}
+      coachNote={cardioDay?.cardio}
+    />
     </>
   );
 }
