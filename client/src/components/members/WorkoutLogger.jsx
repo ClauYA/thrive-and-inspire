@@ -11,6 +11,7 @@ import VideoModal from "./VideoModal";
 import RestTimer, { DEFAULT_REST } from "./RestTimer";
 import { Button } from "../ui";
 import SessionFeedbackForm from "./SessionFeedbackForm";
+import CardioCard from "./CardioCard";
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 const DRAFT_KEY = "li-workout-draft"; // in-progress workout, survives a page refresh
@@ -73,6 +74,7 @@ export default function WorkoutLogger() {
   const [unit] = useState("kg"); // default unit for newly added sets (each set can override)
   const [notes, setNotes] = useState("");
   const [blocks, setBlocks] = useState([]);
+  const [cardio, setCardio] = useState(null);
   const restRef = useRef(null); // rest-timer bar; start it with restRef.current.start(seconds)
   const [started, setStarted] = useState(false);
   const [fromRoutine, setFromRoutine] = useState(false);
@@ -112,7 +114,7 @@ export default function WorkoutLogger() {
     try {
       localStorage.setItem(
         DRAFT_KEY,
-        JSON.stringify({ savedAt: Date.now(), title, date, notes, planId, fromRoutine, dayNotes, dayPos, routinePlan, blocks, sessionFeel, sessionEffort, muscleIntensity })
+        JSON.stringify({ savedAt: Date.now(), title, date, notes, planId, fromRoutine, dayNotes, dayPos, routinePlan, blocks, sessionFeel, sessionEffort, muscleIntensity, cardio })
       );
     } catch { /* ignore */ }
   };
@@ -175,6 +177,7 @@ export default function WorkoutLogger() {
             setTitle(r.workout.title || tr.defaultTitle);
             setDate(String(r.workout.performed_at).slice(0, 10));
             setNotes(r.workout.notes || "");
+            setCardio(r.workout.cardio || null);
             setPlanId(r.workout.plan_id || null);
             setSessionFeel(r.workout.session_feel || "");
             setSessionEffort(r.workout.session_effort || "");
@@ -209,6 +212,7 @@ export default function WorkoutLogger() {
               setDayNotes(dr.dayNotes || "");
               setDayPos(dr.dayPos || { wi: 0, di: 0 });
               setRoutinePlan(dr.routinePlan || null);
+              setCardio(dr.cardio || null);
               setBlocks(dr.blocks);
               setSessionFeel(dr.sessionFeel || "");
               setSessionEffort(dr.sessionEffort || "");
@@ -250,10 +254,10 @@ export default function WorkoutLogger() {
     try {
       localStorage.setItem(
         DRAFT_KEY,
-        JSON.stringify({ savedAt: Date.now(), title, date, notes, planId, fromRoutine, dayNotes, dayPos, routinePlan, blocks, sessionFeel, sessionEffort, muscleIntensity })
+        JSON.stringify({ savedAt: Date.now(), title, date, notes, planId, fromRoutine, dayNotes, dayPos, routinePlan, blocks, sessionFeel, sessionEffort, muscleIntensity, cardio })
       );
     } catch { /* storage full / disabled — ignore */ }
-  }, [started, title, date, notes, planId, fromRoutine, dayNotes, dayPos, routinePlan, blocks, sessionFeel, sessionEffort, muscleIntensity]);
+  }, [started, title, date, notes, planId, fromRoutine, dayNotes, dayPos, routinePlan, blocks, sessionFeel, sessionEffort, muscleIntensity, cardio]);
 
   const makeBlock = (ex, target) => {
     const count = target && Number(target.sets) > 0 ? Number(target.sets) : 3;
@@ -325,6 +329,8 @@ export default function WorkoutLogger() {
     setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, sets: b.sets.map((s, j) => (j === si ? { ...s, [field]: val } : s)) } : b)));
   };
 
+  const hasCardio = /cardio/i.test(dayNotes || "") || !!cardio;
+
   const save = async () => {
     const flatSets = [];
     for (const blk of blocks) {
@@ -346,9 +352,9 @@ export default function WorkoutLogger() {
     try {
       const feedback = { sessionFeel, sessionEffort, muscleIntensity };
       if (editId) {
-        await userApi(`/api/workouts/${editId}`, "PUT", { title, performedAt: date || null, notes, sets: flatSets, weightUnit: unit, ...feedback });
+        await userApi(`/api/workouts/${editId}`, "PUT", { title, performedAt: date || null, notes, sets: flatSets, weightUnit: unit, cardio: hasCardio ? cardio : null, ...feedback });
       } else {
-        await userApi("/api/workouts", "POST", { title, performedAt: date || null, notes, sets: flatSets, planId, weightUnit: unit, ...feedback });
+        await userApi("/api/workouts", "POST", { title, performedAt: date || null, notes, sets: flatSets, planId, weightUnit: unit, cardio: hasCardio ? cardio : null, ...feedback });
         clearDraft();
       }
       navigate("/app");
@@ -610,7 +616,14 @@ export default function WorkoutLogger() {
             {/* Cool-down */}
             <GuideCard title={`🧘 ${tr.cooldownTitle}`} steps={tr.cooldownSteps} />
 
-            {/* Session feedback — how the routine felt */}
+            {hasCardio && (
+                <div className="bg-white rounded-2xl border border-sand p-5 sm:p-6 mb-4">
+                  <div className="font-display text-[1.15rem] font-semibold text-charcoal mb-4">Cardio</div>
+                  <CardioCard value={cardio} onChange={setCardio} />
+                </div>
+              )}
+
+              {/* Session feedback — how the routine felt */}
             <div className="bg-white rounded-2xl border border-sand p-5 sm:p-6 mb-4 grid gap-5">
               <div className="font-display text-[1.15rem] font-semibold text-charcoal">{tr.feedbackTitle}</div>
 
