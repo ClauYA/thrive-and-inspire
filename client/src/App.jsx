@@ -24,7 +24,6 @@ import ForgotPassword from "./components/members/ForgotPassword";
 import ResetPassword from "./components/members/ResetPassword";
 import MemberDashboard from "./components/members/Dashboard";
 import WorkoutLogger from "./components/members/WorkoutLogger";
-import Preview from "./components/members/Preview";
 import RoutineEditor from "./components/members/RoutineEditor";
 import PlansList from "./components/members/PlansList";
 import PlanView from "./components/members/PlanView";
@@ -63,7 +62,6 @@ export default function App() {
         <Route path="/ready" element={<ReadyPage />} />
         <Route path="/book" element={<BookPage />} />
         <Route path="/feedback" element={<FeedbackForm />} />
-        <Route path="/preview" element={<Preview />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/admin/login" element={<AdminLogin />} />
