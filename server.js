@@ -12,6 +12,7 @@ import { marked } from "marked";
 import { dbEnabled, query, pool } from "./db.js";
 import { clampSets } from "./lib/plan.js";
 import { parseFeedback } from "./lib/feedback.js";
+import { parseCardio } from "./lib/cardio.js";
 import { lbToKg } from "./lib/units.js";
 import { isApproved } from "./lib/status.js";
 import { edbQueries, bestByOverlap } from "./lib/exercisedb.js";
@@ -1190,13 +1191,14 @@ app.post("/api/workouts", requireUser, async (req, res) => {
   }
   const unit = weightUnit === "lb" ? "lb" : "kg";
   const fb = parseFeedback(req.body || {});
+  const cardio = parseCardio(req.body || {});
   const client = await pool.connect();
   try {
     await client.query("begin");
     const w = await client.query(
-      `insert into workouts (user_id, title, performed_at, notes, plan_id, weight_unit, session_feel, session_effort, muscle_intensity)
-       values ($1, $2, coalesce($3, now()), $4, $5, $6, $7, $8, $9::jsonb) returning *`,
-      [req.user.sub, String(title || "Workout").trim(), performedAt || null, String(notes || "").trim(), planId || null, unit, fb.feel, fb.effort, fb.muscleIntensity]
+      `insert into workouts (user_id, title, performed_at, notes, plan_id, weight_unit, session_feel, session_effort, muscle_intensity, cardio)
+       values ($1, $2, coalesce($3, now()), $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb) returning *`,
+      [req.user.sub, String(title || "Workout").trim(), performedAt || null, String(notes || "").trim(), planId || null, unit, fb.feel, fb.effort, fb.muscleIntensity, cardio]
     );
     const workout = w.rows[0];
     for (const s of sets) {
@@ -1315,6 +1317,7 @@ app.put("/api/workouts/:id", requireUser, async (req, res) => {
   }
   const unit = weightUnit === "lb" ? "lb" : "kg";
   const fb = parseFeedback(req.body || {});
+  const cardio = parseCardio(req.body || {});
   const own = await query(`select id from workouts where id = $1 and user_id = $2`, [req.params.id, req.user.sub]);
   if (!own.rows[0]) return res.status(404).json({ ok: false, error: "Workout not found." });
   const client = await pool.connect();
@@ -1322,9 +1325,9 @@ app.put("/api/workouts/:id", requireUser, async (req, res) => {
     await client.query("begin");
     await client.query(
       `update workouts set title = $1, performed_at = coalesce($2, performed_at), notes = $3, weight_unit = $4,
-              session_feel = $6, session_effort = $7, muscle_intensity = $8::jsonb
+              session_feel = $6, session_effort = $7, muscle_intensity = $8::jsonb, cardio = $9::jsonb
        where id = $5`,
-      [String(title || "Workout").trim(), performedAt || null, String(notes || "").trim(), unit, req.params.id, fb.feel, fb.effort, fb.muscleIntensity]
+      [String(title || "Workout").trim(), performedAt || null, String(notes || "").trim(), unit, req.params.id, fb.feel, fb.effort, fb.muscleIntensity, cardio]
     );
     await client.query(`delete from workout_sets where workout_id = $1`, [req.params.id]);
     for (const s of sets) {
@@ -2587,6 +2590,7 @@ async function ensureSchema() {
     "alter table workouts add column if not exists session_feel int",
     "alter table workouts add column if not exists session_effort text default ''",
     "alter table workouts add column if not exists muscle_intensity jsonb default '{}'::jsonb",
+    "alter table workouts add column if not exists cardio jsonb",
     // workout_sets: per-set note, per-set weight unit, and RIR stored as text
     "alter table workout_sets add column if not exists note text default ''",
     "alter table workout_sets add column if not exists weight_unit text not null default 'kg'",
