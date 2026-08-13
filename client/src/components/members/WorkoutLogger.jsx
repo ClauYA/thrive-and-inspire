@@ -11,7 +11,7 @@ import VideoModal from "./VideoModal";
 import RestTimer, { DEFAULT_REST } from "./RestTimer";
 import { Button } from "../ui";
 import SessionFeedbackForm from "./SessionFeedbackForm";
-import CardioModal from "./CardioModal";
+import CardioForm from "./CardioForm";
 
 const todayStr = () => new Date().toISOString().slice(0, 10);
 const DRAFT_KEY = "li-workout-draft"; // in-progress workout, survives a page refresh
@@ -75,9 +75,11 @@ export default function WorkoutLogger() {
   const [notes, setNotes] = useState("");
   const [blocks, setBlocks] = useState([]);
   // Coach's cardio prescription for the chosen plan day (plan_days.cardio).
-  // When present, the member sees it and can log cardio via CardioModal.
+  // When present, the member sees it and logs cardio with an inline CardioForm.
   const [dayCardio, setDayCardio] = useState("");
-  const [cardioOpen, setCardioOpen] = useState(false);
+  // A "solo cardio" day = the plan day has a cardio note but no strength
+  // exercises; we then show a streamlined cardio-only screen.
+  const [soloCardio, setSoloCardio] = useState(false);
   const restRef = useRef(null); // rest-timer bar; start it with restRef.current.start(seconds)
   const [started, setStarted] = useState(false);
   const [fromRoutine, setFromRoutine] = useState(false);
@@ -117,7 +119,7 @@ export default function WorkoutLogger() {
     try {
       localStorage.setItem(
         DRAFT_KEY,
-        JSON.stringify({ savedAt: Date.now(), title, date, notes, planId, fromRoutine, dayNotes, dayCardio, dayPos, routinePlan, blocks, sessionFeel, sessionEffort, muscleIntensity })
+        JSON.stringify({ savedAt: Date.now(), title, date, notes, planId, fromRoutine, dayNotes, dayCardio, soloCardio, dayPos, routinePlan, blocks, sessionFeel, sessionEffort, muscleIntensity })
       );
     } catch { /* ignore */ }
   };
@@ -138,6 +140,8 @@ export default function WorkoutLogger() {
         return ex ? makeBlock(ex, pe) : null;
       })
       .filter(Boolean);
+    // Cardio note + no strength exercises → a solo-cardio day.
+    setSoloCardio(!!(day.cardio && day.cardio.trim()) && nb.length === 0);
     setBlocks(nb.length ? nb : [makeBlock(null)]);
     setStarted(true);
     nb.forEach((b) => loadLast(b.uid, b.exerciseId));
@@ -205,7 +209,15 @@ export default function WorkoutLogger() {
           if (raw) {
             const dr = JSON.parse(raw);
             const fresh = dr.savedAt && Date.now() - dr.savedAt < 24 * 60 * 60 * 1000;
-            const matches = planParam ? String(dr.planId) === String(planParam) : true;
+            const samePlan = planParam ? String(dr.planId) === String(planParam) : true;
+            // When the member taps a specific plan day (week+day in the URL),
+            // only restore a draft that belongs to THAT same day — otherwise a
+            // draft from another day would hide the day they just chose (and its
+            // exercises/cardio would never load).
+            const dayRequested = weekParam != null && dayParam != null;
+            const sameDay = !dayRequested
+              || (dr.dayPos && Number(dr.dayPos.wi) === Number(weekParam) && Number(dr.dayPos.di) === Number(dayParam));
+            const matches = samePlan && sameDay;
             if (fresh && matches && Array.isArray(dr.blocks) && dr.blocks.length) {
               setTitle(dr.title || tr.defaultTitle);
               setDate(dr.date || todayStr());
@@ -214,6 +226,7 @@ export default function WorkoutLogger() {
               setFromRoutine(!!dr.fromRoutine);
               setDayNotes(dr.dayNotes || "");
               setDayCardio(dr.dayCardio || "");
+              setSoloCardio(!!dr.soloCardio);
               setDayPos(dr.dayPos || { wi: 0, di: 0 });
               setRoutinePlan(dr.routinePlan || null);
               setBlocks(dr.blocks);
@@ -257,10 +270,10 @@ export default function WorkoutLogger() {
     try {
       localStorage.setItem(
         DRAFT_KEY,
-        JSON.stringify({ savedAt: Date.now(), title, date, notes, planId, fromRoutine, dayNotes, dayCardio, dayPos, routinePlan, blocks, sessionFeel, sessionEffort, muscleIntensity })
+        JSON.stringify({ savedAt: Date.now(), title, date, notes, planId, fromRoutine, dayNotes, dayCardio, soloCardio, dayPos, routinePlan, blocks, sessionFeel, sessionEffort, muscleIntensity })
       );
     } catch { /* storage full / disabled — ignore */ }
-  }, [started, title, date, notes, planId, fromRoutine, dayNotes, dayCardio, dayPos, routinePlan, blocks, sessionFeel, sessionEffort, muscleIntensity]);
+  }, [started, title, date, notes, planId, fromRoutine, dayNotes, dayCardio, soloCardio, dayPos, routinePlan, blocks, sessionFeel, sessionEffort, muscleIntensity]);
 
   const makeBlock = (ex, target) => {
     const count = target && Number(target.sets) > 0 ? Number(target.sets) : 3;
@@ -342,7 +355,9 @@ export default function WorkoutLogger() {
         flatSets.push({ exerciseId: blk.exerciseId || null, exerciseName: blk.exerciseName, setNumber: idx + 1, weight: s.weight, reps: s.reps, rir: s.rir, rpe: "", unit: blk.unit || s.unit || "kg", note: idx === 0 ? (blk.note || "") : "" });
       });
     }
-    if (flatSets.length === 0) {
+    // Solo-cardio days have no strength sets — the session row just carries the
+    // feel/effort feedback (the cardio itself is saved by the CardioForm).
+    if (flatSets.length === 0 && !soloCardio) {
       setError(tr.needSet);
       return;
     }
@@ -357,7 +372,7 @@ export default function WorkoutLogger() {
       if (editId) {
         await userApi(`/api/workouts/${editId}`, "PUT", { title, performedAt: date || null, notes, sets: flatSets, weightUnit: unit, ...feedback });
       } else {
-        await userApi("/api/workouts", "POST", { title, performedAt: date || null, notes, sets: flatSets, planId, weightUnit: unit, ...feedback });
+        await userApi("/api/workouts", "POST", { title, performedAt: date || null, notes, sets: flatSets, planId, weightUnit: unit, cardioOnly: soloCardio, ...feedback });
         clearDraft();
       }
       navigate("/app");
@@ -375,6 +390,54 @@ export default function WorkoutLogger() {
     { key: "legs", emoji: "🦵", label: tr.gen_legs },
     { key: "full", emoji: "🔥", label: tr.gen_full },
   ];
+
+  // Solo-cardio day: streamlined screen — coach note + cardio form + a light
+  // feedback block (intensity & effort, no per-muscle). No strength UI.
+  if (started && soloCardio) {
+    return (
+      <div className="min-h-screen bg-cream relative z-[1]">
+        <MemberHeader />
+        <main className="max-w-[620px] mx-auto px-[5%] py-10">
+          <button onClick={() => { clearDraft(); navigate("/app"); }} className="text-terracotta text-[0.85rem] font-semibold mb-5 hover:text-terracotta-dark">
+            {tr.back}
+          </button>
+          <h1 className="font-display text-[1.8rem] font-semibold text-charcoal mb-1">🏃 {tr.cardioSoloTitle}</h1>
+          <p className="text-[0.85rem] text-warm-gray mb-6">{title}</p>
+
+          <div className="bg-white rounded-2xl border border-sand p-5 sm:p-6 mb-4">
+            <CardioForm coachNote={dayCardio} planId={planId} />
+          </div>
+
+          <div className="bg-white rounded-2xl border border-sand p-5 sm:p-6 mb-4 grid gap-5">
+            <div className="font-display text-[1.15rem] font-semibold text-charcoal">{tr.feedbackTitle}</div>
+            <SessionFeedbackForm
+              tr={tr}
+              sessionFeel={sessionFeel}
+              setSessionFeel={setSessionFeel}
+              sessionEffort={sessionEffort}
+              setSessionEffort={setSessionEffort}
+              showMuscles={false}
+            />
+            <div>
+              <label className="block text-[0.8rem] font-semibold text-charcoal mb-1.5">{tr.notes}</label>
+              <textarea rows="3" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={tr.notesPh} className={`${inputClass} resize-none`} />
+            </div>
+          </div>
+
+          {error && <p className="text-red-500 text-[0.85rem] mb-3">{error}</p>}
+
+          <div className="flex gap-3 mt-2">
+            <Button onClick={save} disabled={saving}>
+              {saving ? tr.saving : tr.saveAll}
+            </Button>
+            <button onClick={() => { clearDraft(); navigate("/app"); }} className="text-[0.95rem] font-semibold px-6 py-3.5 rounded-full border border-sand text-warm-gray hover:bg-sand transition-colors">
+              {tr.cancel}
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-cream relative z-[1]">
@@ -621,20 +684,11 @@ export default function WorkoutLogger() {
 
             {hasCardio && (
                 <div className="bg-white rounded-2xl border border-sand p-5 sm:p-6 mb-4">
-                  <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center gap-2 mb-4">
                     <span className="text-xl">🏃</span>
                     <div className="font-display text-[1.15rem] font-semibold text-charcoal">{tr.cardioLabel}</div>
                   </div>
-                  <div className="bg-sage-light/25 border border-sage-light rounded-xl p-4 mb-4">
-                    <p className="text-[0.86rem] text-charcoal leading-[1.5] whitespace-pre-wrap">{dayCardio}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setCardioOpen(true)}
-                    className="w-full bg-forest text-white font-semibold py-3 rounded-full hover:bg-forest-light transition-colors"
-                  >
-                    🏃 {tr.cardioLogTitle}
-                  </button>
+                  <CardioForm coachNote={dayCardio} planId={planId} />
                 </div>
               )}
 
@@ -674,13 +728,6 @@ export default function WorkoutLogger() {
         )}
       </main>
       <RestTimer ref={restRef} />
-      <CardioModal
-        open={cardioOpen}
-        onClose={() => setCardioOpen(false)}
-        onSaved={() => setCardioOpen(false)}
-        planId={planId}
-        coachNote={dayCardio}
-      />
     </div>
   );
 }

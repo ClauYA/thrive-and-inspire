@@ -1184,8 +1184,11 @@ app.get("/api/last-performance/:exerciseId", requireUser, async (req, res) => {
 // ── Create a workout (with its sets) ──
 
 app.post("/api/workouts", requireUser, async (req, res) => {
-  const { title, performedAt, notes, sets, planId, weightUnit } = req.body || {};
-  if (!Array.isArray(sets) || sets.length === 0) {
+  const { title, performedAt, notes, sets, planId, weightUnit, cardioOnly } = req.body || {};
+  const setList = Array.isArray(sets) ? sets : [];
+  // Solo-cardio sessions carry only feedback (no strength sets); everything
+  // else must have at least one set.
+  if (setList.length === 0 && !cardioOnly) {
     return res.status(400).json({ ok: false, error: "Add at least one set before saving." });
   }
   const unit = weightUnit === "lb" ? "lb" : "kg";
@@ -1199,7 +1202,7 @@ app.post("/api/workouts", requireUser, async (req, res) => {
       [req.user.sub, String(title || "Workout").trim(), performedAt || null, String(notes || "").trim(), planId || null, unit, fb.feel, fb.effort, fb.muscleIntensity]
     );
     const workout = w.rows[0];
-    for (const s of sets) {
+    for (const s of setList) {
       await client.query(
         `insert into workout_sets (workout_id, exercise_id, exercise_name, set_number, weight, reps, rir, rpe, weight_unit, note)
          values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
