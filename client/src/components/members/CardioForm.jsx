@@ -2,6 +2,7 @@ import { useState } from "react";
 import { userApi } from "../../lib/userApi";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { CARDIO_TYPES, cardioTypeInfo } from "../../lib/cardioTypes";
+import CardioIcon from "./CardioIcon";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -56,14 +57,20 @@ export default function CardioForm({ coachNote, planId, onSaved }) {
       ) : null}
 
       <div>
-        <label className="block text-[0.8rem] font-semibold text-charcoal mb-1.5">{tr.cardioType}</label>
-        <div className="flex flex-wrap gap-2">
+        <label className="block text-[0.8rem] font-semibold text-charcoal mb-2">{tr.cardioType}</label>
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
           {CARDIO_TYPES.map((c) => {
             const info = cardioTypeInfo(c.key, lang);
             const on = type === c.key;
             return (
-              <button key={c.key} type="button" onClick={() => { setType(c.key); setSaved(false); }} className={`text-[0.8rem] font-medium px-3 py-1.5 rounded-full border transition-colors ${on ? "bg-terracotta text-white border-terracotta" : "bg-white text-charcoal border-sand hover:border-terracotta"}`}>
-                {c.icon} {info.label}
+              <button
+                key={c.key}
+                type="button"
+                onClick={() => { setType(c.key); setSaved(false); }}
+                className={`flex flex-col items-center justify-center gap-1.5 py-3 px-1 rounded-2xl border transition-colors ${on ? "bg-terracotta text-white border-terracotta" : "bg-white text-charcoal border-sand hover:border-terracotta"}`}
+              >
+                <CardioIcon type={c.key} className="w-6 h-6" />
+                <span className="text-[0.72rem] font-medium text-center leading-tight">{info.label}</span>
               </button>
             );
           })}

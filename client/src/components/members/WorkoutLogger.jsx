@@ -93,6 +93,9 @@ export default function WorkoutLogger() {
   const [dayPos, setDayPos] = useState({ wi: 0, di: 0 });
   const [draftRestored, setDraftRestored] = useState(false);
   const [flashUid, setFlashUid] = useState(null);
+  // Accordion: only one exercise card is expanded at a time. When the last set
+  // of an exercise gets its reps, the card collapses and the next one opens.
+  const [openUid, setOpenUid] = useState(null);
   // Session feedback captured when saving the day's workout.
   const [sessionFeel, setSessionFeel] = useState("");
   const [sessionEffort, setSessionEffort] = useState("");
@@ -124,6 +127,9 @@ export default function WorkoutLogger() {
     } catch { /* ignore */ }
   };
 
+  // An exercise is "done" once every set has a rep value.
+  const blockDone = (blk) => blk.sets.length > 0 && blk.sets.every((s) => String(s.reps).length > 0);
+
   // Prefill the logger from a plan's week/day: title, day notes, and exercise
   // blocks with their targets. Used by the initial load and the day picker.
   const applyDay = (planObj, wi, di, exList) => {
@@ -142,7 +148,9 @@ export default function WorkoutLogger() {
       .filter(Boolean);
     // Cardio note + no strength exercises → a solo-cardio day.
     setSoloCardio(!!(day.cardio && day.cardio.trim()) && nb.length === 0);
-    setBlocks(nb.length ? nb : [makeBlock(null)]);
+    const finalBlocks = nb.length ? nb : [makeBlock(null)];
+    setBlocks(finalBlocks);
+    setOpenUid(finalBlocks[0]?.uid ?? null);
     setStarted(true);
     nb.forEach((b) => loadLast(b.uid, b.exerciseId));
   };
@@ -189,7 +197,11 @@ export default function WorkoutLogger() {
             setSessionFeel(r.workout.session_feel || "");
             setSessionEffort(r.workout.session_effort || "");
             setMuscleIntensity(r.workout.muscle_intensity || {});
-            setBlocks(nb.length ? nb : [makeBlock(null)]);
+            {
+              const fb = nb.length ? nb : [makeBlock(null)];
+              setBlocks(fb);
+              setOpenUid(fb[0]?.uid ?? null);
+            }
             setStarted(true);
             nb.forEach((b) => b.exerciseId && loadLast(b.uid, b.exerciseId));
           } catch (e) {
@@ -230,6 +242,7 @@ export default function WorkoutLogger() {
               setDayPos(dr.dayPos || { wi: 0, di: 0 });
               setRoutinePlan(dr.routinePlan || null);
               setBlocks(dr.blocks);
+              setOpenUid(dr.blocks.find((b) => !(b.sets?.length > 0 && b.sets.every((s) => String(s.reps).length > 0)))?.uid ?? dr.blocks[0]?.uid ?? null);
               setSessionFeel(dr.sessionFeel || "");
               setSessionEffort(dr.sessionEffort || "");
               setMuscleIntensity(dr.muscleIntensity || {});
@@ -275,6 +288,11 @@ export default function WorkoutLogger() {
     } catch { /* storage full / disabled — ignore */ }
   }, [started, title, date, notes, planId, fromRoutine, dayNotes, dayCardio, soloCardio, dayPos, routinePlan, blocks, sessionFeel, sessionEffort, muscleIntensity]);
 
+  // Clear the expanded card when the session ends.
+  useEffect(() => {
+    if (!started) setOpenUid(null);
+  }, [started]);
+
   const makeBlock = (ex, target) => {
     const count = target && Number(target.sets) > 0 ? Number(target.sets) : 3;
     const rir = target && RIR_OPTIONS.includes(target.rir) ? target.rir : "";
@@ -300,7 +318,9 @@ export default function WorkoutLogger() {
 
   const startWith = (picks, newTitle) => {
     const nb = picks.map((ex) => makeBlock(ex));
-    setBlocks(nb.length ? nb : [makeBlock(null)]);
+    const finalBlocks = nb.length ? nb : [makeBlock(null)];
+    setBlocks(finalBlocks);
+    setOpenUid(finalBlocks[0]?.uid ?? null);
     if (newTitle) setTitle(newTitle);
     setStarted(true);
     nb.forEach((b) => loadLast(b.uid, b.exerciseId));
@@ -328,8 +348,8 @@ export default function WorkoutLogger() {
 
   const muscleGroups = [...new Set(exercises.map((e) => e.muscle_group).filter(Boolean))].sort();
 
-  const addBlock = () => setBlocks((b) => [...b, makeBlock(null)]);
-  const removeBlock = (u) => setBlocks((b) => b.filter((blk) => blk.uid !== u));
+  const addBlock = () => { const nb = makeBlock(null); setBlocks((b) => [...b, nb]); setOpenUid(nb.uid); };
+  const removeBlock = (u) => { setBlocks((b) => b.filter((blk) => blk.uid !== u)); setOpenUid((cur) => (cur === u ? null : cur)); };
   const pickExercise = (u) => (e) => {
     const ex = exercises.find((x) => x.id === e.target.value);
     setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, exerciseId: ex?.id || "", exerciseName: ex?.name || "", mediaUrl: ex?.media_url || "", last: ex ? undefined : null } : b)));
@@ -343,6 +363,20 @@ export default function WorkoutLogger() {
   const updateSet = (u, si, field) => (e) => {
     const val = e.target.value;
     setBlocks((bs) => bs.map((b) => (b.uid === u ? { ...b, sets: b.sets.map((s, j) => (j === si ? { ...s, [field]: val } : s)) } : b)));
+  };
+
+  // Reps change: start the rest timer, and if this fills the exercise's last
+  // remaining set, collapse the card and open the next unfinished exercise.
+  const onRepsChange = (blk, si) => (e) => {
+    const val = e.target.value;
+    updateSet(blk.uid, si, "reps")(e);
+    if (val) restRef.current?.start(DEFAULT_REST);
+    if (!val) return;
+    const willBeDone = blk.sets.every((s, j) => (j === si ? true : String(s.reps).length > 0));
+    if (!willBeDone) return;
+    const idx = blocks.findIndex((b) => b.uid === blk.uid);
+    const next = blocks.slice(idx + 1).find((b) => !blockDone(b));
+    setOpenUid(next ? next.uid : null);
   };
 
   const hasCardio = !!(dayCardio && dayCardio.trim());
@@ -554,8 +588,27 @@ export default function WorkoutLogger() {
 
             {blocks.map((blk) => {
               const rec = blk.last === undefined ? null : recommendation(blk.last?.sets, lang);
+              const open = openUid === blk.uid;
+              const done = blockDone(blk);
+              const summary = blk.sets.filter((s) => String(s.reps).length > 0).map((s) => `${s.weight || 0}×${s.reps}`).join(" · ");
               return (
-                <div key={blk.uid} className="bg-white rounded-2xl border border-sand p-5 sm:p-6 mb-4">
+                <div key={blk.uid} className="bg-white rounded-2xl border border-sand mb-4 overflow-hidden">
+                  <button type="button" onClick={() => setOpenUid(open ? null : blk.uid)} className="w-full flex items-center justify-between gap-3 p-4 sm:p-5 text-left hover:bg-cream/40 transition-colors">
+                    <div className="min-w-0">
+                      <div className="font-semibold text-charcoal truncate flex items-center gap-1.5">
+                        {done && <span className="text-forest shrink-0">✓</span>}
+                        <span className="truncate">{blk.exerciseName || tr.selectExercise}</span>
+                      </div>
+                      {!open && (
+                        <div className="text-[0.76rem] text-warm-gray truncate mt-0.5">
+                          {summary || (blk.target && (blk.target.reps || blk.sets.length) ? `${tr.targetLabel}: ${blk.sets.length}${blk.target.reps ? `×${blk.target.reps}` : ""}` : "")}
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-terracotta text-xs shrink-0">{open ? "▲" : "▼"}</span>
+                  </button>
+                  {open && (
+                  <div className="px-5 sm:px-6 pb-5 sm:pb-6">
                   <div className="flex items-start justify-between gap-3 mb-1">
                     <select value={blk.exerciseId} onChange={pickExercise(blk.uid)} className={`${inputClass} cursor-pointer`}>
                       <option value="">{tr.selectExercise}</option>
@@ -631,7 +684,7 @@ export default function WorkoutLogger() {
                           <input type="number" inputMode="decimal" min="0" step="0.5" value={s.weight} onChange={updateSet(blk.uid, si, "weight")} className={`${inputClass} min-w-0`} />
                           <span className="text-[0.8rem] text-warm-gray shrink-0 w-[22px]">{blk.unit || "kg"}</span>
                         </div>
-                        <select value={s.reps} onChange={(e) => { updateSet(blk.uid, si, "reps")(e); if (e.target.value) restRef.current?.start(DEFAULT_REST); }} className={`${inputClass} cursor-pointer`}>
+                        <select value={s.reps} onChange={onRepsChange(blk, si)} className={`${inputClass} cursor-pointer`}>
                           <option value="">–</option>
                           {Array.from({ length: 51 }, (_, n) => (
                             <option key={n} value={n}>{n}</option>
@@ -671,6 +724,8 @@ export default function WorkoutLogger() {
                       </button>
                     </div>
                   </div>
+                  </div>
+                  )}
                 </div>
               );
             })}
