@@ -6,6 +6,14 @@ import CardioIcon from "./CardioIcon";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+// Brand color per cardio icon (aubergine / petróleo / teal / coral), matching
+// the Figma. Only the icon is colored; the label stays charcoal.
+const ICON_COLORS = {
+  Treadmill: "#511a54", Bike: "#1f929e", Rowing: "#63b4bd", Elliptical: "#1f929e",
+  Stair: "#db2e63", Walk: "#db2e63", HIIT: "#511a54", JumpRope: "#1f929e",
+  Swim: "#63b4bd", Other: "#511a54",
+};
+
 // Inline cardio logger: pick a type, enter duration/distance/HR/RPE, save.
 // Reused inline in the workout logger (mixed & solo-cardio days) and inside
 // CardioModal for the quick "log cardio" button on the dashboard.
@@ -69,7 +77,9 @@ export default function CardioForm({ coachNote, planId, onSaved }) {
                 onClick={() => { setType(c.key); setSaved(false); }}
                 className={`flex flex-col items-center justify-center gap-1.5 py-3 px-1 rounded-2xl border transition-colors ${on ? "bg-terracotta text-white border-terracotta" : "bg-white text-charcoal border-sand hover:border-terracotta"}`}
               >
-                <CardioIcon type={c.key} className="w-6 h-6" />
+                <span style={{ color: on ? "#ffffff" : (ICON_COLORS[c.key] || "#511a54") }}>
+                  <CardioIcon type={c.key} className="w-6 h-6" />
+                </span>
                 <span className="text-[0.72rem] font-medium text-center leading-tight">{info.label}</span>
               </button>
             );
