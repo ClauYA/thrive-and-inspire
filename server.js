@@ -1800,6 +1800,85 @@ app.post("/api/admin/members", requireAdmin, async (req, res) => {
   }
 });
 
+// ── Coaches (multi-coach, phase 1: admin creates/manages coach accounts) ──
+const COACH_ROLES = ["head_coach", "coach", "assistant"];
+const COACH_STATUSES = ["active", "pending", "disabled"];
+
+// List coaches with their client counts.
+app.get("/api/admin/coaches", requireAdmin, async (req, res) => {
+  try {
+    const { rows } = await query(
+      `select c.id, c.name, c.email, c.role, c.permissions, c.status, c.created_at,
+              count(u.id)::int as client_count
+       from coaches c left join users u on u.coach_id = c.id
+       group by c.id order by c.created_at`
+    );
+    res.json({ ok: true, coaches: rows });
+  } catch (err) {
+    console.error("List coaches failed:", err);
+    res.status(500).json({ ok: false, error: "Could not load coaches." });
+  }
+});
+
+// Invite a coach — creates a pending record with an invite token. (Coach
+// sign-in from that token is phase 2; for now the admin shares the link.)
+app.post("/api/admin/coaches", requireAdmin, async (req, res) => {
+  if (!dbEnabled) return res.status(503).json({ ok: false, error: "The coach area is not configured on the server." });
+  const { name, email, role, permissions } = req.body || {};
+  if (!name || !String(name).trim()) return res.status(400).json({ ok: false, error: "Please enter a name." });
+  if (!isValidEmail(email)) return res.status(400).json({ ok: false, error: "Please enter a valid email." });
+  const roleVal = COACH_ROLES.includes(role) ? role : "coach";
+  const perms = permissions && typeof permissions === "object" ? permissions : {};
+  try {
+    const exists = await query(`select 1 from coaches where email = $1`, [String(email).trim().toLowerCase()]);
+    if (exists.rows[0]) return res.status(409).json({ ok: false, error: "A coach with this email already exists." });
+    const inviteToken = crypto.randomBytes(24).toString("hex");
+    const { rows } = await query(
+      `insert into coaches (name, email, role, permissions, status, invite_token)
+       values ($1, $2, $3, $4::jsonb, 'pending', $5)
+       returning id, name, email, role, permissions, status, invite_token, created_at`,
+      [String(name).trim(), String(email).trim().toLowerCase(), roleVal, JSON.stringify(perms), inviteToken]
+    );
+    res.json({ ok: true, coach: rows[0] });
+  } catch (err) {
+    console.error("Invite coach failed:", err);
+    res.status(500).json({ ok: false, error: "Could not create the coach." });
+  }
+});
+
+// Update a coach's role, permissions, name, or status.
+app.patch("/api/admin/coaches/:id", requireAdmin, async (req, res) => {
+  const { name, role, permissions, status } = req.body || {};
+  const sets = [];
+  const vals = [];
+  if (name != null) { vals.push(String(name).trim()); sets.push(`name = $${vals.length}`); }
+  if (role != null) { vals.push(COACH_ROLES.includes(role) ? role : "coach"); sets.push(`role = $${vals.length}`); }
+  if (permissions != null) { vals.push(JSON.stringify(permissions)); sets.push(`permissions = $${vals.length}::jsonb`); }
+  if (status != null) { vals.push(COACH_STATUSES.includes(status) ? status : "pending"); sets.push(`status = $${vals.length}`); }
+  if (!sets.length) return res.status(400).json({ ok: false, error: "Nothing to update." });
+  vals.push(req.params.id);
+  try {
+    const { rowCount } = await query(`update coaches set ${sets.join(", ")} where id = $${vals.length}`, vals);
+    if (!rowCount) return res.status(404).json({ ok: false, error: "Coach not found." });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Update coach failed:", err);
+    res.status(500).json({ ok: false, error: "Could not update the coach." });
+  }
+});
+
+// Remove a coach (their clients keep their data; coach_id is set to null).
+app.delete("/api/admin/coaches/:id", requireAdmin, async (req, res) => {
+  try {
+    const { rowCount } = await query(`delete from coaches where id = $1`, [req.params.id]);
+    if (!rowCount) return res.status(404).json({ ok: false, error: "Coach not found." });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Delete coach failed:", err);
+    res.status(500).json({ ok: false, error: "Could not remove the coach." });
+  }
+});
+
 // One member: profile + workouts + plans
 app.get("/api/admin/members/:id", requireAdmin, async (req, res) => {
   try {
@@ -2603,6 +2682,10 @@ async function ensureSchema() {
     // cardio_logs: member's logged cardio sessions
     "create table if not exists cardio_logs (id uuid primary key default gen_random_uuid(), user_id uuid not null references users(id) on delete cascade, performed_at date, type text not null default '', duration_min int, distance numeric, distance_unit text default 'km', avg_hr int, rpe int, notes text default '', plan_id uuid references plans(id) on delete set null, created_at timestamptz not null default now())",
     "create index if not exists cardio_logs_user_idx on cardio_logs (user_id, performed_at desc)",
+    // coaches: team members who manage assigned clients (multi-coach, phase 1)
+    "create table if not exists coaches (id uuid primary key default gen_random_uuid(), name text not null default '', email text not null unique, role text not null default 'coach', permissions jsonb not null default '{}'::jsonb, status text not null default 'pending', invite_token text, created_at timestamptz not null default now())",
+    // users: which coach a client is assigned to
+    "alter table users add column if not exists coach_id uuid references coaches(id) on delete set null",
   ];
   let ok = 0;
   for (const sql of statements) {
