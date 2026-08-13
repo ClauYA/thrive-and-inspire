@@ -8,6 +8,7 @@ import TestimonialsAdmin from "./TestimonialsAdmin";
 import EmailLog from "./EmailLog";
 import MembersAdmin from "./MembersAdmin";
 import ExerciseGifs from "./ExerciseGifs";
+import CoachesAdmin from "./CoachesAdmin";
 
 export default function AdminDashboard() {
   const { t, lang } = useLanguage();
@@ -115,10 +116,18 @@ export default function AdminDashboard() {
               >
                 {a.tabGifs}
               </button>
+              <button
+                onClick={() => setTab("coaches")}
+                className={`text-[0.85rem] font-semibold px-5 py-2 rounded-full transition-colors ${tab === "coaches" ? "bg-terracotta text-white" : "text-warm-gray"}`}
+              >
+                {a.tabCoaches}
+              </button>
             </div>
 
             {tab === "members" ? (
               <MembersAdmin onAuthError={goLogin} />
+            ) : tab === "coaches" ? (
+              <CoachesAdmin onAuthError={goLogin} />
             ) : tab === "gifs" ? (
               <ExerciseGifs onAuthError={goLogin} />
             ) : tab === "testimonials" ? (
