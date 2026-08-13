@@ -240,7 +240,7 @@ export default function Dashboard() {
 
         {/* New workout / cardio */}
         <div className="flex justify-end gap-2 mb-4">
-          <button onClick={() => setCardioOpen(true)} className="text-[0.85rem] font-semibold text-forest border border-sage-light bg-white px-4 py-2 rounded-full hover:bg-sage-light/40 whitespace-nowrap">🏃 + {tr.cardioLabel}</button>
+          <button onClick={() => setCardioOpen(true)} className="text-[0.85rem] font-semibold text-forest border border-sage-light bg-white px-4 py-2 rounded-full hover:bg-sage-light/40 whitespace-nowrap">🏃 {tr.cardioSoloBtn}</button>
           <Button as={Link} to="/app/new" size="sm" className="whitespace-nowrap">
             + {tr.newWorkout}
           </Button>
